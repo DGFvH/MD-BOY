@@ -27,6 +27,14 @@ const SECURITY_HEADERS = {
   ].join('; '),
 };
 
+function originHost(origin) {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return null; // e.g. "null" from sandboxed frames
+  }
+}
+
 export function createApp({ db, cookieSecure = false, staticDir = join(ROOT, 'dist') } = {}) {
   const app = express();
   app.disable('x-powered-by');
@@ -41,7 +49,7 @@ export function createApp({ db, cookieSecure = false, staticDir = join(ROOT, 'di
   app.use('/api', (req, _res, next) => {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
     const origin = req.headers.origin;
-    if (origin && new URL(origin).host !== req.headers.host) {
+    if (origin && originHost(origin) !== req.headers.host) {
       return next(new HttpError(403, 'Cross-origin request blocked.'));
     }
     next();
