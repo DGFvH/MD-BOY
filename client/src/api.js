@@ -35,10 +35,14 @@ async function request(method, path, body, { keepalive = false } = {}) {
 }
 
 export const api = {
+  config: () => request('GET', '/config'),
   me: () => request('GET', '/auth/me'),
   login: (email, password) => request('POST', '/auth/login', { email, password }),
   register: (email, password) => request('POST', '/auth/register', { email, password }),
   logout: () => request('POST', '/auth/logout'),
+  changePassword: (current_password, new_password) => request('POST', '/auth/password', { current_password, new_password }),
+  deleteAccount: (password) => request('DELETE', '/auth/account', { password }),
+  exportUrl: '/api/export', // a .zip of every document, downloaded with a plain link
 
   listDocs: () => request('GET', '/docs'),
   searchDocs: (q) => request('GET', `/docs?q=${encodeURIComponent(q)}`),

@@ -66,37 +66,92 @@ export const icons = {
   settings: P('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
 };
 
-export function iconButton(icon, label, onClick, extra = {}) {
-  return h('button', { type: 'button', class: 'icon-btn', title: label, 'aria-label': label, html: icons[icon], onClick, ...extra });
+const iconNodes = {};
+
+/** A new SVG element for an icon (each icon is parsed once, then cloned). */
+export function icon(name) {
+  if (!iconNodes[name]) {
+    const t = document.createElement('template');
+    t.innerHTML = icons[name] ?? '';
+    iconNodes[name] = t.content.firstElementChild;
+  }
+  return iconNodes[name]?.cloneNode(true) ?? null;
+}
+
+export function iconButton(name, label, onClick, extra = {}) {
+  return h('button', { type: 'button', class: 'icon-btn', title: label, 'aria-label': label, onClick, ...extra },
+    'html' in extra ? null : icon(name));
 }
 
 // ---- Toasts -------------------------------------------------------------
 
-let toastHost;
-export function toast(message, { type = 'info', timeout = 3500 } = {}) {
-  if (!toastHost) {
-    toastHost = h('div', { class: 'toasts', role: 'status' });
-    document.body.append(toastHost);
+// Toasts go into the top open dialog, if any: outside it they would sit under the
+// backdrop, unreadable by screen readers and unclickable.
+function toastHost() {
+  const dialogs = document.querySelectorAll('dialog[open]');
+  const parent = dialogs[dialogs.length - 1] ?? document.body;
+  let host = parent.querySelector(':scope > .toasts');
+  if (!host) {
+    host = h('div', { class: 'toasts', role: 'status' });
+    parent.append(host);
   }
-  const el = h('div', { class: `toast toast-${type}` }, message);
-  toastHost.append(el);
-  setTimeout(() => {
+  return host;
+}
+
+/**
+ * Shows a short message. `action: { label, onClick }` adds a button (e.g. Undo); the toast
+ * stays while the pointer or focus is on it. Returns a function that dismisses it.
+ */
+export function toast(message, { type = 'info', timeout = 3500, action } = {}) {
+  const el = h('div', { class: `toast toast-${type}${action ? ' has-action' : ''}` }, h('span', {}, message));
+  let timer;
+  const dismiss = () => {
+    clearTimeout(timer);
+    if (el.classList.contains('leaving')) return;
     el.classList.add('leaving');
     setTimeout(() => el.remove(), 250);
-  }, timeout);
+  };
+  const start = () => {
+    clearTimeout(timer);
+    timer = setTimeout(dismiss, timeout);
+  };
+  if (action) {
+    el.append(h('button', {
+      type: 'button',
+      class: 'toast-action',
+      onMousedown: (e) => e.preventDefault(), // keep focus where it is (e.g. in the editor)
+      onClick: () => {
+        dismiss();
+        action.onClick();
+      },
+    }, action.label));
+    el.addEventListener('pointerenter', () => clearTimeout(timer));
+    el.addEventListener('pointerleave', start);
+    el.addEventListener('focusin', () => clearTimeout(timer));
+    el.addEventListener('focusout', start);
+  }
+  toastHost().append(el);
+  start();
+  return dismiss;
 }
 
 // ---- Modal dialogs ------------------------------------------------------
 
+const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+
 /**
  * Opens a modal. `render(close)` returns the body content.
  * Resolves with the value passed to close(), or undefined on dismiss.
+ * Tab stays inside the dialog; focus goes back to where it was when it closes.
  */
 export function modal({ title, render, wide = false }) {
   return new Promise((resolve) => {
     const previous = document.activeElement;
     const dialog = h('dialog', { class: `modal${wide ? ' modal-wide' : ''}`, 'aria-label': title });
+    let closed = false;
     const close = (value) => {
+      if (closed) return;
+      closed = true;
       dialog.close();
       dialog.remove();
       previous?.focus?.();
@@ -105,13 +160,35 @@ export function modal({ title, render, wide = false }) {
     dialog.append(
       h('header', { class: 'modal-head' }, h('h2', {}, title), iconButton('close', 'Close', () => close(undefined))),
       h('div', { class: 'modal-body' }, render(close)),
+      // Present from the start, so the first toast shown in the dialog is announced.
+      h('div', { class: 'toasts', role: 'status' }),
     );
     dialog.addEventListener('cancel', (e) => {
       e.preventDefault();
       close(undefined);
     });
+    // Close on a click on the backdrop, but not when a text selection started inside ends there.
+    let downOnBackdrop = false;
+    dialog.addEventListener('pointerdown', (e) => {
+      downOnBackdrop = e.target === dialog;
+    });
     dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) close(undefined);
+      if (e.target === dialog && downOnBackdrop) close(undefined);
+    });
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const items = [...dialog.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === dialog)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
     document.body.append(dialog);
     dialog.showModal();
@@ -146,6 +223,7 @@ export function promptDialog(title, { label = '', value = '', placeholder = '', 
   });
 }
 
+/** Asks OK/Cancel. With `danger`, focus starts on Cancel so Enter does not destroy anything. */
 export function confirmDialog(title, message, { ok = 'OK', danger = false } = {}) {
   return modal({
     title,
@@ -153,13 +231,19 @@ export function confirmDialog(title, message, { ok = 'OK', danger = false } = {}
       h('div', { class: 'stack' },
         h('p', {}, message),
         h('div', { class: 'modal-actions' },
-          h('button', { type: 'button', class: 'btn', onClick: () => close(false) }, 'Cancel'),
-          h('button', { type: 'button', class: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, autofocus: true, onClick: () => close(true) }, ok))),
+          h('button', { type: 'button', class: 'btn', autofocus: danger, onClick: () => close(false) }, 'Cancel'),
+          h('button', { type: 'button', class: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, autofocus: !danger, onClick: () => close(true) }, ok))),
   }).then(Boolean);
 }
 
-/** Shows a message with several labelled choices; resolves with the chosen value. */
+/**
+ * Shows a message with several labelled choices; resolves with the chosen value (undefined when dismissed).
+ * choices: [{ label, value, primary?, danger?, autofocus? }]. Focus starts on the `autofocus`
+ * choice, else on the first choice that is not `danger`.
+ */
 export function choiceDialog(title, message, choices) {
+  let focus = choices.findIndex((c) => c.autofocus);
+  if (focus < 0) focus = choices.findIndex((c) => !c.danger);
   return modal({
     title,
     render: (close) =>
@@ -167,57 +251,94 @@ export function choiceDialog(title, message, choices) {
         typeof message === 'string' ? h('p', {}, message) : message,
         h('div', { class: 'modal-actions' },
           choices.map((c, i) =>
-            h('button', { type: 'button', class: `btn ${c.primary ? 'btn-primary' : ''}`, autofocus: i === choices.length - 1, onClick: () => close(c.value) }, c.label)))),
+            h('button', {
+              type: 'button',
+              class: `btn${c.danger ? ' btn-danger' : c.primary ? ' btn-primary' : ''}`,
+              autofocus: i === focus,
+              onClick: () => close(c.value),
+            }, c.label)))),
   });
 }
 
 // ---- Dropdown menus -----------------------------------------------------
 
 let openMenu = null;
-function closeMenu() {
-  openMenu?.remove();
+
+/** Closes the open menu; `refocus` puts focus back on the button that opened it. */
+function closeMenu(refocus = false) {
+  if (!openMenu) return;
+  const { anchor } = openMenu;
+  openMenu.remove();
   openMenu = null;
+  anchor.setAttribute('aria-expanded', 'false');
+  if (refocus && anchor.isConnected) anchor.focus();
 }
 document.addEventListener('click', (e) => {
-  if (openMenu && !openMenu.contains(e.target)) closeMenu();
+  // A click on the menu's own button is left to showMenu, which then closes the menu.
+  if (openMenu && !openMenu.contains(e.target) && !openMenu.anchor.contains(e.target)) closeMenu();
 }, true);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeMenu();
 });
 
-/** items: [{ label, icon?, onClick, danger?, checked? } | 'separator'] */
+function menuKeydown(e) {
+  const items = [...e.currentTarget.querySelectorAll('[role="menuitem"]')];
+  const i = items.indexOf(document.activeElement);
+  let next;
+  if (e.key === 'ArrowDown') next = items[(i + 1) % items.length];
+  else if (e.key === 'ArrowUp') next = items[i <= 0 ? items.length - 1 : i - 1];
+  else if (e.key === 'Home') next = items[0];
+  else if (e.key === 'End') next = items[items.length - 1];
+  else if (e.key === 'Escape' || e.key === 'Tab') {
+    // Handled here, so a page-level Escape (e.g. closing the sidebar) does not also run.
+    e.preventDefault();
+    e.stopPropagation();
+    closeMenu(true);
+    return;
+  } else return;
+  e.preventDefault();
+  next?.focus();
+}
+
+/**
+ * Opens a menu under `anchor`; calling it again for the same anchor closes it.
+ * items: [{ label, icon?, onClick, danger?, checked? } | 'separator']
+ */
 export function showMenu(anchor, items) {
   const wasSame = openMenu?.anchor === anchor;
-  closeMenu();
+  closeMenu(wasSame);
   if (wasSame) return;
-  const menu = h('div', { class: 'menu', role: 'menu' },
+  const menu = h('div', { class: 'menu', role: 'menu', 'aria-label': anchor.getAttribute('aria-label'), onKeydown: menuKeydown },
     items.map((item) =>
       item === 'separator'
         ? h('div', { class: 'menu-sep', role: 'separator' })
         : h('button', {
             type: 'button',
             role: 'menuitem',
+            tabindex: '-1',
             class: `menu-item${item.danger ? ' danger' : ''}`,
             onClick: () => {
-              closeMenu();
+              closeMenu(true);
               item.onClick();
             },
           },
-          h('span', { class: 'menu-icon', html: item.icon ? icons[item.icon] : '' }),
+          h('span', { class: 'menu-icon' }, item.icon ? icon(item.icon) : null),
           h('span', {}, item.label),
           item.checked !== undefined && h('span', { class: 'menu-check' }, item.checked ? '✓' : ''))));
   menu.anchor = anchor;
+  anchor.setAttribute('aria-haspopup', 'menu');
+  anchor.setAttribute('aria-expanded', 'true');
   document.body.append(menu);
   const r = anchor.getBoundingClientRect();
   const mw = menu.offsetWidth;
   const mh = menu.offsetHeight;
-  let left = Math.min(r.left, window.innerWidth - mw - 8);
+  const left = Math.min(r.left, window.innerWidth - mw - 8);
   let top = r.bottom + 4;
   if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 4);
   menu.style.left = `${Math.max(8, left)}px`;
   menu.style.top = `${top}px`;
   openMenu = menu;
-  menu.querySelector('button')?.focus();
+  menu.querySelector('[role="menuitem"]')?.focus();
 }
 
 export function debounce(fn, ms) {

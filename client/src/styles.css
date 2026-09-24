@@ -137,7 +137,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 .tree-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   min-height: 32px;
   padding: 0 4px 0 calc(8px + var(--depth, 0) * 14px);
   border-radius: 7px;
@@ -145,27 +145,70 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
   cursor: pointer;
   user-select: none;
   position: relative;
+  /* Rows out of view skip layout and paint, so long lists open fast. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 32px;
 }
 .tree-row:hover { background: var(--surface-2); }
 .tree-row.active { background: var(--accent-soft); }
 :root[data-theme='dark'] .tree-row.active { color: #fff; }
 .tree-row.drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; }
+/* The row's link (document) or toggle (folder); its action buttons are siblings. */
+.tree-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-touch-callout: none; /* long-press drags the row instead */
+}
+.tree-main:focus-visible { outline-offset: -2px; border-radius: 6px; }
+@supports selector(:has(*)) {
+  .tree-main:focus-visible { outline: none; }
+  .tree-row:has(> .tree-main:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .tree-row:has(:focus-visible) .icon-btn { opacity: 1; }
+}
 .tree-row .tree-icon { display: grid; place-items: center; color: var(--text-faint); flex: none; }
 .tree-row .tree-icon svg { width: 16px; height: 16px; }
 .tree-row .chev svg { width: 14px; height: 14px; transition: transform 0.15s; }
 .tree-row .chev.open svg { transform: rotate(90deg); }
 .tree-row .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tree-row .icon-btn { width: 26px; height: 26px; opacity: 0; }
-.tree-row:hover .icon-btn, .tree-row .icon-btn:focus-visible, .tree-row.active .icon-btn { opacity: 1; }
+.tree-row:hover .icon-btn, .tree-row .icon-btn:focus-visible, .tree-row.active .icon-btn, .tree-row .icon-btn[aria-expanded='true'] { opacity: 1; }
+.tree-row .icon-btn[aria-expanded='true'] { background: var(--surface-2); color: var(--text); }
+.tree-row .icon-btn:focus-visible { outline-offset: -2px; } /* inside the row, which clips */
 .tree-row .icon-btn svg { width: 16px; height: 16px; }
 .tree-empty { padding: 16px 12px; color: var(--text-faint); font-size: 13px; }
-.search-result { display: block; padding: 8px 10px; border-radius: 7px; cursor: pointer; }
+.search-result { display: block; padding: 8px 10px; border-radius: 7px; color: inherit; text-decoration: none; cursor: pointer; }
 .search-result:hover { background: var(--surface-2); }
+.search-result.active { background: var(--accent-soft); }
+:root[data-theme='dark'] .search-result.active { color: #fff; }
+.search-result:focus-visible { outline-offset: -2px; }
 .search-result strong { display: block; font-weight: 600; }
-.search-result span { display: block; font-size: 12px; color: var(--text-muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.search-result span { font-size: 12px; color: var(--text-muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .search-result mark { background: var(--match); color: inherit; border-radius: 2px; }
-.sidebar-foot { display: flex; align-items: center; gap: 4px; padding: 8px 10px; border-top: 1px solid var(--border); }
-.sidebar-foot .user { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 13px; padding-left: 4px; }
+.sidebar-foot { display: flex; align-items: center; gap: 4px; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+.sidebar-foot .user {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding-left: 4px;
+}
+button.user { height: 32px; padding: 0 6px; border: 0; border-radius: 7px; background: none; text-align: left; }
+button.user:hover { background: var(--surface-2); color: var(--text); }
 
 .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
@@ -208,9 +251,20 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
   overflow-x: auto;
   scrollbar-width: none;
   flex: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 10px;
+  /* Shadows at an edge where more tools are scrolled out of view: the "local" covers move
+     with the content and hide each shadow once that end is reached. */
+  --scroll-shadow: color-mix(in srgb, var(--text-faint) 40%, transparent);
+  background:
+    linear-gradient(to right, var(--bg) 40%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--bg) 40%, transparent) right / 24px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--scroll-shadow), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--scroll-shadow), transparent) right / 12px 100% no-repeat scroll,
+    var(--bg);
 }
 .toolbar::-webkit-scrollbar { display: none; }
-.toolbar .icon-btn { width: 30px; height: 30px; }
+.toolbar .icon-btn { width: 30px; height: 30px; scroll-snap-align: start; }
 .toolbar .sep { width: 1px; height: 18px; background: var(--border); margin: 0 5px; flex: none; }
 
 .workspace { flex: 1; display: flex; min-height: 0; position: relative; }
@@ -320,6 +374,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
 }
 .menu-item {
   display: flex;
@@ -343,6 +400,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 .modal {
   width: min(440px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 32px);
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -363,7 +421,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 .kbd-table td:last-child { text-align: right; }
 .kbd-table kbd { font-family: var(--font-mono); font-size: 12px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); }
 
-.toasts { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 200; align-items: center; pointer-events: none; }
+/* Forms in dialogs (e.g. Account): sections, labelled fields, a danger zone. */
+.modal-section { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+.modal-section h3 { margin: 0; font-size: 14px; }
+.form-row { display: flex; flex-direction: column; gap: 4px; }
+.form-row label { font-weight: 500; font-size: 13px; color: var(--text-muted); }
+.form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.danger-zone {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 5%, transparent);
+}
+.danger-zone h3 { color: var(--danger); }
+
+.toasts { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); left: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 200; align-items: center; pointer-events: none; }
 .toast {
   padding: 10px 16px;
   border-radius: 10px;
@@ -371,13 +443,53 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
   color: var(--bg);
   box-shadow: var(--shadow);
   font-size: 13px;
-  max-width: calc(100vw - 32px);
+  max-width: min(560px, 100%);
   animation: toast-in 0.2s ease-out;
   transition: opacity 0.25s, transform 0.25s;
 }
 .toast-error { background: var(--danger); color: #fff; }
+.toast.has-action { display: flex; align-items: center; gap: 14px; pointer-events: auto; }
+.toast-action {
+  flex: none;
+  margin: -6px -8px -6px 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--accent-soft);
+  font-weight: 650;
+}
+.toast-action:hover { background: color-mix(in srgb, var(--bg) 14%, transparent); }
+.toast-error .toast-action { color: inherit; text-decoration: underline; }
 .toast.leaving { opacity: 0; transform: translateY(6px); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* "Skip to editor": hidden until focused (use a <button>: a #link would change the route). */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 300;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+  transform: translateY(calc(-100% - 16px));
+}
+.skip-link:focus { transform: none; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 .mobile-only { display: none !important; }
 .sidebar-backdrop { display: none; }
@@ -397,20 +509,53 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
     width: min(var(--sidebar-w), 85vw);
     z-index: 40;
     transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    visibility: visible !important;
-    box-shadow: var(--shadow);
+    /* Closed: not painted (no shadow strip at the edge) and out of the Tab order. */
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
   }
-  .app.mobile-sidebar-open .sidebar { transform: none; }
+  .app.mobile-sidebar-open .sidebar { transform: none; visibility: visible; box-shadow: var(--shadow); transition: transform 0.2s ease; }
   .app.mobile-sidebar-open .sidebar-backdrop { display: block; position: fixed; inset: 0; background: rgba(10, 10, 20, 0.4); z-index: 30; }
   .mobile-only { display: inline-grid !important; }
   .desktop-only { display: none !important; }
   .workspace[data-view='split'] .pane-preview { display: none; }
   .pane-preview .markdown-body { padding: 20px 16px 40vh; }
-  .topbar { padding: 0 6px; gap: 2px; }
+  .topbar { padding: 0 4px; gap: 0; }
   .title-input { font-size: 15px; }
+  /* Leave room for the title: while all is well the save status is just its dot
+     (the text stays for screen readers); problems still show their text. */
+  .save-status { display: block; flex: 0 1 auto; min-width: 0; max-width: 30vw; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+  .save-status::before { display: inline-block; margin-right: 6px; vertical-align: 1px; }
+  .save-status:is([data-state='saved'], [data-state='saving'], [data-state='dirty']) { font-size: 0; }
+  .save-status:is([data-state='saved'], [data-state='saving'], [data-state='dirty'])::before { margin-right: 0; }
+  /* Two views on phones: show only the button for the other one, as a toggle. */
+  .segmented { background: none; border: 0; padding: 0; }
+  .segmented .icon-btn:is(.active, [aria-pressed='true']) { display: none; }
   .statusbar .hide-sm { display: none; }
   .side-panel { width: min(var(--panel-w), 90vw); }
+}
+
+/* ---- Touch screens: tap targets of at least 40px ---- */
+@media (pointer: coarse) {
+  :root { --editor-font-size: 16px; } /* 16px or more: iOS does not zoom in on focus */
+  input[type='text'], input[type='email'], input[type='password'], input[type='search'], select, textarea { font-size: 16px; }
+  input[type='text'], input[type='email'], input[type='password'], input[type='search'], select, .sidebar-search input { height: 40px; }
+  .sidebar-search .search-icon { top: 16px; }
+  .title-input { height: 40px; font-size: 16px; }
+  .btn, .sidebar-actions .btn { height: 40px; }
+  .icon-btn, .segmented .icon-btn, .toolbar .icon-btn { width: 40px; height: 40px; }
+  .segmented { padding: 0; }
+  .tree-row { min-height: 40px; contain-intrinsic-size: auto 40px; }
+  .tree-row .icon-btn { width: 40px; height: 40px; opacity: 1; }
+  .tree-row .row-add { display: none; } /* "New document" is in the folder's ⋯ menu */
+  .search-result { padding: 10px; }
+  button.user { height: 40px; }
+  .menu-item, .outline-item, .revision { min-height: 40px; }
+  .toast-action { min-height: 40px; margin-block: -10px; }
+  .link-btn { min-height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .toast, .tree-row .chev svg { transition: none !important; animation: none !important; }
 }
 
 /* ---- Print: only the rendered document ---- */

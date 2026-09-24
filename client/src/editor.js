@@ -55,59 +55,111 @@ const baseTheme = EditorView.theme({
 
 // ---- Formatting commands ------------------------------------------------
 
-function wrap(view, before, after = before, placeholderText = 'text') {
-  const changes = view.state.changeByRange((range) => {
-    const text = view.state.sliceDoc(range.from, range.to);
-    const outerBefore = view.state.sliceDoc(range.from - before.length, range.from);
-    const outerAfter = view.state.sliceDoc(range.to, range.to + after.length);
-    // Toggle off when the selection is already wrapped.
-    if (outerBefore === before && outerAfter === after) {
-      return {
-        changes: [
-          { from: range.from - before.length, to: range.from, insert: '' },
-          { from: range.to, to: range.to + after.length, insert: '' },
-        ],
-        range: EditorSelection.range(range.from - before.length, range.to - before.length),
-      };
-    }
-    const inner = text || placeholderText;
-    return {
-      changes: { from: range.from, to: range.to, insert: before + inner + after },
-      range: EditorSelection.range(range.from + before.length, range.from + before.length + inner.length),
-    };
-  });
-  view.dispatch(view.state.update(changes, { scrollIntoView: true, userEvent: 'input' }));
+/** Applies changes and moves collapsed cursors after inserted text (so a cursor at the start of a line ends up after a new "- "). */
+function applyChanges(view, spec) {
+  const changes = view.state.changes(spec);
+  view.dispatch({ changes, selection: view.state.selection.map(changes, 1), scrollIntoView: true, userEvent: 'input' });
   view.focus();
   return true;
+}
+
+/** Number of `ch` characters at the start (or end) of `s`. */
+function runOf(s, ch, atEnd = false) {
+  let n = 0;
+  while (n < s.length && s[atEnd ? s.length - 1 - n : n] === ch) n++;
+  return n;
+}
+
+/** Wraps each selection in an inline marker such as "**", or removes it when already wrapped. */
+function wrap(view, marker, placeholderText) {
+  const { state } = view;
+  const ch = marker[0];
+  const n = marker.length;
+  // Is a run of `m` marker characters this marker? "*" and "**" share a character:
+  // italic owns odd runs ("*a*", "***a***"), bold owns runs of two or more.
+  const isMarker = (m) => (ch === '*' && n === 1 ? m % 2 === 1 : m >= n);
+  // Text that contains the marker itself is left alone when unwrapping ("*a* and *b*").
+  const runs = new RegExp(`[${ch}]+`, 'g');
+  const clean = (s) => !(s.match(runs) ?? []).some((run) => isMarker(run.length));
+
+  const changes = state.changeByRange((range) => {
+    let { from, to } = range;
+    const raw = state.sliceDoc(from, to);
+    if (raw.trim()) {
+      // Wrap the trimmed text: "**word **" would not render.
+      from += raw.length - raw.trimStart().length;
+      to -= raw.length - raw.trimEnd().length;
+    } else {
+      // A cursor inside a word wraps that word.
+      from = to;
+      const word = state.wordAt(to);
+      if (word && word.from < to && to < word.to) ({ from, to } = word);
+    }
+    const text = state.sliceDoc(from, to);
+    // Toggle off when the markers sit just outside the text...
+    const outer = Math.min(runOf(state.sliceDoc(Math.max(0, from - 3), from), ch, true), runOf(state.sliceDoc(to, to + 3), ch));
+    if (isMarker(outer) && clean(text)) {
+      return {
+        changes: [{ from: from - n, to: from }, { from: to, to: to + n }],
+        range: EditorSelection.range(from - n, to - n),
+      };
+    }
+    // ...or when the selected text includes them.
+    const inner = text.length > 2 * n ? text.slice(n, -n) : '';
+    if (inner.split(ch).join('') && isMarker(Math.min(runOf(text, ch), runOf(text, ch, true))) && clean(inner)) {
+      return {
+        changes: [{ from, to: from + n }, { from: to - n, to }],
+        range: EditorSelection.range(from, to - 2 * n),
+      };
+    }
+    const body = text || placeholderText;
+    return {
+      changes: { from, to, insert: marker + body + marker },
+      range: EditorSelection.range(from + n, from + n + body.length),
+    };
+  });
+  view.dispatch(state.update(changes, { scrollIntoView: true, userEvent: 'input' }));
+  view.focus();
+  return true;
+}
+
+/** Last line a range covers: one ending at the start of a line (e.g. a triple-click) leaves that line out. */
+function lastLine(doc, r) {
+  const line = doc.lineAt(r.to);
+  return r.to > r.from && line.from === r.to ? doc.lineAt(r.to - 1) : line;
 }
 
 function selectedLines(state) {
   const lines = new Set();
   for (const r of state.selection.ranges) {
-    for (let n = state.doc.lineAt(r.from).number; n <= state.doc.lineAt(r.to).number; n++) lines.add(n);
+    for (let n = state.doc.lineAt(r.from).number; n <= lastLine(state.doc, r).number; n++) lines.add(n);
   }
-  return [...lines].map((n) => state.doc.line(n));
+  return [...lines].sort((a, b) => a - b).map((n) => state.doc.line(n));
 }
+
+const isBlank = (line) => !line.text.trim();
 
 const LINE_PREFIX_RE = /^(\s*)(#{1,6}\s|>\s?|[-*+]\s\[[ xX]\]\s|[-*+]\s|\d+[.)]\s)?/;
 
 /** Sets (or toggles off) a block prefix such as "## ", "> ", "- " on every selected line. */
-function setLinePrefix(view, makePrefix) {
-  const lines = selectedLines(view.state);
+function setLinePrefix(view, makePrefix, { quote = false } = {}) {
+  const all = selectedLines(view.state);
+  // Across several lines, blank lines get no prefix (no empty list items);
+  // quotes mark them with ">" so the paragraphs stay in one blockquote.
+  const multi = all.length > 1 && !all.every(isBlank);
+  const lines = multi ? all.filter((l) => !isBlank(l)) : all;
   const first = makePrefix(0);
   const prefixOf = (line) => LINE_PREFIX_RE.exec(line.text)[2] ?? '';
   const allHave = lines.every((l) => prefixOf(l) && sameKind(prefixOf(l), first));
   const changes = lines.map((line, i) => {
     const m = LINE_PREFIX_RE.exec(line.text);
-    const indent = m[1];
-    const existing = m[2] ?? '';
-    const from = line.from + indent.length;
-    const insert = allHave ? '' : makePrefix(i);
-    return { from, to: from + existing.length, insert };
+    const from = line.from + m[1].length;
+    return { from, to: from + (m[2] ?? '').length, insert: allHave ? '' : makePrefix(i) };
   });
-  view.dispatch({ changes, scrollIntoView: true, userEvent: 'input' });
-  view.focus();
-  return true;
+  if (quote && multi && !allHave) {
+    for (const line of all) if (isBlank(line)) changes.push({ from: line.from, to: line.to, insert: '>' });
+  }
+  return applyChanges(view, changes);
 }
 
 function sameKind(a, b) {
@@ -115,17 +167,23 @@ function sameKind(a, b) {
   return kind(a) === kind(b);
 }
 
+/** Inserts a block (table, rule, code) on its own lines, with blank lines around it. */
 function insertBlock(view, text, selectOffset = null, selectLength = 0) {
-  const { state } = view;
-  const range = state.selection.main;
-  const line = state.doc.lineAt(range.from);
-  const needsLeadingNewline = line.text.trim().length > 0;
-  const prefix = needsLeadingNewline ? (range.from === line.to ? '\n\n' : '\n') : '';
-  const insert = prefix + text + '\n';
-  const at = needsLeadingNewline && range.from !== line.to ? line.to : range.from;
-  const anchor = at + prefix.length + (selectOffset ?? text.length);
+  const { doc } = view.state;
+  const line = lastLine(doc, view.state.selection.main);
+  const prev = line.number > 1 ? doc.line(line.number - 1) : null;
+  const next = line.number < doc.lines ? doc.line(line.number + 1) : null;
+  // Fill a blank line, else go after the current line: a block right under a
+  // paragraph line would join it ("---" there turns the paragraph into a heading).
+  const onBlank = isBlank(line);
+  const from = onBlank ? line.from : line.to;
+  const before = onBlank ? (prev && !isBlank(prev) ? '\n' : '') : '\n\n';
+  // Keep a blank line after the block; at the end, add a line to type on.
+  const after = next ? (isBlank(next) ? '' : '\n') : '\n\n';
+  const start = from + before.length;
+  const anchor = start + (selectOffset ?? text.length + (next ? 1 : 2));
   view.dispatch({
-    changes: { from: at, to: needsLeadingNewline ? at : range.to, insert },
+    changes: { from, to: onBlank ? line.to : from, insert: before + text + after },
     selection: EditorSelection.range(anchor, anchor + selectLength),
     scrollIntoView: true,
     userEvent: 'input',
@@ -134,23 +192,54 @@ function insertBlock(view, text, selectOffset = null, selectLength = 0) {
   return true;
 }
 
+/** Fences the selected lines as a code block, or removes the fences around them. */
+function fenceLines(view) {
+  const { state } = view;
+  const { doc } = state;
+  const r = state.selection.main;
+  const first = doc.lineAt(r.from);
+  const last = lastLine(doc, r);
+  const prev = first.number > 1 ? doc.line(first.number - 1) : null;
+  const next = last.number < doc.lines ? doc.line(last.number + 1) : null;
+  if (prev && next && /^\s*```/.test(prev.text) && /^\s*```\s*$/.test(next.text)) {
+    const removed = first.from - prev.from;
+    view.dispatch({
+      changes: [{ from: prev.from, to: first.from }, { from: last.to, to: next.to }],
+      selection: EditorSelection.range(prev.from, last.to - removed),
+      scrollIntoView: true,
+      userEvent: 'input',
+    });
+  } else {
+    // Fences go on their own lines (with the line's indent, so list items keep their code).
+    const indent = /^\s*/.exec(first.text)[0];
+    const body = state.sliceDoc(first.from, last.to);
+    const start = first.from + indent.length + 4;
+    view.dispatch({
+      changes: { from: first.from, to: last.to, insert: `${indent}\`\`\`\n${body}\n${indent}\`\`\`` },
+      selection: EditorSelection.range(start, start + body.length),
+      scrollIntoView: true,
+      userEvent: 'input',
+    });
+  }
+  view.focus();
+  return true;
+}
+
 export const commands = {
-  bold: (v) => wrap(v, '**', '**', 'bold text'),
-  italic: (v) => wrap(v, '*', '*', 'italic text'),
-  strike: (v) => wrap(v, '~~', '~~', 'text'),
-  code: (v) => wrap(v, '`', '`', 'code'),
-  math: (v) => wrap(v, '$', '$', 'E = mc^2'),
+  bold: (v) => wrap(v, '**', 'bold text'),
+  italic: (v) => wrap(v, '*', 'italic text'),
+  strike: (v) => wrap(v, '~~', 'text'),
+  code: (v) => wrap(v, '`', 'code'),
+  math: (v) => wrap(v, '$', 'E = mc^2'),
   heading: (level) => (v) => setLinePrefix(v, () => '#'.repeat(level) + ' '),
   cycleHeading: (v) => {
     const line = v.state.doc.lineAt(v.state.selection.main.from);
-    const current = /^(#{1,6})\s/.exec(line.text)?.[1].length ?? 0;
-    const next = current >= 3 ? 0 : current + 1;
     const existing = /^#{1,6}\s/.exec(line.text)?.[0] ?? '';
-    v.dispatch({ changes: { from: line.from, to: line.from + existing.length, insert: next ? '#'.repeat(next) + ' ' : '' }, userEvent: 'input' });
-    v.focus();
-    return true;
+    const current = existing.trim().length;
+    const next = current >= 3 ? 0 : current + 1;
+    return applyChanges(v, { from: line.from, to: line.from + existing.length, insert: next ? '#'.repeat(next) + ' ' : '' });
   },
-  quote: (v) => setLinePrefix(v, () => '> '),
+  quote: (v) => setLinePrefix(v, () => '> ', { quote: true }),
   ul: (v) => setLinePrefix(v, () => '- '),
   ol: (v) => setLinePrefix(v, (i) => `${i + 1}. `),
   task: (v) => setLinePrefix(v, () => '- [ ] '),
@@ -174,20 +263,18 @@ export const commands = {
     v.focus();
     return true;
   },
-  codeBlock: (v) => {
-    const r = v.state.selection.main;
-    const text = v.state.sliceDoc(r.from, r.to);
-    if (text) return wrap(v, '```\n', '\n```');
-    return insertBlock(v, '```js\n\n```', 3, 2);
-  },
+  codeBlock: (v) => (v.state.selection.main.empty ? insertBlock(v, '```js\n\n```', 3, 2) : fenceLines(v)),
   table: (v) => insertBlock(v, '| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |', 2, 8),
   hr: (v) => insertBlock(v, '---'),
 };
 
 // ---- Editor factory -----------------------------------------------------
 
-export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
+export function createEditor(parent, { onChange, onSave, onScroll, onCursor, onCycleView }) {
+  // Line numbers live in a compartment; the setting is kept here so load() can restore it.
   const lineNumbersCompartment = new Compartment();
+  let showLineNumbers = false;
+  const gutter = () => (showLineNumbers ? [lineNumbers(), highlightActiveLineGutter()] : []);
 
   const view = new EditorView({
     parent,
@@ -195,7 +282,6 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
   });
 
   const extensions = [
-    lineNumbersCompartment.of([]),
     highlightSpecialChars(),
     history(),
     drawSelection(),
@@ -209,12 +295,16 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
     highlightActiveLine(),
     highlightSelectionMatches(),
     EditorView.lineWrapping,
-    markdown({ base: markdownLanguage, codeLanguages: languages }),
+    // pasteURLAsLink: pasting a URL over selected text makes "[text](url)".
+    markdown({ base: markdownLanguage, codeLanguages: languages, pasteURLAsLink: true }),
     syntaxHighlighting(markdownHighlight),
     baseTheme,
     placeholder('Start writing Markdown…'),
     EditorView.contentAttributes.of({ 'aria-label': 'Markdown editor', spellcheck: 'true', autocorrect: 'on', autocapitalize: 'sentences' }),
     keymap.of([
+      // Handled here (before defaultKeymap's Mod-/ comment toggle) and kept from the page's own shortcut handler.
+      { key: 'Mod-s', run: () => (onSave?.(), true), preventDefault: true, stopPropagation: true },
+      { key: 'Mod-/', run: () => (onCycleView?.(), true), preventDefault: true, stopPropagation: true },
       { key: 'Mod-b', run: commands.bold },
       { key: 'Mod-i', run: commands.italic },
       { key: 'Mod-Shift-x', run: commands.strike },
@@ -227,7 +317,6 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
       { key: 'Mod-Shift-7', run: commands.ol },
       { key: 'Mod-Shift-8', run: commands.ul },
       { key: 'Mod-Shift-9', run: commands.task },
-      { key: 'Mod-s', run: () => (onSave?.(), true), preventDefault: true },
       ...closeBracketsKeymap,
       ...defaultKeymap,
       ...searchKeymap,
@@ -250,7 +339,7 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
   // Distance from the top of the scroll container's content to the document start.
   const docOffset = () => view.documentTop - view.scrollDOM.getBoundingClientRect().top + view.scrollDOM.scrollTop;
 
-  const newState = (doc) => EditorState.create({ doc, extensions });
+  const newState = (doc) => EditorState.create({ doc, extensions: [lineNumbersCompartment.of(gutter()), extensions] });
   view.setState(newState(''));
 
   return {
@@ -267,7 +356,8 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
     focus: () => view.focus(),
     run: (cmd) => cmd(view),
     setLineNumbers(on) {
-      view.dispatch({ effects: lineNumbersCompartment.reconfigure(on ? [lineNumbers(), highlightActiveLineGutter()] : []) });
+      showLineNumbers = !!on;
+      view.dispatch({ effects: lineNumbersCompartment.reconfigure(gutter()) });
     },
     /** 1-based line number at the top of the visible area (fractional). */
     topLine() {
@@ -288,9 +378,11 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor }) {
       const block = view.lineBlockAt(line.from);
       view.scrollDOM.scrollTop = docOffset() + block.top + block.height * (lineNo - Math.floor(lineNo));
     },
+    /** Flips "[ ]"/"[x]" on a task item line (also inside blockquotes); false if the line is not a task. */
     toggleTaskAtLine(lineNo) {
+      if (!Number.isInteger(lineNo) || lineNo < 1 || lineNo > view.state.doc.lines) return false;
       const line = view.state.doc.line(lineNo);
-      const m = /^(\s*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\])/.exec(line.text);
+      const m = /^((?:\s*>)*\s*(?:[-*+]|\d+[.)])\s+\[)([ xX])\](?=\s)/.exec(line.text);
       if (!m) return false;
       const pos = line.from + m[1].length;
       view.dispatch({ changes: { from: pos, to: pos + 1, insert: m[2] === ' ' ? 'x' : ' ' }, userEvent: 'input' });

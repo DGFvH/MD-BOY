@@ -5,21 +5,31 @@ import './styles.css';
 import { api, setUnauthorizedHandler } from './api.js';
 import { createEditor, commands } from './editor.js';
 import { createPreview, extractHeadings, documentStats, renderMarkdown } from './preview.js';
+import { stripFrontMatter } from './render/front-matter.js';
 import { createSidebar } from './sidebar.js';
-import { saveDraft, loadDraft, clearDraft, getPrefs, setPref } from './storage.js';
-import { exportMarkdown, exportHtml, printDocument, pickMarkdownFiles, readMarkdownFiles } from './export.js';
+import { saveDraft, loadDraft, clearDraft, clearAllDrafts, draftIds, getPrefs, setPref } from './storage.js';
+import { exportMarkdown, exportHtml, pickMarkdownFiles, readMarkdownFiles } from './export.js';
 import {
   h, icons, iconButton, toast, modal, promptDialog, confirmDialog, choiceDialog, showMenu, debounce, timeAgo,
 } from './ui.js';
 import { WELCOME_TITLE, WELCOME_CONTENT } from './welcome.js';
-import { APP_NAME, APP_TAGLINE, pageTitle } from './brand.js';
+import { pageTitle } from './brand.js';
+import { showAuth } from './app/auth.js';
+import { showAccount } from './app/account.js';
 
 const root = document.getElementById('app');
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const mobileQuery = window.matchMedia('(max-width: 820px)');
 
+const RETRY_DELAYS = [5000, 10000, 30000, 60000]; // after network or server errors
+const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // drafts of documents that no longer exist
+const KEEPALIVE_LIMIT = 60000; // browsers cap keepalive request bodies at 64 KB
+
 let user = null;
 let shell = null; // the mounted app, see mountApp()
+
+// The title the server stores for a given title input.
+const cleanTitle = (title) => String(title ?? '').trim().slice(0, 200) || 'Untitled';
 
 // ---- Theme ------------------------------------------------------------------
 
@@ -41,14 +51,11 @@ darkQuery.addEventListener('change', () => {
 });
 applyTheme();
 
-// ---- Boot -------------------------------------------------------------------
+// ---- Boot and auth ----------------------------------------------------------
 
 setUnauthorizedHandler(() => {
   if (!user) return;
-  user = null;
-  shell?.destroy();
-  shell = null;
-  showAuth('login', 'Your session has expired. Please sign in again.');
+  toAuthScreen('Your session has expired. Please sign in again.');
 });
 
 async function boot() {
@@ -56,7 +63,7 @@ async function boot() {
     ({ user } = await api.me());
     mountApp();
   } catch (err) {
-    if (err.status === 401) showAuth('login');
+    if (err.status === 401) openAuth();
     else {
       root.replaceChildren(
         h('div', { class: 'boot' },
@@ -68,76 +75,59 @@ async function boot() {
   }
 }
 
-// ---- Auth screen ------------------------------------------------------------
-
-function showAuth(mode = 'login', notice = '') {
-  const isLogin = mode === 'login';
-  const error = h('div', { class: 'auth-error', role: 'alert' }, notice);
-  const email = h('input', { type: 'email', name: 'email', autocomplete: 'email', required: true, autofocus: true, id: 'auth-email' });
-  const password = h('input', {
-    type: 'password', name: 'password', required: true, minlength: '8', id: 'auth-password',
-    autocomplete: isLogin ? 'current-password' : 'new-password',
-  });
-  const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-block' }, isLogin ? 'Sign in' : 'Create account');
-
-  const form = h('form', {
-    class: 'stack',
-    onSubmit: async (e) => {
-      e.preventDefault();
-      error.textContent = '';
-      submit.disabled = true;
-      try {
-        const res = isLogin ? await api.login(email.value, password.value) : await api.register(email.value, password.value);
-        user = res.user;
-        if (!isLogin) {
-          await api.createDoc({ title: WELCOME_TITLE, content: WELCOME_CONTENT }).catch(() => {});
-        }
-        mountApp();
-      } catch (err) {
-        error.textContent = err.message;
-        submit.disabled = false;
-      }
+function openAuth(opts = {}) {
+  showAuth(root, {
+    ...opts,
+    onSignedIn: async (signedIn, { isNew }) => {
+      user = signedIn;
+      if (isNew) await api.createDoc({ title: WELCOME_TITLE, content: WELCOME_CONTENT }).catch(() => {});
+      mountApp();
     },
-  },
-  h('div', { class: 'stack', style: 'gap:6px' }, h('label', { for: 'auth-email' }, 'Email'), email),
-  h('div', { class: 'stack', style: 'gap:6px' }, h('label', { for: 'auth-password' }, 'Password'), password),
-  error,
-  submit);
-
-  root.replaceChildren(
-    h('div', { class: 'auth' },
-      h('div', { class: 'auth-card' },
-        h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), APP_NAME),
-        h('h1', {}, isLogin ? 'Welcome back' : 'Create your account'),
-        h('p', { class: 'muted' }, isLogin ? 'Sign in to open your documents.' : `${APP_TAGLINE} Free, and your documents are saved in the cloud.`),
-        form,
-        h('div', { class: 'auth-switch' },
-          isLogin ? 'New here? ' : 'Already have an account? ',
-          h('button', { type: 'button', class: 'link-btn', onClick: () => showAuth(isLogin ? 'register' : 'login') }, isLogin ? 'Create an account' : 'Sign in')))),
-  );
-  email.focus();
+  });
 }
 
-// ---- The editor app ---------------------------------------------------------
+/** Tears the app down and shows the sign-in screen (after sign-out, expiry or account deletion). */
+function toAuthScreen(notice = '') {
+  user = null;
+  shell?.destroy();
+  shell = null;
+  for (const dialog of document.querySelectorAll('dialog')) dialog.remove(); // they belong to the old app
+  history.replaceState(null, '', '#/');
+  openAuth({ mode: 'login', notice });
+}
 
 function mountApp() {
   shell?.destroy();
+  setPref('hasAccount', true); // next time the sign-in form comes first
   shell = createApp();
 }
+
+// ---- The editor app ---------------------------------------------------------
 
 function createApp() {
   const prefs = getPrefs();
   let docs = [];
   let folders = [];
-  let doc = null; // the open document: { id, title, content, version, folder_id, ... }
-  let dirty = false;
-  let conflict = false;
+  let doc = null; // the open document: { id, title, content, version, folder_id, ..., baseTitle }
+  let dirty = false; // the open document has changes the server does not have yet
+  let issue = null; // { kind: 'conflict' | 'trashed' | 'deleted', current }: saving waits for the user
+  let issueDialogOpen = false;
   let currentSave = null;
   let queued = null;
-  let offlineTimer = null;
+  let retryTimer = null;
+  let retryCount = 0;
+  let lastError = ''; // last save error shown, so a failing save doesn't toast on every attempt
+  let offlineNotified = false;
+  let maybeSaved = null; // { id, content } sent without seeing the reply (keepalive, dropped connection)
+  let draftTimer = null;
+  let draftOk = true; // false when this browser could not store the draft
   let trashOpen = false;
   let autoTitle = null;
   let revisionsCache = null;
+  let navSeq = 0; // bumped by every navigation, so a slower, older one cannot win
+  let printing = false;
+  let lastRefresh = 0;
+  let destroyed = false;
   const cleanups = [];
 
   const listen = (target, type, fn, opts) => {
@@ -163,13 +153,18 @@ function createApp() {
       }
     },
     onBlur: () => {
-      if (doc && !titleInput.value.trim()) {
-        titleInput.value = doc.title = 'Untitled';
-        markDirty();
-      }
+      // Show what will be stored ("Hello " is saved as "Hello", "" as "Untitled").
+      if (!doc || titleInput.value === cleanTitle(titleInput.value)) return;
+      titleInput.value = doc.title = cleanTitle(titleInput.value);
+      markDirty();
     },
   });
-  const saveStatus = h('span', { class: 'save-status', 'data-state': 'saved', role: 'status' }, 'Saved');
+  // Not a live region: it changes on every typing pause. Problems are also announced by toasts.
+  const saveStatus = h('span', { class: 'save-status', 'data-state': 'saved' }, 'Saved');
+  const resolveBtn = h('button', {
+    type: 'button', class: 'btn', hidden: true, style: 'height:28px;padding:0 10px;font-size:12.5px',
+    onClick: () => resolveIssue(),
+  }, 'Resolve…');
 
   const viewButtons = {
     edit: iconButton('edit', 'Editor only (Ctrl+/ cycles)', () => setView('edit')),
@@ -193,7 +188,7 @@ function createApp() {
   }, { class: 'icon-btn sidebar-toggle' });
 
   const topbar = h('header', { class: 'topbar' },
-    menuBtn, titleInput, saveStatus,
+    menuBtn, titleInput, saveStatus, resolveBtn,
     h('div', { class: 'segmented', role: 'group', 'aria-label': 'View' }, viewButtons.edit, viewButtons.split, viewButtons.preview),
     h('span', { class: 'divider desktop-only' }), outlineBtn, historyBtn, themeBtn, moreBtn);
 
@@ -252,7 +247,8 @@ function createApp() {
       markDirty();
       schedulePreview();
     },
-    onSave: () => save({ snapshot: true, announce: true }),
+    onSave: () => saveVersion(),
+    onCycleView: () => cycleView(),
     onScroll: () => syncFrom('editor'),
     onCursor: ({ line, col, selected }) => {
       statCursor.textContent = `Ln ${line}, Col ${col}${selected ? ` (${selected} selected)` : ''}`;
@@ -267,7 +263,7 @@ function createApp() {
   });
 
   const sidebar = createSidebar(sidebarEl, {
-    onOpenDoc: (id) => openDoc(id),
+    onOpenDoc: (id) => openDoc(id, { push: true }),
     onNewDoc: (folderId) => newDoc(folderId),
     onNewFolder: (parentId) => newFolder(parentId),
     onRenameDoc: (d) => renameDoc(d),
@@ -278,17 +274,51 @@ function createApp() {
     onRenameFolder: (f) => renameFolder(f),
     onMoveFolderPrompt: (f) => moveFolderPrompt(f),
     onDeleteFolder: (f) => deleteFolder(f),
-    onShowTrash: () => (trashOpen ? closeTrash() : showTrash()),
+    onShowTrash: () => (trashOpen ? closeTrash() : showTrash({ push: true })),
     onImport: () => importFiles(),
     onToggleSidebar: () => (mobileQuery.matches ? setMobileSidebar(false) : setSidebar(false)),
     onLogout: () => logout(),
+    onAccount: () => openAccount(),
   });
 
   // ---- Save status ----
-  function setStatus(state, text) {
-    const labels = { saved: 'Saved', dirty: 'Unsaved', saving: 'Saving…', offline: 'Offline – saved locally', conflict: 'Conflict', error: 'Save failed' };
+  function setStatus(state, text, detail = '') {
+    const labels = {
+      saved: 'Saved', dirty: 'Unsaved', saving: 'Saving…', conflict: 'Conflict', error: 'Save failed',
+      offline: draftOk ? 'Offline – saved locally' : 'Offline – not saved',
+    };
     saveStatus.dataset.state = state;
     saveStatus.textContent = text ?? labels[state];
+    saveStatus.title = detail || (state === 'offline' && !draftOk
+      ? 'This browser could not keep a copy either. Keep this tab open until you are back online.' : '');
+    resolveBtn.hidden = !issue || !doc;
+  }
+
+  // ---- Local drafts ----
+  // The open document's unsaved text is also kept in this browser (written shortly after typing).
+  function scheduleDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(writeDraft, 300);
+  }
+
+  function writeDraft() {
+    clearTimeout(draftTimer);
+    if (!doc || !dirty) return;
+    const ok = saveDraft(doc.id, { title: doc.title, content: doc.content, baseVersion: doc.version });
+    if (ok !== draftOk) {
+      draftOk = ok;
+      if (saveStatus.dataset.state === 'offline') setStatus('offline');
+    }
+  }
+
+  // Drafts of documents that are gone (deleted elsewhere, long ago) would only fill up storage.
+  function pruneDrafts() {
+    const known = new Set(docs.map((d) => d.id));
+    for (const id of draftIds()) {
+      if (known.has(id)) continue;
+      const draft = loadDraft(id);
+      if (!(draft?.savedAt > Date.now() - DRAFT_MAX_AGE)) clearDraft(id);
+    }
   }
 
   // ---- Saving ----
@@ -297,12 +327,14 @@ function createApp() {
   function markDirty() {
     if (!doc) return;
     dirty = true;
-    saveDraft(doc.id, { title: doc.title, content: doc.content, baseVersion: doc.version });
-    if (!conflict && saveStatus.dataset.state !== 'offline') setStatus('dirty');
+    scheduleDraft();
+    if (issue) return; // saving waits until the user resolves it
+    if (saveStatus.dataset.state !== 'offline') setStatus('dirty');
     scheduleSave();
   }
 
   function save(opts = {}) {
+    if (destroyed) return Promise.resolve();
     if (currentSave) {
       queued = { snapshot: queued?.snapshot || !!opts.snapshot, announce: queued?.announce || !!opts.announce };
       return currentSave;
@@ -311,109 +343,283 @@ function createApp() {
       currentSave = null;
       const next = queued;
       queued = null;
-      if (next) save(next);
+      if (next && !destroyed) save(next);
     });
     return currentSave;
   }
 
+  /** Ctrl+S, "Save version now": save and keep this state in the history. */
+  function saveVersion() {
+    if (!doc) return;
+    if (issue) resolveIssue();
+    else save({ snapshot: true, announce: true });
+  }
+
   async function doSave({ snapshot = false, announce = false } = {}) {
-    if (!doc || conflict) return;
+    if (destroyed || !doc || issue) return;
     if (!dirty && !snapshot) return;
     scheduleSave.cancel();
-    clearTimeout(offlineTimer);
+    clearTimeout(retryTimer);
     const target = doc;
-    const sent = { title: target.title.trim() || 'Untitled', content: target.content, version: target.version };
+    const title = cleanTitle(target.title);
+    // Send the title only when it was changed here, so a stale tab can't undo a rename made elsewhere.
+    const titleEdited = title !== target.baseTitle;
+    const body = { content: target.content, version: target.version, snapshot };
+    if (titleEdited) body.title = title;
     setStatus('saving');
+    let saved;
     try {
-      const { document: saved } = await api.saveDoc(target.id, { ...sent, snapshot });
-      target.version = saved.version;
-      target.updated_at = saved.updated_at;
-      if (target.content === sent.content && target.title === sent.title) {
-        if (doc === target) dirty = false;
-        clearDraft(target.id);
-      } else {
-        saveDraft(target.id, { title: target.title, content: target.content, baseVersion: target.version });
-      }
-      const meta = docs.find((d) => d.id === target.id);
-      if (meta && (meta.title !== saved.title || meta.updated_at !== saved.updated_at)) {
-        const titleChanged = meta.title !== saved.title;
-        Object.assign(meta, { title: saved.title, updated_at: saved.updated_at, version: saved.version });
-        if (titleChanged) renderSidebar();
-      }
-      if (doc === target) {
-        setStatus(dirty ? 'dirty' : 'saved');
-        updateMeta();
-        if (dirty) scheduleSave();
-      }
-      if (snapshot) revisionsCache = null;
-      if (announce) toast('Saved. A version was added to the history.');
-      if (getPrefs().panel === 'history' && snapshot) renderPanel();
+      ({ document: saved } = await api.saveDoc(target.id, body));
     } catch (err) {
-      if (doc !== target) return;
-      if (err.status === 409) return handleConflict(err.body.current);
-      if (err.status === 0) {
-        setStatus('offline');
-        offlineTimer = setTimeout(() => save(), 5000);
-      } else if (err.status === 404) {
-        setStatus('error', 'Deleted elsewhere');
-        toast('This document was deleted in another window. Your text is kept locally.', { type: 'error', timeout: 6000 });
-      } else {
-        setStatus('error');
-        toast(err.message, { type: 'error' });
-        offlineTimer = setTimeout(() => save(), 10000);
-      }
+      if (destroyed || err.status === 401) return; // signed out: the draft is restored after signing in
+      if (err.status === 0) maybeSaved = { id: target.id, content: body.content };
+      if (doc === target) onSaveError(err, { snapshot, announce });
+      return;
     }
+    if (destroyed) return;
+    if (maybeSaved?.id === target.id) maybeSaved = null;
+    Object.assign(target, { version: saved.version, updated_at: saved.updated_at, folder_id: saved.folder_id, baseTitle: saved.title });
+    // Renamed elsewhere and not here: take the new name.
+    if (!titleEdited && saved.title !== title && cleanTitle(target.title) === title) {
+      target.title = saved.title;
+      if (doc === target) titleInput.value = saved.title;
+    }
+    if (target.content === body.content && cleanTitle(target.title) === saved.title) {
+      if (doc === target) dirty = false;
+      clearDraft(target.id);
+    } else {
+      saveDraft(target.id, { title: target.title, content: target.content, baseVersion: target.version });
+    }
+    const meta = docs.find((d) => d.id === target.id);
+    if (meta) {
+      const moved = meta.title !== saved.title || meta.folder_id !== saved.folder_id;
+      Object.assign(meta, { title: saved.title, folder_id: saved.folder_id, updated_at: saved.updated_at, version: saved.version });
+      if (moved) renderSidebar();
+    }
+    retryCount = 0;
+    lastError = '';
+    offlineNotified = false;
+    if (doc === target) {
+      setStatus(dirty ? 'dirty' : 'saved');
+      updateMeta();
+      if (dirty) scheduleSave();
+    }
+    if (snapshot) revisionsCache = null;
+    if (announce) toast('Saved to the version history.');
+    if (getPrefs().panel === 'history' && snapshot && doc === target) renderPanel();
   }
 
+  function onSaveError(err, opts = {}) {
+    const { status } = err;
+    if (status === 409) return raiseIssue('conflict', err.body?.current, opts);
+    if (status === 410) return raiseIssue('trashed', err.body?.current);
+    if (status === 404) return raiseIssue('deleted', null);
+    if (status === 0 || status >= 500) {
+      // Probably temporary: try again with growing pauses (and on every edit).
+      setStatus(status === 0 ? 'offline' : 'error', undefined, status === 0 ? '' : err.message);
+      retryTimer = setTimeout(() => save(), RETRY_DELAYS[Math.min(retryCount++, RETRY_DELAYS.length - 1)]);
+      if (status === 0 && !offlineNotified) {
+        offlineNotified = true;
+        toast(draftOk
+          ? 'You’re offline. Your changes are kept in this browser and saved when you’re back online.'
+          : 'You’re offline, and this browser could not keep a copy. Keep this tab open until you’re back online.',
+        { type: draftOk ? 'info' : 'error', timeout: 6000 });
+      }
+      if (status !== 0) showErrorOnce(err.message);
+      return;
+    }
+    // Other refusals (e.g. too large) won't change by retrying: wait for the next edit.
+    setStatus('error', 'Not saved', err.message);
+    showErrorOnce(err.message);
+  }
+
+  function showErrorOnce(message) {
+    if (message === lastError) return;
+    lastError = message;
+    toast(message, { type: 'error', timeout: 6000 });
+  }
+
+  /** Waits for pending saves and saves unsaved changes. Never throws; check `dirty` afterwards. */
   async function flush() {
     scheduleSave.cancel();
-    if (currentSave) await currentSave;
-    if (dirty && !conflict) await save();
+    while (currentSave) await currentSave;
+    if (dirty && !issue && !destroyed) await save();
+    while (currentSave) await currentSave;
   }
 
-  async function handleConflict(current) {
-    conflict = true;
-    setStatus('conflict');
-    const choice = await choiceDialog(
-      'This document changed elsewhere',
-      'It was edited in another tab or on another device since you opened it. What would you like to do?',
-      [
-        { label: 'Keep a copy of mine', value: 'copy' },
-        { label: 'Load the other version', value: 'theirs' },
-        { label: 'Overwrite with mine', value: 'mine', primary: true },
-      ],
-    );
-    if (!doc || doc.id !== current.id) return;
-    conflict = false;
-    if (choice === 'theirs' || choice === 'copy') {
-      if (choice === 'copy') {
-        const { document: copy } = await api.createDoc({ title: `${doc.title} (my version)`, content: doc.content, folder_id: doc.folder_id });
-        docs.unshift(copy);
-        toast(`Your version was saved as “${copy.title}”.`);
-      }
-      clearDraft(doc.id);
-      setDoc(current, { skipDraft: true });
-      renderSidebar();
-    } else if (choice === 'mine') {
+  // ---- Conflicts and documents removed elsewhere ----
+  function raiseIssue(kind, current, opts = {}) {
+    // Our own earlier write (a reply that never arrived), or the same text: nothing to resolve.
+    if (kind === 'conflict' && current && (current.content === doc.content
+      || (maybeSaved?.id === doc.id && maybeSaved.content === current.content))) {
       doc.version = current.version;
-      dirty = true;
-      save();
-    } else {
-      // Dismissed: keep the local text; the next save will run into the conflict and ask again.
-      setStatus('conflict');
+      maybeSaved = null;
+      save(opts); // runs after the current save
+      return;
     }
+    issue = { kind, current };
+    const labels = { conflict: 'Conflict', trashed: 'In the trash', deleted: 'Deleted elsewhere' };
+    setStatus(kind === 'conflict' ? 'conflict' : 'error', labels[kind]);
+    resolveIssue(); // not awaited: saving and navigation don't wait for the dialog
+  }
+
+  function issueDialog(kind) {
+    if (kind === 'conflict') {
+      return choiceDialog('This document changed elsewhere',
+        h('div', { class: 'stack', style: 'gap:8px' },
+          h('p', {}, 'It was edited in another tab or on another device while you were writing here.'),
+          h('ul', { style: 'margin:0;padding-left:20px;line-height:1.5' },
+            h('li', {}, h('strong', {}, 'Keep both'), ': your text becomes a new document, and the other version opens here.'),
+            h('li', {}, h('strong', {}, 'Overwrite with mine'), ': the other version is kept in the version history.'),
+            h('li', {}, h('strong', {}, 'Discard mine'), ': your changes here are lost.'))),
+        [
+          { label: 'Discard mine', value: 'theirs', danger: true },
+          { label: 'Overwrite with mine', value: 'mine' },
+          { label: 'Keep both', value: 'both', primary: true, autofocus: true },
+        ]);
+    }
+    if (kind === 'trashed') {
+      return choiceDialog('This document is in the trash',
+        'It was moved to the trash in another tab or on another device. Your text is still here.',
+        [
+          { label: 'Save as new document', value: 'copy' },
+          { label: 'Restore it', value: 'restore', primary: true, autofocus: true },
+        ]);
+    }
+    return choiceDialog('This document was deleted',
+      'It was deleted permanently in another tab or on another device. Your text is still here.',
+      [
+        { label: 'Discard my text', value: 'discard', danger: true },
+        { label: 'Save as new document', value: 'copy', primary: true, autofocus: true },
+      ]);
+  }
+
+  async function resolveIssue() {
+    if (!issue || issueDialogOpen) return;
+    const target = doc;
+    const { kind, current } = issue;
+    issueDialogOpen = true;
+    const choice = await issueDialog(kind).finally(() => (issueDialogOpen = false));
+    if (destroyed || doc !== target || issue?.current !== current || !choice) return; // dismissed: "Resolve…" asks again
+    try {
+      if (choice === 'mine') {
+        // Put the other version in the history first, then overwrite it.
+        const { document: kept } = await api.saveDoc(target.id, { content: current.content, version: current.version, snapshot: true });
+        if (doc !== target) return;
+        target.version = kept.version;
+        issue = null;
+        dirty = true;
+        save();
+      } else if (choice === 'both' || choice === 'theirs') {
+        if (choice === 'both') {
+          const copy = await saveCopy(target, ' (my version)');
+          toast(`Your version was saved as “${copy.title}”.`);
+        }
+        const { document: fresh } = await api.getDoc(target.id);
+        if (doc !== target) return;
+        dirty = false;
+        clearDraft(target.id);
+        setDoc(fresh, { skipDraft: true });
+      } else if (choice === 'restore') {
+        const { document: restored } = await api.restoreDoc(target.id);
+        if (doc !== target) return;
+        if (!docs.some((d) => d.id === restored.id)) docs.unshift(restored);
+        renderSidebar();
+        issue = null;
+        dirty = true;
+        save(); // a change made before it was trashed still shows up as a conflict
+      } else if (choice === 'copy') {
+        const copy = await saveCopy(target, '');
+        if (doc !== target) return;
+        dirty = false;
+        clearDraft(target.id);
+        docs = docs.filter((d) => d.id !== target.id);
+        setDoc(copy, { skipDraft: true });
+        toast('Saved as a new document.');
+      } else if (choice === 'discard') {
+        dirty = false;
+        clearDraft(target.id);
+        docs = docs.filter((d) => d.id !== target.id);
+        closeDoc();
+      }
+    } catch (err) {
+      if (destroyed || doc !== target) return;
+      if ([404, 409, 410].includes(err.status) && choice !== 'both' && choice !== 'copy') {
+        issue = null;
+        onSaveError(err); // it changed again: ask again with the new state
+      } else {
+        toast(err.message, { type: 'error' });
+      }
+    }
+  }
+
+  async function saveCopy(src, suffix) {
+    const folderId = folders.some((f) => f.id === src.folder_id) ? src.folder_id : null;
+    const { document: copy } = await api.createDoc({ title: `${cleanTitle(src.title)}${suffix}`, content: src.content, folder_id: folderId });
+    if (!destroyed) {
+      docs.unshift(copy);
+      renderSidebar();
+    }
+    return copy;
   }
 
   // ---- Documents ----
   async function refreshLists() {
     const [d, f] = await Promise.all([api.listDocs(), api.listFolders()]);
+    if (destroyed) return;
     docs = d.documents;
     folders = f.folders;
+    lastRefresh = Date.now();
     renderSidebar();
+  }
+
+  // Coming back to the tab: pick up documents and changes made elsewhere.
+  async function refreshOnReturn() {
+    if (destroyed || Date.now() - lastRefresh < 15000) return;
+    lastRefresh = Date.now();
+    try {
+      await refreshLists();
+      await syncOpenDoc();
+    } catch {
+      // Offline or signed out; the next save or action will say so.
+    }
+  }
+
+  // Loads a newer server version of the open document when there is nothing unsaved here.
+  async function syncOpenDoc() {
+    const target = doc;
+    const meta = target && docs.find((d) => d.id === target.id);
+    if (!meta || dirty || issue) return;
+    if (meta.version > target.version) {
+      const { document: d } = await api.getDoc(target.id);
+      if (destroyed || doc !== target || dirty || issue || d.deleted_at || d.version <= target.version) return;
+      Object.assign(target, { title: d.title, baseTitle: d.title, content: d.content, version: d.version, updated_at: d.updated_at, folder_id: d.folder_id });
+      titleInput.value = d.title;
+      editor.replace(d.content);
+      preview.update(d.content);
+      revisionsCache = null;
+      updateMeta();
+      renderPanel();
+      toast('Updated with changes made elsewhere.');
+    } else if (meta.title !== target.baseTitle && document.activeElement !== titleInput) {
+      target.title = target.baseTitle = titleInput.value = meta.title;
+      updateMeta();
+    }
   }
 
   function renderSidebar() {
     sidebar.update({ docs, folders, currentId: trashOpen ? null : doc?.id ?? null, trashOpen, user });
+  }
+
+  function navigate(hash, push = false) {
+    if (location.hash === hash) return;
+    if (push) history.pushState(null, '', hash);
+    else history.replaceState(null, '', hash);
+  }
+
+  // Puts the address back in line with what is shown (after a cancelled or failed navigation).
+  function syncHash() {
+    navigate(doc ? `#/doc/${doc.id}` : trashOpen ? '#/trash' : '#/');
   }
 
   function showDocUI(show) {
@@ -423,20 +629,32 @@ function createApp() {
     titleInput.disabled = !show;
     for (const b of [outlineBtn, historyBtn, ...Object.values(viewButtons)]) b.disabled = !show;
     saveStatus.hidden = !show;
+    resolveBtn.hidden = !show || !issue;
     if (!show) titleInput.value = trashOpen ? 'Trash' : '';
   }
 
-  function setDoc(d, { skipDraft = false } = {}) {
-    doc = { ...d };
+  /** Forgets the open document; its unsaved text stays in this browser's drafts. */
+  function dropDoc() {
+    if (doc && dirty) writeDraft();
+    scheduleSave.cancel();
+    clearTimeout(draftTimer);
+    clearTimeout(retryTimer);
+    doc = null;
     dirty = false;
-    conflict = false;
+    issue = null;
+    retryCount = 0;
+    lastError = '';
+  }
+
+  function setDoc(d, { skipDraft = false, push = false } = {}) {
+    dropDoc();
+    doc = { ...d, baseTitle: d.title };
     revisionsCache = null;
-    autoTitle = null;
     trashOpen = false;
     const draft = skipDraft ? null : loadDraft(d.id);
     let restoredDraft = false;
     let askDraft = null;
-    if (draft && (draft.content !== d.content || draft.title !== d.title)) {
+    if (draft && (draft.content !== d.content || cleanTitle(draft.title) !== d.title)) {
       if (draft.baseVersion === d.version) {
         doc.content = draft.content;
         doc.title = draft.title;
@@ -447,6 +665,7 @@ function createApp() {
     } else if (draft) {
       clearDraft(d.id);
     }
+    autoTitle = leadingH1(doc.content) === doc.title ? doc.title : null;
     titleInput.value = doc.title;
     editor.load(doc.content);
     preview.update(doc.content, { force: true });
@@ -456,8 +675,7 @@ function createApp() {
     renderPanel();
     setStatus('saved');
     setPref('lastDoc', doc.id);
-    if (location.hash !== `#/doc/${doc.id}`) history.replaceState(null, '', `#/doc/${doc.id}`);
-    document.title = pageTitle(doc.title);
+    navigate(`#/doc/${doc.id}`, push);
     renderSidebar();
     if (restoredDraft) {
       dirty = true;
@@ -466,77 +684,112 @@ function createApp() {
       save();
     }
     if (askDraft) {
-      const draftDocId = d.id;
+      const target = doc;
       choiceDialog('Unsaved local changes found',
-        `This browser has changes from ${timeAgo(new Date(askDraft.savedAt).toISOString())} that were never saved, but the document has changed since. Restore your local changes?`,
+        `This browser has changes from ${timeAgo(new Date(askDraft.savedAt).toISOString())} that were never saved, but the document has changed since. Restore your local changes? The current version stays in the history.`,
         [
-          { label: 'Discard them', value: false },
-          { label: 'Restore my changes', value: true, primary: true },
-        ]).then((restore) => {
-        if (!doc || doc.id !== draftDocId) return;
-        if (restore) {
-          doc.title = titleInput.value = askDraft.title;
-          editor.replace(askDraft.content);
-          doc.content = askDraft.content;
-          preview.update(doc.content);
-          markDirty();
-        } else {
-          clearDraft(draftDocId);
+          { label: 'Discard them', value: false, danger: true },
+          { label: 'Restore my changes', value: true, primary: true, autofocus: true },
+        ]).then(async (restore) => {
+        if (doc !== target) return;
+        if (!restore) {
+          if (restore === false) clearDraft(target.id);
+          return;
         }
+        // Keep the server's current text in the history before replacing it.
+        await api.saveDoc(target.id, { content: d.content, version: d.version, snapshot: true }).catch(() => {});
+        if (doc !== target) return;
+        doc.title = titleInput.value = askDraft.title;
+        editor.replace(askDraft.content);
+        doc.content = askDraft.content;
+        preview.update(doc.content);
+        markDirty();
       });
     }
   }
 
-  async function openDoc(id, { focus = false } = {}) {
+  /**
+   * Saves the open document before navigating away. Resolves false when the user
+   * chooses to stay because the changes could not be saved.
+   */
+  async function leaveDoc() {
+    await flush();
+    if (destroyed) return false;
+    if (issueDialogOpen) return false; // the save hit a conflict: resolve it first
+    if (!doc || !dirty) return true;
+    writeDraft();
+    const where = draftOk
+      ? 'They are kept in this browser and come back when you open the document here again.'
+      : 'This browser could not keep a copy either, so they are lost if you leave.';
+    const choice = await choiceDialog('Changes not saved yet',
+      `Your latest changes to “${cleanTitle(doc.title)}” have not reached the server. ${where}`,
+      [
+        { label: 'Leave anyway', value: 'leave', danger: !draftOk },
+        { label: 'Stay', value: 'stay', primary: true, autofocus: true },
+      ]);
+    return choice === 'leave' && !destroyed;
+  }
+
+  async function openDoc(id, { focus = false, push = false } = {}) {
     if (doc?.id === id && !trashOpen) {
       setMobileSidebar(false);
       return;
     }
-    await flush();
+    const seq = ++navSeq;
+    if (!(await leaveDoc())) return seq === navSeq && syncHash();
+    if (seq !== navSeq) return;
     try {
       const { document: d } = await api.getDoc(id);
+      if (destroyed || seq !== navSeq) return;
       if (d.deleted_at) {
         toast('That document is in the trash.');
         return showTrash();
       }
-      trashOpen = false;
-      setDoc(d);
+      if (dirty) await flush(); // typed while it was loading
+      if (destroyed || seq !== navSeq) return;
+      if (issueDialogOpen) return syncHash();
+      setDoc(d, { push });
       setMobileSidebar(false);
       if (focus) editor.focus();
     } catch (err) {
+      if (destroyed || seq !== navSeq) return;
       if (err.status === 404) {
         toast('That document no longer exists.', { type: 'error' });
         docs = docs.filter((x) => x.id !== id);
-        if (doc?.id === id) closeDoc();
         renderSidebar();
       } else {
         toast(err.message, { type: 'error' });
       }
+      syncHash();
     }
   }
 
   function closeDoc() {
-    doc = null;
-    dirty = false;
-    document.title = pageTitle();
-    history.replaceState(null, '', trashOpen ? '#/trash' : '#/');
+    dropDoc();
+    document.title = pageTitle(trashOpen ? 'Trash' : undefined);
+    navigate(trashOpen ? '#/trash' : '#/');
     showDocUI(false);
     sidePanel.hidden = true;
     renderSidebar();
   }
 
   async function newDoc(folderId, init = {}) {
+    const seq = ++navSeq;
+    if (!(await leaveDoc()) || seq !== navSeq) return null;
     try {
-      await flush();
       const { document: d } = await api.createDoc({ title: 'Untitled', content: '', folder_id: folderId, ...init });
+      if (destroyed) return null;
       docs.unshift(d);
+      if (seq !== navSeq) {
+        renderSidebar();
+        return d;
+      }
       if (folderId) {
         const c = { ...getPrefs().collapsed };
         delete c[folderId];
         setPref('collapsed', c);
       }
-      trashOpen = false;
-      setDoc(d, { skipDraft: true });
+      setDoc(d, { skipDraft: true, push: true });
       setMobileSidebar(false);
       if (!init.content) {
         titleInput.focus();
@@ -544,27 +797,39 @@ function createApp() {
       }
       return d;
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
+      return null;
     }
   }
 
+  // Front matter aside, the text of the first heading when the document starts with an H1.
+  function leadingH1(text) {
+    const top = text.split('\n', 60);
+    const first = extractHeadings(top.join('\n'))[0];
+    if (!first || first.level !== 1 || first.text === '(untitled)') return null;
+    if (stripFrontMatter(top.slice(0, first.line - 1).join('\n')).trim()) return null;
+    return first.text.trim().slice(0, 200) || null;
+  }
+
   function maybeAutoTitle(text) {
-    // While a document is still "Untitled", use its first H1 as the title.
+    // While a document is "Untitled", its title follows its first H1 (and goes back when the H1 is removed).
     if (doc.title !== 'Untitled' && doc.title !== autoTitle) return;
-    const m = /^#\s+(.+?)\s*#*\s*$/m.exec(text.split('\n', 20).join('\n'));
-    const next = m ? m[1].replace(/[*_`~]/g, '').slice(0, 200) : null;
-    if (next && next !== doc.title) {
-      doc.title = next;
+    const next = leadingH1(text);
+    if (next) {
       autoTitle = next;
-      titleInput.value = next;
+      if (doc.title !== next) doc.title = titleInput.value = next;
+    } else if (autoTitle) {
+      autoTitle = null;
+      doc.title = titleInput.value = 'Untitled';
     }
   }
 
   async function renameDoc(d) {
     const title = await promptDialog('Rename document', { value: d.title, ok: 'Rename' });
-    if (!title) return;
+    if (!title || destroyed) return;
     if (doc?.id === d.id) {
       doc.title = titleInput.value = title;
+      autoTitle = null;
       markDirty();
       await flush();
       return;
@@ -582,15 +847,14 @@ function createApp() {
     try {
       if (doc?.id === id) await flush();
       const { document: saved } = await api.saveDoc(id, { folder_id: folderId });
+      if (destroyed) return;
       const meta = docs.find((d) => d.id === id);
       if (meta) Object.assign(meta, { folder_id: saved.folder_id, version: saved.version });
-      if (doc?.id === id) {
-        doc.folder_id = saved.folder_id;
-        doc.version = saved.version;
-      }
+      // Only the folder: taking the server's version here would hide a conflicting edit.
+      if (doc?.id === id) doc.folder_id = saved.folder_id;
       renderSidebar();
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
     }
   }
 
@@ -635,33 +899,53 @@ function createApp() {
 
   async function duplicateDoc(d) {
     try {
-      if (doc?.id === d.id) await flush();
-      const { document: full } = await api.getDoc(d.id);
-      await newDoc(full.folder_id, { title: `${full.title} (copy)`, content: full.content });
+      // The open document is copied as shown, including changes not saved yet.
+      const src = doc?.id === d.id ? { ...doc } : (await api.getDoc(d.id)).document;
+      await newDoc(src.folder_id, { title: `${cleanTitle(src.title)} (copy)`, content: src.content });
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
     }
   }
 
   async function trashDoc(d) {
     try {
-      if (doc?.id === d.id) await flush();
+      if (doc?.id === d.id) {
+        await flush();
+        if (issueDialogOpen) return; // the save hit a conflict: resolve it first
+      }
       await api.trashDoc(d.id);
+      if (destroyed) return;
+      const wasOpen = doc?.id === d.id;
       docs = docs.filter((x) => x.id !== d.id);
-      clearDraft(d.id);
-      if (doc?.id === d.id) closeDoc();
+      // Text that could not be saved stays in this browser, in case the document is restored.
+      if (!(wasOpen && dirty)) clearDraft(d.id);
+      if (wasOpen) closeDoc();
       renderSidebar();
       sidebar.refreshSearch();
-      toast(`Moved “${d.title}” to the trash.`);
+      toast(`Moved “${d.title}” to the trash.`, { timeout: 6000, action: { label: 'Undo', onClick: () => undoTrash(d.id, wasOpen) } });
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
+    }
+  }
+
+  async function undoTrash(id, reopen) {
+    try {
+      const { document: restored } = await api.restoreDoc(id);
+      if (destroyed) return;
+      if (!docs.some((x) => x.id === id)) docs.unshift(restored);
+      renderSidebar();
+      sidebar.refreshSearch();
+      if (trashOpen) loadTrash();
+      else if (reopen && !doc) openDoc(id);
+    } catch (err) {
+      if (!destroyed) toast(err.message, { type: 'error' });
     }
   }
 
   // ---- Folders ----
   async function newFolder(parentId) {
     const name = await promptDialog(parentId ? 'New subfolder' : 'New folder', { placeholder: 'Folder name', ok: 'Create' });
-    if (!name) return;
+    if (!name || destroyed) return;
     try {
       const { folder } = await api.createFolder(name, parentId);
       folders.push(folder);
@@ -678,7 +962,7 @@ function createApp() {
 
   async function renameFolder(f) {
     const name = await promptDialog('Rename folder', { value: f.name, ok: 'Rename' });
-    if (!name) return;
+    if (!name || destroyed) return;
     try {
       const { folder } = await api.updateFolder(f.id, { name });
       Object.assign(f, folder);
@@ -690,7 +974,7 @@ function createApp() {
 
   async function moveFolderPrompt(f) {
     const res = await pickFolder(`Move “${f.name}”`, f.parent_id ?? null, (x) => x.id === f.id || isInside(x.id, f.id));
-    if (!res) return;
+    if (!res || destroyed) return;
     try {
       const { folder } = await api.updateFolder(f.id, { parent_id: res.id });
       Object.assign(f, folder);
@@ -704,42 +988,52 @@ function createApp() {
     const ok = await confirmDialog('Delete folder?',
       `“${f.name}” and its subfolders will be deleted. Documents inside are kept and moved to the top level.`,
       { ok: 'Delete folder', danger: true });
-    if (!ok) return;
+    if (!ok || destroyed) return;
     try {
       await api.deleteFolder(f.id);
       await refreshLists();
       if (doc && !folders.some((x) => x.id === doc.folder_id)) doc.folder_id = null;
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
     }
   }
 
   // ---- Trash ----
-  async function showTrash() {
-    await flush();
+  async function showTrash({ push = false } = {}) {
+    const seq = ++navSeq;
+    if (!(await leaveDoc())) return seq === navSeq && syncHash();
+    if (seq !== navSeq) return;
+    dropDoc();
     trashOpen = true;
-    doc = null;
-    dirty = false;
     document.title = pageTitle('Trash');
-    history.replaceState(null, '', '#/trash');
+    navigate('#/trash', push);
     showDocUI(false);
     sidePanel.hidden = true;
     renderSidebar();
     setMobileSidebar(false);
     trashView.replaceChildren(h('p', { class: 'muted' }, 'Loading…'));
+    await loadTrash();
+  }
+
+  async function loadTrash() {
+    const seq = navSeq;
     try {
       const { documents } = await api.listTrash();
-      renderTrash(documents);
+      if (seq === navSeq && trashOpen && !destroyed) renderTrash(documents);
     } catch (err) {
-      trashView.replaceChildren(h('p', {}, err.message));
+      if (seq === navSeq && trashOpen && !destroyed) trashView.replaceChildren(h('p', {}, err.message));
     }
   }
 
   function closeTrash() {
-    trashOpen = false;
     const last = getPrefs().lastDoc;
-    if (last && docs.some((d) => d.id === last)) openDoc(last);
-    else closeDoc();
+    if (last && docs.some((d) => d.id === last)) {
+      openDoc(last, { push: true });
+    } else {
+      ++navSeq;
+      trashOpen = false;
+      closeDoc();
+    }
   }
 
   function renderTrash(items) {
@@ -751,10 +1045,11 @@ function createApp() {
         onClick: async () => {
           try {
             const { document: restored } = await api.restoreDoc(d.id);
-            docs.unshift(restored);
+            if (destroyed) return;
+            if (!docs.some((x) => x.id === d.id)) docs.unshift(restored);
             renderTrash(items.filter((x) => x.id !== d.id));
             renderSidebar();
-            toast(`Restored “${d.title}”.`);
+            toast(`Restored “${d.title}”.`, { action: { label: 'Open', onClick: () => openDoc(d.id, { push: true }) } });
           } catch (err) {
             toast(err.message, { type: 'error' });
           }
@@ -764,11 +1059,13 @@ function createApp() {
       h('button', {
         class: 'btn',
         title: 'Delete forever',
+        'aria-label': `Delete “${d.title}” forever`,
         onClick: async () => {
           if (!(await confirmDialog('Delete forever?', `“${d.title}” and its history will be permanently deleted.`, { ok: 'Delete forever', danger: true }))) return;
           try {
             await api.deleteDoc(d.id);
-            renderTrash(items.filter((x) => x.id !== d.id));
+            clearDraft(d.id);
+            if (!destroyed) renderTrash(items.filter((x) => x.id !== d.id));
           } catch (err) {
             toast(err.message, { type: 'error' });
           }
@@ -784,13 +1081,14 @@ function createApp() {
             if (!(await confirmDialog('Empty trash?', `${items.length} document(s) will be permanently deleted.`, { ok: 'Empty trash', danger: true }))) return;
             try {
               await api.emptyTrash();
-              renderTrash([]);
+              for (const x of items) clearDraft(x.id);
+              if (!destroyed) renderTrash([]);
             } catch (err) {
               toast(err.message, { type: 'error' });
             }
           },
         }, 'Empty trash')),
-      items.length ? list : h('p', { class: 'muted', style: 'margin-top:24px' }, 'The trash is empty.'),
+      ...(items.length ? list : [h('p', { class: 'muted', style: 'margin-top:24px' }, 'The trash is empty.')]),
     );
   }
 
@@ -801,17 +1099,19 @@ function createApp() {
     for (const f of files) {
       try {
         const { document: d } = await api.createDoc({ title: f.title, content: f.content, folder_id: doc?.folder_id ?? null });
+        if (destroyed) return;
         docs.unshift(d);
         last = d;
       } catch (err) {
+        if (destroyed) return;
         toast(`${f.title}: ${err.message}`, { type: 'error' });
       }
     }
+    renderSidebar();
     if (last) {
       toast(files.length === 1 ? `Imported “${last.title}”.` : `Imported ${files.length} documents.`);
-      await openDoc(last.id);
+      await openDoc(last.id, { push: true });
     }
-    renderSidebar();
   }
 
   async function importFiles() {
@@ -844,19 +1144,63 @@ function createApp() {
     importDocs(await readMarkdownFiles([...e.dataTransfer.files]));
   });
 
+  async function downloadHtml() {
+    const { title, content } = doc;
+    try {
+      exportHtml(cleanTitle(title), await preview.renderStandalone(content));
+    } catch (err) {
+      toast(err.message, { type: 'error' });
+    }
+  }
+
+  // Print in the light theme, with diagrams re-rendered for it first.
+  async function printDoc() {
+    if (!doc || printing) return;
+    printing = true;
+    document.documentElement.dataset.theme = 'light';
+    preview.update(doc.content);
+    preview.setVisible(true);
+    try {
+      await preview.setThemeOverride('light');
+    } catch {
+      // Print what is there.
+    }
+    if (destroyed) return;
+    window.print();
+  }
+
+  function endPrint() {
+    if (!printing) return;
+    printing = false;
+    applyTheme();
+    preview.setThemeOverride(null)?.catch(() => {});
+    preview.setVisible(shownView() !== 'edit');
+  }
+
+  function openAccount() {
+    showAccount({
+      user,
+      beforeExport: () => flush(),
+      onDeleted: () => {
+        dirty = false;
+        clearAllDrafts();
+        setPref('lastDoc', null);
+        setPref('hasAccount', false);
+        toAuthScreen('Your account and all its documents were deleted.');
+      },
+    });
+  }
+
   function moreMenuItems() {
     const p = getPrefs();
     const items = [];
     if (doc) {
       items.push(
-        { label: 'Save version now', icon: 'history', onClick: () => save({ snapshot: true, announce: true }) },
+        { label: 'Save version now', icon: 'history', onClick: saveVersion },
         'separator',
-        { label: 'Download Markdown (.md)', icon: 'download', onClick: () => exportMarkdown(doc.title, doc.content) },
-        { label: 'Download HTML (.html)', icon: 'download', onClick: () => {
-          preview.update(doc.content);
-          exportHtml(doc.title, preview.html());
-        } },
-        { label: 'Print / Save as PDF', icon: 'printer', onClick: () => printDocument() },
+        { label: 'Download Markdown (.md)', icon: 'download', onClick: () => exportMarkdown(cleanTitle(doc.title), doc.content) },
+        { label: 'Download HTML (.html)', icon: 'download', onClick: downloadHtml },
+        { label: 'Print / Save as PDF', icon: 'printer', onClick: printDoc },
       );
     }
     items.push(
@@ -864,7 +1208,8 @@ function createApp() {
       'separator',
       { label: 'Line numbers', checked: p.lineNumbers, onClick: () => editor.setLineNumbers(setPref('lineNumbers', !p.lineNumbers).lineNumbers) },
       { label: 'Sync scrolling', checked: p.syncScroll, onClick: () => setPref('syncScroll', !p.syncScroll) },
-      { label: 'Keyboard shortcuts', icon: 'settings', onClick: showShortcuts },
+      { label: 'Keyboard shortcuts', onClick: showShortcuts },
+      { label: 'Account…', icon: 'settings', onClick: openAccount },
     );
     if (doc) {
       const current = doc;
@@ -881,6 +1226,7 @@ function createApp() {
       ['Heading 1–3', `${mod}+Alt+1…3`], ['Numbered / bulleted / task list', `${mod}+Shift+7 / 8 / 9`],
       ['Find / replace', `${mod}+F`], ['Undo / redo', `${mod}+Z / ${mod}+Shift+Z`], ['Indent / outdent', 'Tab / Shift+Tab'],
       ['Cycle view (editor, split, preview)', `${mod}+/`], ['Toggle sidebar', `${mod}+\\`], ['Search documents', `${mod}+Shift+F`],
+      ['Print / Save as PDF', `${mod}+P`],
     ];
     modal({
       title: 'Keyboard shortcuts',
@@ -889,18 +1235,24 @@ function createApp() {
   }
 
   // ---- Views, panels, sidebar ----
+  // The view actually shown: split is desktop-only.
+  const shownView = () => (mobileQuery.matches && getPrefs().view === 'split' ? 'edit' : getPrefs().view);
+
   function setView(view) {
     setPref('view', view);
     workspace.dataset.view = view;
-    const shown = mobileQuery.matches && view === 'split' ? 'edit' : view; // split is desktop-only
+    const shown = shownView();
     for (const [k, b] of Object.entries(viewButtons)) b.classList.toggle('active', k === shown);
-    if (view !== 'edit') preview.update(doc?.content ?? '');
-    if (view === 'split') requestAnimationFrame(() => syncFrom('editor'));
+    // A hidden preview is not rendered while typing; it catches up when shown.
+    if (doc) preview.update(doc.content);
+    if (!printing) preview.setVisible(shown !== 'edit');
+    if (shown === 'split') requestAnimationFrame(() => syncFrom('editor'));
   }
 
   function cycleView() {
+    if (!doc) return;
     const order = mobileQuery.matches ? ['edit', 'preview'] : ['edit', 'split', 'preview'];
-    const i = order.indexOf(getPrefs().view);
+    const i = order.indexOf(shownView());
     setView(order[(i + 1) % order.length]);
   }
 
@@ -958,13 +1310,13 @@ function createApp() {
   async function renderHistory() {
     panelTitle.textContent = 'Version history';
     const current = doc;
-    const saveBtn = h('button', { class: 'btn btn-block', style: 'margin-bottom:8px', onClick: () => save({ snapshot: true, announce: true }), html: `${icons.history}<span>Save version now</span>` });
+    const saveBtn = h('button', { class: 'btn btn-block', style: 'margin-bottom:8px', onClick: saveVersion, html: `${icons.history}<span>Save version now</span>` });
     if (!revisionsCache) {
       panelBody.replaceChildren(saveBtn, h('p', { class: 'muted', style: 'padding:8px' }, 'Loading…'));
       try {
         revisionsCache = (await api.listRevisions(current.id)).revisions;
       } catch (err) {
-        panelBody.replaceChildren(saveBtn, h('p', { style: 'padding:8px' }, err.message));
+        if (doc === current) panelBody.replaceChildren(saveBtn, h('p', { style: 'padding:8px' }, err.message));
         return;
       }
       if (doc !== current || getPrefs().panel !== 'history') return;
@@ -999,13 +1351,13 @@ function createApp() {
     });
     if (!restore || doc !== target) return;
     try {
-      await flush();
+      if (!(await leaveDoc()) || doc !== target) return;
       const { document: restored } = await api.restoreRevision(target.id, r.id);
-      clearDraft(target.id);
-      setDoc(restored, { skipDraft: true });
+      if (doc !== target) return;
+      setDoc(restored, { skipDraft: true }); // changes that could not be saved stay in the draft
       toast('Version restored. The previous text is kept in the history.');
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
     }
   }
 
@@ -1017,7 +1369,7 @@ function createApp() {
 
   function onThemeChange() {
     themeBtn.innerHTML = icons[{ auto: 'auto', light: 'sun', dark: 'moon' }[getPrefs().theme]];
-    preview.rerender();
+    if (!printing) preview.rerender();
   }
 
   // ---- Preview, stats and scroll sync ----
@@ -1032,15 +1384,21 @@ function createApp() {
     if (!doc) return;
     const s = documentStats(doc.content);
     statWords.textContent = `${s.words.toLocaleString()} words · ${s.chars.toLocaleString()} characters · ${s.minutes} min read`;
-    statUpdated.textContent = doc.updated_at ? `Saved ${timeAgo(doc.updated_at)}` : '';
-    document.title = pageTitle(doc.title || 'Untitled');
+    updateSavedLabel();
+    document.title = pageTitle(cleanTitle(doc.title));
   }
+
+  function updateSavedLabel() {
+    statUpdated.textContent = doc?.updated_at ? `Saved ${timeAgo(doc.updated_at)}` : '';
+  }
+  const clock = setInterval(updateSavedLabel, 30000); // keeps "Saved 5 min ago" current
+  cleanups.push(() => clearInterval(clock));
 
   let scrollSource = null;
   let scrollTimer = null;
   let scrollFrame = null;
   function syncFrom(source) {
-    if (!getPrefs().syncScroll || getPrefs().view !== 'split' || mobileQuery.matches) return;
+    if (!getPrefs().syncScroll || shownView() !== 'split') return;
     if (scrollSource && scrollSource !== source) return;
     scrollSource = source;
     clearTimeout(scrollTimer);
@@ -1054,19 +1412,23 @@ function createApp() {
 
   // ---- Global events ----
   listen(document, 'keydown', (e) => {
-    const mod = e.ctrlKey || e.metaKey;
-    if (!mod) return;
-    if (e.key === 's' || e.key === 'S') {
+    // Skip keys the editor already handled, and AltGr (Ctrl+Alt on Windows), which types characters like \.
+    if (e.defaultPrevented || e.altKey || !(e.ctrlKey || e.metaKey)) return;
+    const key = e.key.toLowerCase();
+    if (key === 's') {
       e.preventDefault();
-      if (doc) save({ snapshot: true, announce: true });
+      saveVersion();
+    } else if (key === 'p' && !e.shiftKey && doc) {
+      e.preventDefault();
+      printDoc();
     } else if (e.key === '/') {
       e.preventDefault();
-      if (doc) cycleView();
+      cycleView();
     } else if (e.key === '\\') {
       e.preventDefault();
       if (mobileQuery.matches) setMobileSidebar(!appEl.classList.contains('mobile-sidebar-open'));
       else setSidebar(!getPrefs().sidebar);
-    } else if (e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+    } else if (e.shiftKey && key === 'f') {
       e.preventDefault();
       if (!getPrefs().sidebar && !mobileQuery.matches) setSidebar(true);
       setMobileSidebar(true);
@@ -1074,54 +1436,111 @@ function createApp() {
     }
   });
 
+  // Only asks; the last save is sent on pagehide, which fires only when the page really goes.
   listen(window, 'beforeunload', (e) => {
+    writeDraft();
     if (dirty && doc) {
-      // The draft is already in localStorage; also try a last save.
-      api.saveDoc(doc.id, { title: doc.title, content: doc.content, version: doc.version }, { keepalive: true }).catch(() => {});
       e.preventDefault();
       e.returnValue = '';
     }
   });
-  listen(document, 'visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flush();
+  listen(window, 'pagehide', () => {
+    writeDraft();
+    if (!dirty || !doc || issue || destroyed) return;
+    const target = doc;
+    const body = { content: target.content, version: target.version };
+    const title = cleanTitle(target.title);
+    if (title !== target.baseTitle) body.title = title;
+    if (new TextEncoder().encode(JSON.stringify(body)).length > KEEPALIVE_LIMIT) return; // the draft has it
+    maybeSaved = { id: target.id, content: target.content };
+    api.saveDoc(target.id, body, { keepalive: true }).then(({ document: saved }) => {
+      // Still here (restored from the back/forward cache): take the new version.
+      if (doc !== target || target.version !== body.version) return;
+      Object.assign(target, { version: saved.version, updated_at: saved.updated_at, baseTitle: saved.title });
+      maybeSaved = null;
+      if (target.content === body.content && cleanTitle(target.title) === saved.title) {
+        dirty = false;
+        clearDraft(target.id);
+        setStatus('saved');
+      }
+    }, () => {});
   });
+  listen(document, 'visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      writeDraft();
+      flush();
+    } else {
+      refreshOnReturn();
+    }
+  });
+  listen(window, 'focus', () => refreshOnReturn());
   listen(window, 'online', () => {
-    if (dirty) save();
+    if (!dirty || issue) return;
+    retryCount = 0;
+    save();
   });
   listen(window, 'hashchange', () => route());
 
-  // Always print in the light theme.
+  // Printing from the browser menu: at least use the light theme and the current text.
   listen(window, 'beforeprint', () => {
-    if (doc) preview.update(doc.content);
+    if (printing) return;
+    printing = true;
     document.documentElement.dataset.theme = 'light';
+    if (doc) {
+      preview.update(doc.content);
+      preview.setVisible(true);
+    }
   });
-  listen(window, 'afterprint', () => applyTheme());
+  listen(window, 'afterprint', () => endPrint());
 
   function route() {
     const m = /^#\/doc\/([\w-]+)/.exec(location.hash);
     if (m) return openDoc(m[1]);
     if (location.hash === '#/trash') return showTrash();
+    syncHash(); // e.g. Back to "#/": the open document stays open
     return null;
   }
 
   async function logout() {
-    await flush().catch(() => {});
+    await flush();
+    if (destroyed || issueDialogOpen) return;
+    // Drafts (of any document) hold text that never reached the server either.
+    const drafts = draftIds();
+    if (dirty || drafts.length) {
+      const onlyThis = dirty && drafts.every((id) => id === doc.id);
+      const what = onlyThis ? `Your latest changes to “${cleanTitle(doc.title)}” were` : 'Some changes were';
+      const ok = await confirmDialog('Sign out and lose unsaved changes?',
+        `${what} never saved to the server. Signing out removes them from this browser.`,
+        { ok: 'Sign out anyway', danger: true });
+      if (!ok || destroyed) return;
+    }
     try {
       await api.logout();
-    } catch {
-      /* ignore */
+    } catch (err) {
+      // 401: the session had already ended, so we are signed out anyway.
+      if (err.status !== 401) {
+        toast(err.status === 0 ? 'Couldn’t sign out: you’re offline. Try again when you’re connected.' : err.message, { type: 'error' });
+        return;
+      }
     }
-    user = null;
-    destroy();
-    shell = null;
-    history.replaceState(null, '', '#/');
-    showAuth('login');
+    if (destroyed) return;
+    // Nothing of this account stays readable in this browser.
+    dirty = false;
+    clearAllDrafts();
+    setPref('lastDoc', null);
+    toAuthScreen();
   }
 
   function destroy() {
+    if (destroyed) return;
+    if (dirty) writeDraft(); // e.g. the session expired: restored after signing in again
+    destroyed = true;
+    doc = null;
+    dirty = false;
     scheduleSave.cancel();
     schedulePreview.cancel();
-    clearTimeout(offlineTimer);
+    clearTimeout(retryTimer);
+    clearTimeout(draftTimer);
     for (const fn of cleanups) fn();
     editor.view.destroy();
   }
@@ -1138,9 +1557,11 @@ function createApp() {
     try {
       await refreshLists();
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      if (!destroyed) toast(err.message, { type: 'error' });
       return;
     }
+    if (destroyed) return;
+    pruneDrafts();
     if (route()) return;
     const last = getPrefs().lastDoc;
     const pick = docs.find((d) => d.id === last) ?? docs[0];

@@ -2,7 +2,7 @@
 import markdownCss from './markdown.css?raw';
 import { APP_NAME } from './brand.js';
 import { downloadFile, escapeHtml, h } from './ui.js';
-import katexPkg from 'katex/package.json';
+import { frontMatterTitle } from './render/front-matter.js';
 
 export function safeFileName(title) {
   return (title || 'Untitled').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 100) || 'Untitled';
@@ -12,19 +12,25 @@ export function exportMarkdown(title, content) {
   downloadFile(`${safeFileName(title)}.md`, content, 'text/markdown;charset=utf-8');
 }
 
+/**
+ * A self-contained page: no external CSS, fonts or scripts. Expects the body from
+ * preview.renderStandalone() (math as MathML, light-theme diagrams), so it is always light.
+ */
 export function buildStandaloneHtml(title, bodyHtml) {
   return `<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="${APP_NAME}">
 <title>${escapeHtml(title || 'Untitled')}</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@${katexPkg.version}/dist/katex.min.css">
 <style>
-:root { color-scheme: light dark; }
+:root { color-scheme: light; }
 body { margin: 0; background: var(--bg); color: var(--text); }
 ${markdownCss}
+.markdown-body .katex-html { display: none; } /* HTML math needs KaTeX's CSS; show the MathML copy */
+.markdown-body .katex-display { display: block; text-align: center; }
+.markdown-body math { font-size: 1.1em; }
 </style>
 </head>
 <body>
@@ -55,7 +61,8 @@ export async function readMarkdownFiles(files) {
   const out = [];
   for (const file of files) {
     if (!isMarkdownFile(file) || file.size > 5 * 1024 * 1024) continue;
-    out.push({ title: file.name.replace(MD_EXT, '') || 'Imported', content: await file.text() });
+    const content = await file.text();
+    out.push({ title: frontMatterTitle(content) || file.name.replace(MD_EXT, '') || 'Imported', content });
   }
   return out;
 }

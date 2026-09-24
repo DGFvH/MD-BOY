@@ -12,8 +12,12 @@ function safe(fn, fallback) {
   }
 }
 
+/** Stores a draft; false when it could not be stored (storage full or unavailable). */
 export function saveDraft(docId, draft) {
-  safe(() => localStorage.setItem(DRAFT_PREFIX + docId, JSON.stringify({ ...draft, savedAt: Date.now() })));
+  return safe(() => {
+    localStorage.setItem(DRAFT_PREFIX + docId, JSON.stringify({ ...draft, savedAt: Date.now() }));
+    return true;
+  }, false);
 }
 
 export function loadDraft(docId) {
@@ -22,6 +26,22 @@ export function loadDraft(docId) {
 
 export function clearDraft(docId) {
   safe(() => localStorage.removeItem(DRAFT_PREFIX + docId));
+}
+
+/** Ids of every document that has a draft in this browser. */
+export function draftIds() {
+  return safe(() => {
+    const ids = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(DRAFT_PREFIX)) ids.push(key.slice(DRAFT_PREFIX.length));
+    }
+    return ids;
+  }, []);
+}
+
+export function clearAllDrafts() {
+  for (const id of draftIds()) clearDraft(id);
 }
 
 const DEFAULT_PREFS = {
@@ -33,9 +53,12 @@ const DEFAULT_PREFS = {
   syncScroll: true,
   collapsed: {}, // folderId -> true
   lastDoc: null,
+  hasAccount: false, // someone has signed in from this browser before
 };
 
-let prefs = { ...DEFAULT_PREFS, ...safe(() => JSON.parse(localStorage.getItem(PREF_KEY)), {}) };
+const stored = safe(() => JSON.parse(localStorage.getItem(PREF_KEY)), null) || {};
+// Settings saved before hasAccount existed mean someone used the app in this browser.
+let prefs = { ...DEFAULT_PREFS, hasAccount: Object.keys(stored).length > 0, ...stored };
 
 export function getPrefs() {
   return prefs;
