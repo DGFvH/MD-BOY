@@ -1,8 +1,8 @@
 // Local, per-browser persistence: unsaved drafts and UI preferences.
 // Every access is guarded because storage can be unavailable (private mode, quotas).
 
-const DRAFT_PREFIX = 'mdboy:draft:';
-const PREF_KEY = 'mdboy:prefs';
+const DRAFT_PREFIX = 'hashmark:draft:';
+const PREF_KEY = 'hashmark:prefs';
 
 function safe(fn, fallback) {
   try {

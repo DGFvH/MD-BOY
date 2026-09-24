@@ -12,6 +12,7 @@ import {
   h, icons, iconButton, toast, modal, promptDialog, confirmDialog, choiceDialog, showMenu, debounce, timeAgo,
 } from './ui.js';
 import { WELCOME_TITLE, WELCOME_CONTENT } from './welcome.js';
+import { APP_NAME, APP_TAGLINE, pageTitle } from './brand.js';
 
 const root = document.getElementById('app');
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -106,9 +107,9 @@ function showAuth(mode = 'login', notice = '') {
   root.replaceChildren(
     h('div', { class: 'auth' },
       h('div', { class: 'auth-card' },
-        h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), 'MD-BOY'),
+        h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), APP_NAME),
         h('h1', {}, isLogin ? 'Welcome back' : 'Create your account'),
-        h('p', { class: 'muted' }, isLogin ? 'Sign in to open your documents.' : 'Free, simple, and your documents are saved in the cloud.'),
+        h('p', { class: 'muted' }, isLogin ? 'Sign in to open your documents.' : `${APP_TAGLINE} Free, and your documents are saved in the cloud.`),
         form,
         h('div', { class: 'auth-switch' },
           isLogin ? 'New here? ' : 'Already have an account? ',
@@ -456,7 +457,7 @@ function createApp() {
     setStatus('saved');
     setPref('lastDoc', doc.id);
     if (location.hash !== `#/doc/${doc.id}`) history.replaceState(null, '', `#/doc/${doc.id}`);
-    document.title = `${doc.title} · MD-BOY`;
+    document.title = pageTitle(doc.title);
     renderSidebar();
     if (restoredDraft) {
       dirty = true;
@@ -517,7 +518,7 @@ function createApp() {
   function closeDoc() {
     doc = null;
     dirty = false;
-    document.title = 'MD-BOY';
+    document.title = pageTitle();
     history.replaceState(null, '', trashOpen ? '#/trash' : '#/');
     showDocUI(false);
     sidePanel.hidden = true;
@@ -719,7 +720,7 @@ function createApp() {
     trashOpen = true;
     doc = null;
     dirty = false;
-    document.title = 'Trash · MD-BOY';
+    document.title = pageTitle('Trash');
     history.replaceState(null, '', '#/trash');
     showDocUI(false);
     sidePanel.hidden = true;
@@ -1032,7 +1033,7 @@ function createApp() {
     const s = documentStats(doc.content);
     statWords.textContent = `${s.words.toLocaleString()} words · ${s.chars.toLocaleString()} characters · ${s.minutes} min read`;
     statUpdated.textContent = doc.updated_at ? `Saved ${timeAgo(doc.updated_at)}` : '';
-    document.title = `${doc.title || 'Untitled'} · MD-BOY`;
+    document.title = pageTitle(doc.title || 'Untitled');
   }
 
   let scrollSource = null;

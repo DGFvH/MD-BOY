@@ -1,5 +1,6 @@
 // Sidebar: folder tree, document list, search and footer.
 import { api } from './api.js';
+import { APP_NAME } from './brand.js';
 import { h, icons, iconButton, showMenu, debounce, escapeHtml, toast } from './ui.js';
 import { getPrefs, setPref } from './storage.js';
 
@@ -43,7 +44,7 @@ export function createSidebar(root, actions) {
 
   root.append(
     h('div', { class: 'sidebar-head' },
-      h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), 'MD-BOY'),
+      h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), APP_NAME),
       iconButton('upload', 'Import Markdown files', () => actions.onImport()),
       iconButton('menu', 'Hide sidebar', () => actions.onToggleSidebar())),
     h('div', { class: 'sidebar-search' }, h('span', { class: 'search-icon', html: icons.search }), searchInput),
@@ -60,14 +61,14 @@ export function createSidebar(root, actions) {
   // ---- Drag & drop documents onto folders ----
   function makeDropTarget(row, folderId) {
     row.addEventListener('dragover', (e) => {
-      if (!e.dataTransfer.types.includes('application/x-mdboy-doc')) return;
+      if (!e.dataTransfer.types.includes('application/x-hashmark-doc')) return;
       e.preventDefault();
       row.classList.add('drop-target');
     });
     row.addEventListener('dragleave', () => row.classList.remove('drop-target'));
     row.addEventListener('drop', (e) => {
       row.classList.remove('drop-target');
-      const id = e.dataTransfer.getData('application/x-mdboy-doc');
+      const id = e.dataTransfer.getData('application/x-hashmark-doc');
       if (id) {
         e.preventDefault();
         actions.onMoveDoc(id, folderId);
@@ -89,7 +90,7 @@ export function createSidebar(root, actions) {
         if (e.key === 'Enter') actions.onOpenDoc(doc.id);
       },
       onDragstart: (e) => {
-        e.dataTransfer.setData('application/x-mdboy-doc', doc.id);
+        e.dataTransfer.setData('application/x-hashmark-doc', doc.id);
         e.dataTransfer.effectAllowed = 'move';
       },
     },

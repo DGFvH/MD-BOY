@@ -1,4 +1,4 @@
-// Small fetch wrapper for the MD-BOY JSON API.
+// Small fetch wrapper for the Hashmark JSON API.
 
 export class ApiError extends Error {
   constructor(status, message, body) {

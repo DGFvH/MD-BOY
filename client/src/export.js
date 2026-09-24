@@ -1,5 +1,6 @@
 // Import and export: Markdown files, standalone HTML and print-to-PDF.
 import markdownCss from './markdown.css?raw';
+import { APP_NAME } from './brand.js';
 import { downloadFile, escapeHtml, h } from './ui.js';
 import katexPkg from 'katex/package.json';
 
@@ -17,7 +18,7 @@ export function buildStandaloneHtml(title, bodyHtml) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="MD-BOY">
+<meta name="generator" content="${APP_NAME}">
 <title>${escapeHtml(title || 'Untitled')}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@${katexPkg.version}/dist/katex.min.css">
 <style>

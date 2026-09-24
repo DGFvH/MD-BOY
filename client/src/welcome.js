@@ -1,8 +1,10 @@
-export const WELCOME_TITLE = 'Welcome to MD-BOY';
+import { APP_NAME } from './brand.js';
 
-export const WELCOME_CONTENT = `# Welcome to MD-BOY
+export const WELCOME_TITLE = `Welcome to ${APP_NAME}`;
 
-MD-BOY is a simple Markdown editor that lives in your browser. Everything you write is **saved automatically** to your account.
+export const WELCOME_CONTENT = `# ${WELCOME_TITLE}
+
+${APP_NAME} is a simple Markdown editor that lives in your browser. Everything you write is **saved automatically** to your account.
 
 ## The basics
 

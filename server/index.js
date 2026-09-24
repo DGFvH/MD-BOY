@@ -96,7 +96,7 @@ export function createApp({ db, cookieSecure = false, staticDir = join(ROOT, 'di
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT) || 3000;
   const dataDir = process.env.DATA_DIR || join(ROOT, 'data');
-  const db = openDatabase(join(dataDir, 'md-boy.db'));
+  const db = openDatabase(join(dataDir, 'hashmark.db'));
   const app = createApp({ db, cookieSecure: process.env.COOKIE_SECURE === '1' });
-  app.listen(port, () => console.log(`MD-BOY running at http://localhost:${port}`));
+  app.listen(port, () => console.log(`Hashmark running at http://localhost:${port}`));
 }

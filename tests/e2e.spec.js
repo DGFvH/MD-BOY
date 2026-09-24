@@ -12,7 +12,7 @@ test('register, write Markdown, see preview, and persist', async ({ page }) => {
 
   // The welcome document opens with a rendered preview.
   const preview = page.locator('.pane-preview .markdown-body');
-  await expect(preview.locator('h1')).toHaveText('Welcome to MD-BOY');
+  await expect(preview.locator('h1')).toHaveText('Welcome to Hashmark');
   await expect(preview.locator('table')).toBeVisible();
   await expect(preview.locator('.katex').first()).toBeVisible();
   await expect(preview.locator('.mermaid-block.rendered svg')).toBeVisible({ timeout: 15_000 });

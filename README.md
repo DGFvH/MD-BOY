@@ -1,6 +1,8 @@
-# MD-BOY
+# Hashmark
 
-A simple, capable **online Markdown editor**. Write in the browser, see a live preview, and have everything saved to your account on the server.
+**Write Markdown. See it live. Keep it safe.**
+
+Hashmark is a simple, capable **online Markdown editor**. Write in the browser, see a live preview, and have everything saved to your account on the server.
 
 ## Features
 
@@ -47,8 +49,8 @@ npm run dev         # open http://localhost:5173
 ### Docker
 
 ```bash
-docker build -t md-boy .
-docker run -p 3000:3000 -v md-boy-data:/data md-boy
+docker build -t hashmark .
+docker run -p 3000:3000 -v hashmark-data:/data hashmark
 ```
 
 ## Configuration
@@ -56,11 +58,11 @@ docker run -p 3000:3000 -v md-boy-data:/data md-boy
 | Variable        | Default  | Description |
 | --------------- | -------- | ----------- |
 | `PORT`          | `3000`   | HTTP port |
-| `DATA_DIR`      | `./data` | Folder for the SQLite database (`md-boy.db`) |
+| `DATA_DIR`      | `./data` | Folder for the SQLite database (`hashmark.db`) |
 | `COOKIE_SECURE` | unset    | Set to `1` when served over HTTPS, so session cookies are marked `Secure` |
 | `TRUST_PROXY`   | unset    | Set to `1` behind a reverse proxy (nginx, Caddy, Fly.io, Render…) so rate limiting sees real client IPs |
 
-Back up your data by copying `DATA_DIR`. It is safest to do this while the server is stopped, or with `sqlite3 md-boy.db ".backup backup.db"`.
+Back up your data by copying `DATA_DIR`. It is safest to do this while the server is stopped, or with `sqlite3 hashmark.db ".backup backup.db"`.
 
 ## Tests
 
@@ -89,7 +91,7 @@ client/                 Vite frontend (vanilla JS, no framework)
   src/export.js         import and export
   src/storage.js        local drafts and preferences
 tests/                  API and end-to-end tests
-docs/LLM-INTEGRATION.md research: connecting MD-BOY to LLMs
+docs/LLM-INTEGRATION.md research: connecting Hashmark to LLMs
 ```
 
 ## API
@@ -122,4 +124,4 @@ All endpoints use JSON and need a session cookie, except register and login.
 
 ## Roadmap: talking to LLMs
 
-It is possible to connect MD-BOY to Claude, GPT, Gemini, Mistral, OpenRouter or local models (Ollama, LM Studio). You could chat about a document, rewrite a selection, or accept and reject suggested edits. See **[docs/LLM-INTEGRATION.md](docs/LLM-INTEGRATION.md)** for the research, the recommended architecture (users bring their own API keys, the server stores them encrypted and relays calls), and a phased plan.
+It is possible to connect Hashmark to Claude, GPT, Gemini, Mistral, OpenRouter or local models (Ollama, LM Studio). You could chat about a document, rewrite a selection, or accept and reject suggested edits. See **[docs/LLM-INTEGRATION.md](docs/LLM-INTEGRATION.md)** for the research, the recommended architecture (users bring their own API keys, the server stores them encrypted and relays calls), and a phased plan.
