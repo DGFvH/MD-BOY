@@ -27,6 +27,9 @@ function groupBy(items, keyOf) {
   return map;
 }
 
+// Row ⋯ buttons open a menu; showMenu keeps aria-expanded up to date.
+const MENU_BUTTON = { 'aria-haspopup': 'menu', 'aria-expanded': 'false' };
+
 function setLabel(button, label) {
   button.title = label;
   button.setAttribute('aria-label', label);
@@ -173,7 +176,7 @@ export function createSidebar(root, actions) {
         'separator',
         { label: 'Move to trash', icon: 'trash', danger: true, onClick: () => actions.onDeleteDoc(doc) },
       ]);
-    });
+    }, MENU_BUTTON);
     r.el = h('div', {
       class: 'tree-row',
       draggable: 'true',
@@ -232,7 +235,7 @@ export function createSidebar(root, actions) {
         'separator',
         { label: 'Delete folder', icon: 'trash', danger: true, onClick: () => actions.onDeleteFolder(folder) },
       ]);
-    });
+    }, MENU_BUTTON);
     r.el = h('div', { class: 'tree-row folder-row', dataset: { folderId: id }, onClick: () => toggleFolder(id) },
       r.toggle, r.add, r.more);
     makeDropTarget(r.el, id);
@@ -360,6 +363,7 @@ export function createSidebar(root, actions) {
     const email = state.user?.email ?? '';
     userLabel.textContent = email;
     userLabel.title = actions.onAccount ? `${email} – Account settings` : email;
+    if (actions.onAccount) userLabel.setAttribute('aria-label', email ? `Account settings (${email})` : 'Account settings');
     trashBtn.classList.toggle('active', !!state.trashOpen);
     trashBtn.setAttribute('aria-pressed', String(!!state.trashOpen));
 

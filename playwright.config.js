@@ -11,7 +11,7 @@ export default defineConfig({
     launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
   },
   webServer: {
-    command: `rm -rf .e2e-data && npm run build && DATA_DIR=.e2e-data PORT=${PORT} node --no-warnings server/index.js`,
+    command: `rm -rf .e2e-data && npm run build && DATA_DIR=.e2e-data PORT=${PORT} node --disable-warning=ExperimentalWarning server/index.js`,
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: false,
     timeout: 120_000,

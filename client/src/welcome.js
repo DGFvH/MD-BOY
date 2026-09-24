@@ -8,10 +8,10 @@ ${APP_NAME} is a simple Markdown editor that lives in your browser. Everything y
 
 ## The basics
 
-- Write on the left and see the result on the right.
-- Use the toolbar or shortcuts like **Ctrl/⌘ + B**, *Ctrl/⌘ + I* and \`Ctrl/⌘ + K\`.
-- Press **Ctrl/⌘ + S** to save a named point in the *version history*.
-- Organise documents in folders, and drag documents onto a folder to move them.
+- Write Markdown in the editor and see it formatted in the preview, side by side on a wide screen.
+- Use the toolbar, or keyboard shortcuts like **Ctrl/⌘ + B**, *Ctrl/⌘ + I* and \`Ctrl/⌘ + K\`.
+- Save a point in the *version history* with **Save version now** in the ⋯ menu, or press **Ctrl/⌘ + S** on a keyboard.
+- Organise documents in folders: drag a document onto a folder, or use its ⋯ menu to move it.
 
 ## Things you can write
 
@@ -19,7 +19,7 @@ ${APP_NAME} is a simple Markdown editor that lives in your browser. Everything y
 
 - [x] Create an account
 - [ ] Write your first document
-- [ ] Click a checkbox in the preview to tick it off
+- [ ] Tick off a task by tapping or clicking its checkbox in the preview
 
 ### Tables
 

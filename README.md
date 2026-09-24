@@ -12,27 +12,29 @@ Hashmark is a simple, capable **online Markdown editor**. Write in the browser, 
 - Toolbar and shortcuts for headings, bold, italic, strikethrough, lists, task lists, quotes, links, images, code, tables, math and horizontal rules
 - GitHub-flavoured Markdown: tables, task lists (tick them off in the preview), footnotes, autolinks
 - Syntax-highlighted code blocks, **KaTeX math** (`$…$`, `$$…$$`) and **Mermaid diagrams**
+- YAML front matter at the top of a document is shown as a small metadata block
 - Outline panel, word and character count, reading time, cursor position
 - Light and dark theme (follows your system, or pick one)
-- Responsive layout that works on phones
+- Responsive layout that works on phones, and full keyboard navigation
 
 **Storage (backend)**
-- Accounts with email and password
+- Accounts with email and password; change your password, download everything, or delete your account from the **Account** dialog
 - Documents and nested **folders**; drag a document onto a folder to move it
 - **Autosave** one second after you stop typing, plus a local draft in the browser so nothing is lost when you go offline or close a tab
-- **Conflict detection**: editing the same document in two tabs never silently overwrites; you choose what to keep
-- **Version history**: automatic snapshots every few minutes and on <kbd>Ctrl</kbd>+<kbd>S</kbd>; preview and restore any version
+- **Conflict detection**: editing the same document in two tabs never silently overwrites; the default choice keeps both versions
+- **Version history**: the text is kept before it is overwritten, at most every few minutes, plus a snapshot on <kbd>Ctrl</kbd>+<kbd>S</kbd>; preview and restore any version
 - **Full-text search** across all your documents (SQLite FTS5)
 - **Trash** with restore and permanent delete
 
 **Import and export**
 - Import `.md` files with the button or by dragging them onto the window
-- Download as `.md` or as standalone `.html`
+- Download as `.md`, or as a standalone `.html` file that works offline (math as MathML, diagrams inlined)
+- Download all documents as a `.zip` of Markdown files, in their folders
 - Print or save as PDF (a clean print stylesheet shows only the document)
 
 ## Quick start
 
-Requires **Node.js 22.5 or newer** (it uses the built-in `node:sqlite` module, so there are no native builds).
+Requires **Node.js 22.13 or newer** (it uses the built-in `node:sqlite` module, so there are no native builds).
 
 ```bash
 npm install
@@ -55,20 +57,43 @@ docker run -p 3000:3000 -v hashmark-data:/data hashmark
 
 ## Configuration
 
-| Variable        | Default  | Description |
-| --------------- | -------- | ----------- |
-| `PORT`          | `3000`   | HTTP port |
-| `DATA_DIR`      | `./data` | Folder for the SQLite database (`hashmark.db`) |
-| `COOKIE_SECURE` | unset    | Set to `1` when served over HTTPS, so session cookies are marked `Secure` |
-| `TRUST_PROXY`   | unset    | Set to `1` behind a reverse proxy (nginx, Caddy, Fly.io, Render…) so rate limiting sees real client IPs |
+| Variable             | Default     | Description |
+| -------------------- | ----------- | ----------- |
+| `PORT`               | `3000`      | HTTP port |
+| `HOST`               | all interfaces | Address to listen on, e.g. `127.0.0.1` so only a reverse proxy on the same machine can reach the app |
+| `DATA_DIR`           | `./data`    | Folder for the SQLite database (`hashmark.db`) |
+| `COOKIE_SECURE`      | unset       | Set to `1` when served over HTTPS, so session cookies are marked `Secure` (automatic behind an HTTPS proxy when `TRUST_PROXY` is set) |
+| `TRUST_PROXY`        | unset       | Set behind a reverse proxy (nginx, Caddy, Fly.io, Render…) so rate limiting sees real client IPs: a hop count (`1`), or the proxies' addresses or subnets (`loopback`, `172.17.0.0/16`, comma-separated). `true` trusts every hop and is only safe when the app can be reached solely through the proxy |
+| `ALLOW_REGISTRATION` | `1`         | Set to `0` to close sign-ups; existing accounts keep working |
+| `MAX_USER_BYTES`     | `104857600` | Storage limit per account for document content, trash included (100 MB); `0` means no limit |
+
+Behind nginx, pass the original host and scheme so the same-origin check and secure cookies work:
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:3000;
+  proxy_set_header Host $http_host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Then start Hashmark with `HOST=127.0.0.1 TRUST_PROXY=loopback`.
 
 Back up your data by copying `DATA_DIR`. It is safest to do this while the server is stopped, or with `sqlite3 hashmark.db ".backup backup.db"`.
+
+To reset a forgotten password, run this with the same `DATA_DIR` as the server (it is safe while the server runs). It prints a new random password and signs the account out everywhere:
+
+```bash
+node server/admin.js reset-password user@example.com
+docker exec <container> node server/admin.js reset-password user@example.com   # in Docker
+```
 
 ## Tests
 
 ```bash
 npm test            # API tests (node:test + supertest, in-memory database)
-npm run test:e2e    # browser test with Playwright: builds, starts a server, registers, writes, reloads
+npm run test:e2e    # browser tests with Playwright: builds, starts a server, and drives the app
 ```
 
 If Playwright can't find its bundled browser, point it at an installed Chromium with `CHROMIUM_PATH=/path/to/chrome npm run test:e2e`.
@@ -77,16 +102,22 @@ If Playwright can't find its bundled browser, point it at an installed Chromium 
 
 ```
 server/                 Express 5 API + static file server
-  index.js              app setup, security headers, CSRF origin check, error handling
+  index.js              app setup, security headers, same-origin check, error handling
   db.js                 SQLite connection and migrations
-  migrations/           SQL schema (users, sessions, folders, documents, revisions, FTS index)
-  auth.js               register / login / logout, scrypt password hashing, sessions
-  documents.js          documents, search, trash, revisions
+  migrations/           SQL schema (users, sessions, folders, documents, revisions, FTS index, usage)
+  auth.js               register / login / logout / password / account, scrypt hashing, sessions, rate limits
+  documents.js          documents, search, trash, revisions, storage limit
   folders.js            folders
+  export.js, zip.js     "download everything" as a zip (no dependencies)
+  static.js             static files: immutable caching, precompressed .br/.gz
+  admin.js              command-line password reset
 client/                 Vite frontend (vanilla JS, no framework)
+  src/brand.js          product name and tagline
   src/main.js           app shell, autosave, conflicts, panels, routing
+  src/app/              sign-in screen and Account dialog
   src/editor.js         CodeMirror setup and formatting commands
-  src/preview.js        markdown-it pipeline, sanitizing, Mermaid, scroll mapping
+  src/preview.js        markdown-it pipeline, sanitizing, scroll mapping
+  src/render/           block-level re-rendering, Mermaid, front matter
   src/sidebar.js        folder tree, search
   src/export.js         import and export
   src/storage.js        local drafts and preferences
@@ -96,16 +127,20 @@ docs/LLM-INTEGRATION.md research: connecting Hashmark to LLMs
 
 ## API
 
-All endpoints use JSON and need a session cookie, except register and login.
+All endpoints use JSON and need a session cookie, except `/api/config`, register and login.
 
 | Method | Path | Purpose |
 | ------ | ---- | ------- |
 | `POST` | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Account and session |
 | `GET`  | `/api/auth/me` | Current user |
+| `GET`  | `/api/config` | `{ registration }`: whether sign-ups are open |
+| `POST` | `/api/auth/password` | Change password `{ current_password, new_password }`; signs out other sessions |
+| `DELETE` | `/api/auth/account` | Delete the account and all its data `{ password }` |
+| `GET`  | `/api/export` | Download all documents as a zip |
 | `GET`  | `/api/docs` · `?q=search` · `?trash=1` | List, search, or list the trash |
 | `POST` | `/api/docs` | Create `{ title, content, folder_id }` |
 | `GET`  | `/api/docs/:id` | Fetch one document |
-| `PUT`  | `/api/docs/:id` | Save `{ title?, content?, folder_id?, version?, snapshot? }`; returns **409** if `version` is stale |
+| `PUT`  | `/api/docs/:id` | Save `{ title?, content?, folder_id?, version?, snapshot? }`; **409** if the content changed since `version`, **410** if the document is in the trash, **413** over the storage limit |
 | `DELETE` | `/api/docs/:id` · `?permanent=1` | Move to trash, or delete permanently |
 | `POST` | `/api/docs/:id/restore` | Restore from the trash |
 | `DELETE` | `/api/docs/trash` | Empty the trash |
@@ -117,11 +152,15 @@ All endpoints use JSON and need a session cookie, except register and login.
 ## Security notes
 
 - Passwords are hashed with scrypt, and session tokens are stored only as SHA-256 hashes.
-- Session cookies are `HttpOnly` and `SameSite=Lax`. Writes from other origins are rejected.
+- Session cookies are `HttpOnly` and `SameSite=Lax`, and sessions renew while in use. Writes from other origins are rejected (`Sec-Fetch-Site`, with an `Origin` check as fallback).
 - Rendered Markdown is sanitized with DOMPurify, and a strict Content-Security-Policy blocks inline scripts.
 - Every database query is scoped to the signed-in user.
-- Login and registration are rate-limited.
+- Login and registration are rate-limited per address, per email and per account.
 
-## Roadmap: talking to LLMs
+## Review and roadmap
+
+[docs/REVIEW.md](docs/REVIEW.md) walks through the app, lists what the multi-agent review fixed, and lists the next possible improvements.
+
+### Talking to LLMs
 
 It is possible to connect Hashmark to Claude, GPT, Gemini, Mistral, OpenRouter or local models (Ollama, LM Studio). You could chat about a document, rewrite a selection, or accept and reject suggested edits. See **[docs/LLM-INTEGRATION.md](docs/LLM-INTEGRATION.md)** for the research, the recommended architecture (users bring their own API keys, the server stores them encrypted and relays calls), and a phased plan.

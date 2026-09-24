@@ -6,6 +6,7 @@ import { api, setUnauthorizedHandler } from './api.js';
 import { createEditor, commands } from './editor.js';
 import { createPreview, extractHeadings, documentStats, renderMarkdown } from './preview.js';
 import { stripFrontMatter } from './render/front-matter.js';
+import { renderDiagrams } from './render/mermaid.js';
 import { createSidebar } from './sidebar.js';
 import { saveDraft, loadDraft, clearDraft, clearAllDrafts, draftIds, getPrefs, setPref } from './storage.js';
 import { exportMarkdown, exportHtml, pickMarkdownFiles, readMarkdownFiles } from './export.js';
@@ -20,6 +21,8 @@ import { showAccount } from './app/account.js';
 const root = document.getElementById('app');
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const mobileQuery = window.matchMedia('(max-width: 820px)');
+const touchQuery = window.matchMedia('(pointer: coarse)'); // no keyboard shortcuts to mention
+const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
 const RETRY_DELAYS = [5000, 10000, 30000, 60000]; // after network or server errors
 const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // drafts of documents that no longer exist
@@ -56,6 +59,15 @@ applyTheme();
 setUnauthorizedHandler(() => {
   if (!user) return;
   toAuthScreen('Your session has expired. Please sign in again.');
+});
+
+// A file loaded on demand (e.g. the diagram renderer) is gone: a new version was deployed.
+let updateToastAt = 0;
+window.addEventListener('vite:preloadError', (e) => {
+  e.preventDefault(); // the caller treats it as a failed load and tries again next time
+  if (!navigator.onLine || Date.now() - updateToastAt < 60000) return;
+  updateToastAt = Date.now();
+  toast('A new version is available.', { timeout: 60000, action: { label: 'Reload', onClick: () => location.reload() } });
 });
 
 async function boot() {
@@ -136,7 +148,8 @@ function createApp() {
   };
 
   // ---- Layout ----
-  const sidebarEl = h('aside', { class: 'sidebar', 'aria-label': 'Sidebar' });
+  // tabindex: the phone drawer can take focus without popping up the keyboard.
+  const sidebarEl = h('aside', { class: 'sidebar', 'aria-label': 'Sidebar', tabindex: '-1' });
   const backdrop = h('div', { class: 'sidebar-backdrop', onClick: () => setMobileSidebar(false) });
   const titleInput = h('input', {
     type: 'text', class: 'title-input', 'aria-label': 'Document title', placeholder: 'Untitled', maxlength: '200',
@@ -167,20 +180,22 @@ function createApp() {
   }, 'Resolve…');
 
   const viewButtons = {
-    edit: iconButton('edit', 'Editor only (Ctrl+/ cycles)', () => setView('edit')),
+    edit: iconButton('edit', `Editor only (${MOD}+/ cycles)`, () => setView('edit')),
     split: iconButton('split', 'Side by side', () => setView('split'), { class: 'icon-btn desktop-only' }),
     preview: iconButton('eye', 'Preview only', () => setView('preview')),
   };
   const outlineBtn = iconButton('list', 'Outline', () => togglePanel('outline'), { class: 'icon-btn desktop-only' });
   const historyBtn = iconButton('history', 'Version history', () => togglePanel('history'));
-  const themeBtn = iconButton('auto', 'Theme', (e) => {
+  const themeItems = (suffix = '') => {
     const cur = getPrefs().theme;
-    showMenu(e.currentTarget, [
-      { label: 'System', icon: 'auto', checked: cur === 'auto', onClick: () => setTheme('auto') },
-      { label: 'Light', icon: 'sun', checked: cur === 'light', onClick: () => setTheme('light') },
-      { label: 'Dark', icon: 'moon', checked: cur === 'dark', onClick: () => setTheme('dark') },
-    ]);
-  });
+    return [
+      { label: `System${suffix}`, icon: 'auto', checked: cur === 'auto', onClick: () => setTheme('auto') },
+      { label: `Light${suffix}`, icon: 'sun', checked: cur === 'light', onClick: () => setTheme('light') },
+      { label: `Dark${suffix}`, icon: 'moon', checked: cur === 'dark', onClick: () => setTheme('dark') },
+    ];
+  };
+  // On phones the theme choices are in the ⋯ menu instead, to leave room for the title.
+  const themeBtn = iconButton('auto', 'Theme', (e) => showMenu(e.currentTarget, themeItems()), { class: 'icon-btn desktop-only' });
   const moreBtn = iconButton('more', 'More actions', (e) => showMenu(e.currentTarget, moreMenuItems()));
   const menuBtn = iconButton('menu', 'Show sidebar', () => {
     if (mobileQuery.matches) setMobileSidebar(true);
@@ -195,22 +210,36 @@ function createApp() {
   const tb = (icon, label, cmd) => iconButton(icon, label, () => editor.run(cmd));
   const toolbar = h('div', { class: 'toolbar', role: 'toolbar', 'aria-label': 'Formatting' },
     tb('heading', 'Heading (cycle H1–H3)', commands.cycleHeading),
-    tb('bold', 'Bold (Ctrl+B)', commands.bold),
-    tb('italic', 'Italic (Ctrl+I)', commands.italic),
-    tb('strike', 'Strikethrough (Ctrl+Shift+X)', commands.strike),
+    tb('bold', `Bold (${MOD}+B)`, commands.bold),
+    tb('italic', `Italic (${MOD}+I)`, commands.italic),
+    tb('strike', `Strikethrough (${MOD}+Shift+X)`, commands.strike),
     h('span', { class: 'sep' }),
-    tb('ul', 'Bulleted list (Ctrl+Shift+8)', commands.ul),
-    tb('ol', 'Numbered list (Ctrl+Shift+7)', commands.ol),
-    tb('task', 'Task list (Ctrl+Shift+9)', commands.task),
+    tb('ul', `Bulleted list (${MOD}+Shift+8)`, commands.ul),
+    tb('ol', `Numbered list (${MOD}+Shift+7)`, commands.ol),
+    tb('task', `Task list (${MOD}+Shift+9)`, commands.task),
     tb('quote', 'Quote', commands.quote),
     h('span', { class: 'sep' }),
-    tb('link', 'Link (Ctrl+K)', commands.link),
+    tb('link', `Link (${MOD}+K)`, commands.link),
     tb('image', 'Image', commands.image),
-    tb('code', 'Inline code (Ctrl+E)', commands.code),
-    tb('codeBlock', 'Code block (Ctrl+Shift+K)', commands.codeBlock),
+    tb('code', `Inline code (${MOD}+E)`, commands.code),
+    tb('codeBlock', `Code block (${MOD}+Shift+K)`, commands.codeBlock),
     tb('table', 'Table', commands.table),
     tb('math', 'Math', commands.math),
     tb('hr', 'Horizontal rule', commands.hr));
+
+  // The toolbar is one Tab stop; the arrow keys, Home and End move between its buttons.
+  const toolButtons = [...toolbar.querySelectorAll('.icon-btn')];
+  toolButtons.forEach((b, i) => (b.tabIndex = i ? -1 : 0));
+  toolbar.addEventListener('keydown', (e) => {
+    const i = toolButtons.indexOf(document.activeElement);
+    const n = toolButtons.length;
+    const next = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+    if (i < 0 || next === undefined) return;
+    e.preventDefault();
+    toolButtons[i].tabIndex = -1;
+    toolButtons[next].tabIndex = 0;
+    toolButtons[next].focus();
+  });
 
   const editorPane = h('div', { class: 'pane pane-editor' });
   const previewContent = h('article', { class: 'markdown-body' });
@@ -235,7 +264,16 @@ function createApp() {
   const trashView = h('section', { class: 'trash-view', hidden: true });
 
   const main = h('main', { class: 'main' }, topbar, toolbar, workspace, statusbar, emptyState, trashView);
-  const appEl = h('div', { class: 'app' }, sidebarEl, backdrop, main);
+  // A button, not a #link: a link would change the route.
+  const skipLink = h('button', {
+    type: 'button', class: 'skip-link',
+    onClick: () => {
+      setMobileSidebar(false);
+      if (shownView() === 'preview') previewPane.focus();
+      else editor.focus();
+    },
+  }, 'Skip to editor');
+  const appEl = h('div', { class: 'app' }, skipLink, sidebarEl, backdrop, main);
   root.replaceChildren(appEl);
 
   // ---- Components ----
@@ -259,7 +297,11 @@ function createApp() {
   const preview = createPreview({ scroller: previewPane, content: previewContent }, {
     isDark,
     onScroll: () => syncFrom('preview'),
-    onToggleTask: (line) => editor.toggleTaskAtLine(line),
+    onToggleTask: (line, shownText) => {
+      const text = editor.view.state.doc;
+      if (line <= text.lines && text.line(line).text === shownText) editor.toggleTaskAtLine(line);
+      else if (doc) preview.update(doc.content); // the preview was behind the editor: bring it up to date instead
+    },
   });
 
   const sidebar = createSidebar(sidebarEl, {
@@ -449,7 +491,9 @@ function createApp() {
 
   // ---- Conflicts and documents removed elsewhere ----
   function raiseIssue(kind, current, opts = {}) {
-    // Our own earlier write (a reply that never arrived), or the same text: nothing to resolve.
+    // Nothing to resolve when the stored text is our own earlier write (a reply that never arrived),
+    // or when the text here now equals it. The server never sends a 409 for the text it stores, so
+    // the latter is only a cheap safeguard: text edited back to the stored version during the request.
     if (kind === 'conflict' && current && (current.content === doc.content
       || (maybeSaved?.id === doc.id && maybeSaved.content === current.content))) {
       doc.version = current.version;
@@ -623,11 +667,15 @@ function createApp() {
   }
 
   function showDocUI(show) {
-    toolbar.hidden = workspace.hidden = statusbar.hidden = !show;
+    toolbar.hidden = workspace.hidden = statusbar.hidden = skipLink.hidden = !show;
     emptyState.hidden = show || trashOpen;
     trashView.hidden = !trashOpen;
     titleInput.disabled = !show;
-    for (const b of [outlineBtn, historyBtn, ...Object.values(viewButtons)]) b.disabled = !show;
+    titleInput.placeholder = show ? 'Untitled' : '';
+    for (const b of [outlineBtn, historyBtn, ...Object.values(viewButtons)]) {
+      b.disabled = !show;
+      b.classList.toggle('active', show && b.getAttribute('aria-pressed') === 'true'); // no highlight while disabled
+    }
     saveStatus.hidden = !show;
     resolveBtn.hidden = !show || !issue;
     if (!show) titleInput.value = trashOpen ? 'Trash' : '';
@@ -839,7 +887,7 @@ function createApp() {
       Object.assign(d, { title: saved.title, version: saved.version });
       renderSidebar();
     } catch (err) {
-      toast(err.message, { type: 'error' });
+      onListSaveError(d.id, err);
     }
   }
 
@@ -854,7 +902,18 @@ function createApp() {
       if (doc?.id === id) doc.folder_id = saved.folder_id;
       renderSidebar();
     } catch (err) {
-      if (!destroyed) toast(err.message, { type: 'error' });
+      if (doc?.id === id && !issue && [404, 410].includes(err.status)) onSaveError(err);
+      else onListSaveError(id, err);
+    }
+  }
+
+  // A document trashed or deleted elsewhere leaves the sidebar when a change to it is refused.
+  function onListSaveError(id, err) {
+    if (destroyed) return;
+    toast(err.message, { type: 'error' });
+    if (err.status === 404 || err.status === 410) {
+      docs = docs.filter((d) => d.id !== id);
+      renderSidebar();
     }
   }
 
@@ -1136,13 +1195,15 @@ function createApp() {
   listen(window, 'dragover', (e) => {
     if (hasFiles(e)) e.preventDefault();
   });
+  // Capture phase: runs before the editor's own drop handler, which then sees defaultPrevented
+  // and leaves the open document alone (it would otherwise paste the file's text into it).
   listen(window, 'drop', async (e) => {
     if (!hasFiles(e)) return;
     e.preventDefault();
     dragDepth = 0;
     dropOverlay.hidden = true;
     importDocs(await readMarkdownFiles([...e.dataTransfer.files]));
-  });
+  }, { capture: true });
 
   async function downloadHtml() {
     const { title, content } = doc;
@@ -1203,9 +1264,9 @@ function createApp() {
         { label: 'Print / Save as PDF', icon: 'printer', onClick: printDoc },
       );
     }
+    items.push({ label: 'Import Markdown files…', icon: 'upload', onClick: importFiles }, 'separator');
+    if (mobileQuery.matches) items.push(...themeItems(' theme'), 'separator'); // the theme button is desktop-only
     items.push(
-      { label: 'Import Markdown files…', icon: 'upload', onClick: importFiles },
-      'separator',
       { label: 'Line numbers', checked: p.lineNumbers, onClick: () => editor.setLineNumbers(setPref('lineNumbers', !p.lineNumbers).lineNumbers) },
       { label: 'Sync scrolling', checked: p.syncScroll, onClick: () => setPref('syncScroll', !p.syncScroll) },
       { label: 'Keyboard shortcuts', onClick: showShortcuts },
@@ -1219,14 +1280,13 @@ function createApp() {
   }
 
   function showShortcuts() {
-    const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
     const rows = [
-      ['Save a version', `${mod}+S`], ['Bold', `${mod}+B`], ['Italic', `${mod}+I`], ['Strikethrough', `${mod}+Shift+X`],
-      ['Inline code', `${mod}+E`], ['Code block', `${mod}+Shift+K`], ['Link', `${mod}+K`],
-      ['Heading 1–3', `${mod}+Alt+1…3`], ['Numbered / bulleted / task list', `${mod}+Shift+7 / 8 / 9`],
-      ['Find / replace', `${mod}+F`], ['Undo / redo', `${mod}+Z / ${mod}+Shift+Z`], ['Indent / outdent', 'Tab / Shift+Tab'],
-      ['Cycle view (editor, split, preview)', `${mod}+/`], ['Toggle sidebar', `${mod}+\\`], ['Search documents', `${mod}+Shift+F`],
-      ['Print / Save as PDF', `${mod}+P`],
+      ['Save a version', `${MOD}+S`], ['Bold', `${MOD}+B`], ['Italic', `${MOD}+I`], ['Strikethrough', `${MOD}+Shift+X`],
+      ['Inline code', `${MOD}+E`], ['Code block', `${MOD}+Shift+K`], ['Link', `${MOD}+K`],
+      ['Heading 1–3', `${MOD}+Alt+1…3`], ['Numbered / bulleted / task list', `${MOD}+Shift+7 / 8 / 9`],
+      ['Find / replace', `${MOD}+F`], ['Undo / redo', `${MOD}+Z / ${MOD}+Shift+Z`], ['Indent / outdent', 'Tab / Shift+Tab'],
+      ['Cycle view (editor, split, preview)', `${MOD}+/`], ['Toggle sidebar', `${MOD}+\\`], ['Search documents', `${MOD}+Shift+F`],
+      ['Print / Save as PDF', `${MOD}+P`],
     ];
     modal({
       title: 'Keyboard shortcuts',
@@ -1242,7 +1302,10 @@ function createApp() {
     setPref('view', view);
     workspace.dataset.view = view;
     const shown = shownView();
-    for (const [k, b] of Object.entries(viewButtons)) b.classList.toggle('active', k === shown);
+    for (const [k, b] of Object.entries(viewButtons)) {
+      b.classList.toggle('active', k === shown && !b.disabled);
+      b.setAttribute('aria-pressed', String(k === shown));
+    }
     // A hidden preview is not rendered while typing; it catches up when shown.
     if (doc) preview.update(doc.content);
     if (!printing) preview.setVisible(shown !== 'edit');
@@ -1263,7 +1326,17 @@ function createApp() {
   }
 
   function setMobileSidebar(open) {
-    appEl.classList.toggle('mobile-sidebar-open', open && mobileQuery.matches);
+    const on = open && mobileQuery.matches;
+    const was = appEl.classList.contains('mobile-sidebar-open');
+    appEl.classList.toggle('mobile-sidebar-open', on);
+    main.inert = on; // Tab stays in the drawer
+    if (on && !was) {
+      // Not the search box: that would pop up the phone keyboard.
+      sidebarEl.querySelector('[aria-current="page"]')?.focus();
+      if (!sidebarEl.contains(document.activeElement)) sidebarEl.focus();
+    } else if (!on && was && sidebarEl.contains(document.activeElement)) {
+      menuBtn.focus(); // the closed drawer is hidden, which would lose the focus
+    }
   }
 
   function updateMenuBtn() {
@@ -1283,8 +1356,10 @@ function createApp() {
 
   function renderPanel() {
     const panel = getPrefs().panel;
-    outlineBtn.classList.toggle('active', panel === 'outline');
-    historyBtn.classList.toggle('active', panel === 'history');
+    for (const [name, b] of [['outline', outlineBtn], ['history', historyBtn]]) {
+      b.classList.toggle('active', panel === name && !b.disabled);
+      b.setAttribute('aria-pressed', String(panel === name));
+    }
     sidePanel.hidden = !panel || !doc;
     if (!panel || !doc) return;
     if (panel === 'outline') renderOutline();
@@ -1323,7 +1398,8 @@ function createApp() {
     }
     panelBody.replaceChildren(
       saveBtn,
-      h('p', { class: 'muted', style: 'padding:0 8px 8px;margin:0;font-size:12px' }, 'Versions are saved automatically every few minutes while you write, and whenever you press Ctrl+S.'),
+      h('p', { class: 'muted', style: 'padding:0 8px 8px;margin:0;font-size:12px' },
+        `Versions are saved automatically every few minutes while you write${touchQuery.matches ? '.' : `, and whenever you press ${MOD}+S.`}`),
       ...(revisionsCache.length
         ? revisionsCache.map((r) => h('button', { type: 'button', class: 'revision', onClick: () => showRevision(r) },
             h('span', {}, new Date(r.created_at).toLocaleString()),
@@ -1340,11 +1416,32 @@ function createApp() {
     } catch (err) {
       return toast(err.message, { type: 'error' });
     }
+    const body = h('div', {
+      class: 'revision-preview markdown-body',
+      html: renderMarkdown(revision.content),
+      // In-page links (footnotes, headings) scroll here instead of changing the route.
+      onClick: (e) => {
+        const link = e.target.closest('a[href^="#"]');
+        if (!link) return;
+        e.preventDefault();
+        let id = link.getAttribute('href').slice(1);
+        try {
+          id = decodeURIComponent(id);
+        } catch {
+          // keep it as written
+        }
+        if (id) body.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'start' });
+      },
+    });
+    // Read-only: ticking a task here would change nothing.
+    for (const box of body.querySelectorAll('input.task-list-item-checkbox')) box.disabled = true;
+    for (const li of body.querySelectorAll('.task-list-item.enabled')) li.classList.remove('enabled');
+    renderDiagrams(body, isDark() ? 'dark' : 'default'); // not awaited: the source shows until drawn
     const restore = await modal({
       title: `Version from ${new Date(revision.created_at).toLocaleString()}`,
       wide: true,
       render: (close) => h('div', { class: 'stack' },
-        h('div', { class: 'revision-preview markdown-body', html: renderMarkdown(revision.content) }),
+        body,
         h('div', { class: 'modal-actions' },
           h('button', { class: 'btn', onClick: () => close(false) }, 'Close'),
           h('button', { class: 'btn btn-primary', onClick: () => close(true), html: `${icons.restore}<span>Restore this version</span>` }))),
@@ -1357,7 +1454,9 @@ function createApp() {
       setDoc(restored, { skipDraft: true }); // changes that could not be saved stay in the draft
       toast('Version restored. The previous text is kept in the history.');
     } catch (err) {
-      if (!destroyed) toast(err.message, { type: 'error' });
+      if (destroyed) return;
+      if (err.status === 410 && doc === target && !issue) onSaveError(err); // trashed elsewhere: offer to restore it
+      else toast(err.message, { type: 'error' });
     }
   }
 
@@ -1383,7 +1482,7 @@ function createApp() {
   function updateMeta() {
     if (!doc) return;
     const s = documentStats(doc.content);
-    statWords.textContent = `${s.words.toLocaleString()} words · ${s.chars.toLocaleString()} characters · ${s.minutes} min read`;
+    statWords.textContent = `${s.words.toLocaleString()} words · ${s.chars.toLocaleString()} characters${s.minutes ? ` · ${s.minutes} min read` : ''}`;
     updateSavedLabel();
     document.title = pageTitle(cleanTitle(doc.title));
   }
@@ -1412,8 +1511,14 @@ function createApp() {
 
   // ---- Global events ----
   listen(document, 'keydown', (e) => {
-    // Skip keys the editor already handled, and AltGr (Ctrl+Alt on Windows), which types characters like \.
-    if (e.defaultPrevented || e.altKey || !(e.ctrlKey || e.metaKey)) return;
+    if (e.defaultPrevented) return; // e.g. the editor, a menu or the search box handled it
+    // Escape closes the phone drawer (a dialog opened from it closes first).
+    if (e.key === 'Escape' && appEl.classList.contains('mobile-sidebar-open') && !document.querySelector('dialog[open]')) {
+      setMobileSidebar(false);
+      return;
+    }
+    // Skip AltGr (Ctrl+Alt on Windows), which types characters like \.
+    if (e.altKey || !(e.ctrlKey || e.metaKey)) return;
     const key = e.key.toLowerCase();
     if (key === 's') {
       e.preventDefault();
@@ -1482,6 +1587,7 @@ function createApp() {
   listen(window, 'hashchange', () => route());
 
   // Printing from the browser menu: at least use the light theme and the current text.
+  // Light diagrams drawn before are swapped in at once; others can't be waited for here.
   listen(window, 'beforeprint', () => {
     if (printing) return;
     printing = true;
@@ -1489,6 +1595,7 @@ function createApp() {
     if (doc) {
       preview.update(doc.content);
       preview.setVisible(true);
+      preview.setThemeOverride('light')?.catch(() => {});
     }
   });
   listen(window, 'afterprint', () => endPrint());

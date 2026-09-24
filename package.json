@@ -5,13 +5,13 @@
   "description": "A simple, capable online Markdown editor with accounts and cloud storage.",
   "type": "module",
   "engines": {
-    "node": ">=22.5"
+    "node": ">=22.13"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web \"node --no-warnings --watch server/index.js\" \"vite\"",
+    "dev": "concurrently -k -n api,web \"node --disable-warning=ExperimentalWarning --watch server/index.js\" \"vite\"",
     "build": "vite build",
-    "start": "node --no-warnings server/index.js",
-    "test": "node --no-warnings --test tests/api.test.js",
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "test": "node --disable-warning=ExperimentalWarning --test tests/api.test.js",
     "test:e2e": "playwright test"
   },
   "dependencies": {

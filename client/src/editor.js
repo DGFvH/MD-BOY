@@ -170,12 +170,20 @@ function sameKind(a, b) {
 /** Inserts a block (table, rule, code) on its own lines, with blank lines around it. */
 function insertBlock(view, text, selectOffset = null, selectLength = 0) {
   const { doc } = view.state;
-  const line = lastLine(doc, view.state.selection.main);
+  let line = lastLine(doc, view.state.selection.main);
+  // Never split the block the cursor is in: go past a code block's closing fence,
+  // then to the last line of a paragraph, table or list.
+  const opener = fenceOpener(doc, line.number) || (/^\s*```/.test(line.text) ? line.number : 0);
+  if (opener) line = fenceCloser(doc, opener);
+  const onBlank = isBlank(line);
+  while (!onBlank && line.number < doc.lines && !isBlank(doc.line(line.number + 1))) {
+    line = doc.line(line.number + 1);
+    if (/^\s*```/.test(line.text)) line = fenceCloser(doc, line.number); // a code block right under the text
+  }
   const prev = line.number > 1 ? doc.line(line.number - 1) : null;
   const next = line.number < doc.lines ? doc.line(line.number + 1) : null;
-  // Fill a blank line, else go after the current line: a block right under a
-  // paragraph line would join it ("---" there turns the paragraph into a heading).
-  const onBlank = isBlank(line);
+  // Fill a blank line, else go after the block with a blank line between: a block
+  // right under a paragraph would join it ("---" there turns the paragraph into a heading).
   const from = onBlank ? line.from : line.to;
   const before = onBlank ? (prev && !isBlank(prev) ? '\n' : '') : '\n\n';
   // Keep a blank line after the block; at the end, add a line to type on.
@@ -192,6 +200,24 @@ function insertBlock(view, text, selectOffset = null, selectLength = 0) {
   return true;
 }
 
+/** The number of the ``` line that opens the code block line `n` is in, or 0 outside code blocks. */
+function fenceOpener(doc, n) {
+  let opener = 0;
+  for (let i = 1; i < n; i++) {
+    const text = doc.line(i).text;
+    if (!opener) {
+      if (/^\s*```/.test(text)) opener = i;
+    } else if (/^\s*```\s*$/.test(text)) opener = 0;
+  }
+  return opener;
+}
+
+/** The ``` line that closes the code block opened at line `n` (the last line if it is never closed). */
+function fenceCloser(doc, n) {
+  for (let i = n + 1; i <= doc.lines; i++) if (/^\s*```\s*$/.test(doc.line(i).text)) return doc.line(i);
+  return doc.line(doc.lines);
+}
+
 /** Fences the selected lines as a code block, or removes the fences around them. */
 function fenceLines(view) {
   const { state } = view;
@@ -201,7 +227,9 @@ function fenceLines(view) {
   const last = lastLine(doc, r);
   const prev = first.number > 1 ? doc.line(first.number - 1) : null;
   const next = last.number < doc.lines ? doc.line(last.number + 1) : null;
-  if (prev && next && /^\s*```/.test(prev.text) && /^\s*```\s*$/.test(next.text)) {
+  // Unfence only when the lines are exactly the inside of one block: `prev` opens it and
+  // `next` closes it (not the end of one block above and the start of another below).
+  if (prev && next && /^\s*```\s*$/.test(next.text) && fenceOpener(doc, next.number) === prev.number) {
     const removed = first.from - prev.from;
     view.dispatch({
       changes: [{ from: prev.from, to: first.from }, { from: last.to, to: next.to }],
@@ -263,7 +291,13 @@ export const commands = {
     v.focus();
     return true;
   },
-  codeBlock: (v) => (v.state.selection.main.empty ? insertBlock(v, '```js\n\n```', 3, 2) : fenceLines(v)),
+  codeBlock: (v) => {
+    const r = v.state.selection.main;
+    const line = v.state.doc.lineAt(r.from);
+    // A selection on a fence line (like the "js" just inserted) is not code to fence: add a new block.
+    const onFence = r.to <= line.to && /^\s*```/.test(line.text);
+    return r.empty || onFence ? insertBlock(v, '```js\n\n```', 3, 2) : fenceLines(v);
+  },
   table: (v) => insertBlock(v, '| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |', 2, 8),
   hr: (v) => insertBlock(v, '---'),
 };

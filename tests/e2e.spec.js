@@ -95,6 +95,35 @@ test('a document moved to the trash can be restored', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('a Markdown file dropped on the editor is imported, and the open document is left alone', async ({ page }) => {
+  await register(page);
+
+  await page.getByRole('button', { name: 'New doc' }).click();
+  await expect(page.locator('.title-input')).toBeFocused();
+  await page.keyboard.press('Enter');
+  const editor = page.locator('.cm-content');
+  await editor.click();
+  await page.keyboard.insertText('# Drop target\n\nOriginal text.');
+  await expect(page.locator('.save-status')).toHaveText('Saved', { timeout: 5000 });
+
+  const dataTransfer = await page.evaluateHandle(() => {
+    const dt = new DataTransfer();
+    dt.items.add(new File(['# Imported\n\nFile body.\n'], 'imported.md', { type: 'text/markdown' }));
+    return dt;
+  });
+  const box = await editor.boundingBox();
+  const at = { dataTransfer, clientX: box.x + 40, clientY: box.y + 10 };
+  await editor.dispatchEvent('dragover', at);
+  await editor.dispatchEvent('drop', at);
+  await expect(page.locator('.title-input')).toHaveValue('imported');
+  await expect(editor).toContainText('File body.');
+
+  await page.locator('.tree-row', { hasText: 'Drop target' }).click();
+  await expect(page.locator('.title-input')).toHaveValue('Drop target');
+  await expect(editor).toContainText('Original text.');
+  await expect(editor).not.toContainText('File body.');
+});
+
 test('toolbar list button on an empty line puts the cursor after the marker', async ({ page }) => {
   await register(page);
 
@@ -108,4 +137,59 @@ test('toolbar list button on an empty line puts the cursor after the marker', as
 
   await expect(editor).toHaveText('- First item');
   await expect(page.locator('.pane-preview .markdown-body ul li')).toHaveText('First item');
+});
+
+test('a saved version opens read-only, and its in-page links keep the route', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(err.message));
+  await register(page);
+
+  await page.getByRole('button', { name: 'New doc' }).click();
+  await expect(page.locator('.title-input')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await page.locator('.cm-content').click();
+  await page.keyboard.insertText(`# Notes\n\n- [ ] A task\n\nSee the note.[^1]\n\n${'Filler.\n\n'.repeat(60)}[^1]: The note.\n`);
+  await expect(page.locator('.save-status')).toHaveText('Saved', { timeout: 5000 });
+  await page.keyboard.press('Control+s');
+  await expect(page.getByText('Saved to the version history.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Version history' }).click();
+  await page.locator('.revision').first().click();
+  const version = page.locator('dialog .revision-preview');
+  await expect(version.locator('input.task-list-item-checkbox')).toBeDisabled();
+  const hash = await page.evaluate(() => location.hash);
+  await version.locator('sup a').first().click();
+  await expect.poll(() => version.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => location.hash)).toBe(hash);
+
+  expect(errors).toEqual([]);
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('the sidebar drawer holds focus and closes with Escape', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    await register(page);
+
+    // The theme choices move from the top bar into the ⋯ menu.
+    await expect(page.getByRole('button', { name: 'Theme' })).toBeHidden();
+    await page.getByRole('button', { name: 'More actions' }).click();
+    await page.getByRole('menuitemcheckbox', { name: 'Dark theme' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+    const menuButton = page.getByRole('button', { name: 'Show sidebar' });
+    await menuButton.click();
+    await expect(page.locator('.app')).toHaveClass(/mobile-sidebar-open/);
+    await expect(page.locator('.tree-row.active .tree-main')).toBeFocused(); // not the search box: no keyboard pop-up
+    expect(await page.locator('main').evaluate((el) => el.inert)).toBe(true);
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.app')).not.toHaveClass(/mobile-sidebar-open/);
+    await expect(menuButton).toBeFocused();
+    expect(await page.locator('main').evaluate((el) => el.inert)).toBe(false);
+
+    expect(errors).toEqual([]);
+  });
 });

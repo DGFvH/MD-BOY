@@ -97,6 +97,8 @@ function toastHost() {
   }
   return host;
 }
+// The page's live region exists from the start: one added together with its first message is often not announced.
+if (document.body) toastHost();
 
 /**
  * Shows a short message. `action: { label, onClick }` adds a button (e.g. Undo); the toast
@@ -152,8 +154,11 @@ export function modal({ title, render, wide = false }) {
     const close = (value) => {
       if (closed) return;
       closed = true;
+      // Toasts still showing in the dialog move to the page (or the dialog below), so they don't vanish with it.
+      const left = dialog.querySelectorAll(':scope > .toasts > .toast:not(.leaving)');
       dialog.close();
       dialog.remove();
+      if (left.length) toastHost().append(...left);
       previous?.focus?.();
       resolve(value);
     };
@@ -282,7 +287,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function menuKeydown(e) {
-  const items = [...e.currentTarget.querySelectorAll('[role="menuitem"]')];
+  const items = [...e.currentTarget.querySelectorAll('[role^="menuitem"]')];
   const i = items.indexOf(document.activeElement);
   let next;
   if (e.key === 'ArrowDown') next = items[(i + 1) % items.length];
@@ -314,7 +319,9 @@ export function showMenu(anchor, items) {
         ? h('div', { class: 'menu-sep', role: 'separator' })
         : h('button', {
             type: 'button',
-            role: 'menuitem',
+            // Items with a check mark are toggles, so screen readers announce their state.
+            role: item.checked === undefined ? 'menuitem' : 'menuitemcheckbox',
+            'aria-checked': item.checked === undefined ? null : String(Boolean(item.checked)),
             tabindex: '-1',
             class: `menu-item${item.danger ? ' danger' : ''}`,
             onClick: () => {
@@ -324,7 +331,7 @@ export function showMenu(anchor, items) {
           },
           h('span', { class: 'menu-icon' }, item.icon ? icon(item.icon) : null),
           h('span', {}, item.label),
-          item.checked !== undefined && h('span', { class: 'menu-check' }, item.checked ? '✓' : ''))));
+          item.checked !== undefined && h('span', { class: 'menu-check', 'aria-hidden': 'true' }, item.checked ? '✓' : ''))));
   menu.anchor = anchor;
   anchor.setAttribute('aria-haspopup', 'menu');
   anchor.setAttribute('aria-expanded', 'true');
@@ -338,7 +345,7 @@ export function showMenu(anchor, items) {
   menu.style.left = `${Math.max(8, left)}px`;
   menu.style.top = `${top}px`;
   openMenu = menu;
-  menu.querySelector('[role="menuitem"]')?.focus();
+  menu.querySelector('[role^="menuitem"]')?.focus();
 }
 
 export function debounce(fn, ms) {

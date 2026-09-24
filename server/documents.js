@@ -134,9 +134,10 @@ export function createDocumentsRouter(db, { maxUserBytes = 0 } = {}) {
   }
 
   /**
-   * Applies a patch. The version check only applies when content is sent, and
-   * the version only goes up when the content changes, so renames and moves
-   * never conflict with an edit in another tab.
+   * Applies a patch. The version check only applies when the content sent
+   * differs from the stored content (a retried save that already landed is not
+   * a conflict), and the version only goes up when the content changes, so
+   * renames and moves never conflict with an edit in another tab.
    * History keeps the text being replaced when a new editing session starts
    * (no revision for REVISION_INTERVAL_MS), when most of the text is removed,
    * or when `keepCurrent` is set. `force` also stores the new state.
@@ -147,15 +148,15 @@ export function createDocumentsRouter(db, { maxUserBytes = 0 } = {}) {
       if (doc.deleted_at) {
         throw Object.assign(new HttpError(410, 'This document is in the trash.'), { current: doc });
       }
-      if (patch.content !== undefined && patch.version !== undefined && patch.version !== doc.version) {
-        throw Object.assign(new HttpError(409, 'This document was changed elsewhere.'), { current: doc });
-      }
       const next = {
         title: patch.title ?? doc.title,
         content: patch.content ?? doc.content,
         folder_id: patch.folder_id === undefined ? doc.folder_id : patch.folder_id,
       };
       const contentChanged = next.content !== doc.content;
+      if (contentChanged && patch.version !== undefined && patch.version !== doc.version) {
+        throw Object.assign(new HttpError(409, 'This document was changed elsewhere.'), { current: doc });
+      }
       if (contentChanged) {
         checkQuota(userId, doc.content, next.content);
         const last = s.lastRevisionAt.get(doc.id);

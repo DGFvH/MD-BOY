@@ -46,13 +46,9 @@ export function exportHtml(title, bodyHtml) {
   downloadFile(`${safeFileName(title)}.html`, buildStandaloneHtml(title, bodyHtml), 'text/html;charset=utf-8');
 }
 
-export function printDocument() {
-  window.print();
-}
-
 const MD_EXT = /\.(md|markdown|mdown|mkd|txt)$/i;
 
-export function isMarkdownFile(file) {
+function isMarkdownFile(file) {
   return MD_EXT.test(file.name) || file.type === 'text/markdown' || file.type === 'text/plain';
 }
 

@@ -52,11 +52,15 @@ function isSameOrigin(req) {
 }
 
 // TRUST_PROXY: a number of proxy hops ("1"), or the proxies' addresses or subnets
-// ("127.0.0.1", "loopback, 10.0.0.0/8"). Unset or "0" trusts no proxy.
+// ("127.0.0.1", "loopback, 10.0.0.0/8"). Unset, "0" or "false" trusts no proxy.
+// "true" trusts every hop: only safe when clients can reach the app solely
+// through the proxy, since anyone else could fake X-Forwarded-For and -Proto.
 export function parseTrustProxy(value) {
-  if (!value || value === '0') return false;
-  if (/^\d+$/.test(value)) return Number(value);
-  return value.split(',').map((s) => s.trim()).filter(Boolean);
+  const v = value?.trim().toLowerCase();
+  if (!v || v === '0' || v === 'false') return false;
+  if (v === 'true') return true;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
 export function createApp({
@@ -125,10 +129,15 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const port = Number(env.PORT) || 3000;
   const host = env.HOST || undefined;
   const db = openDatabase(databaseFile(env));
+  const trustProxy = parseTrustProxy(env.TRUST_PROXY);
+  if (trustProxy === true) {
+    console.warn('TRUST_PROXY=true trusts every proxy hop: only safe when the app can be reached solely ' +
+      'through your proxy. Prefer a hop count such as TRUST_PROXY=1.');
+  }
   const app = createApp({
     db,
     cookieSecure: env.COOKIE_SECURE === '1',
-    trustProxy: parseTrustProxy(env.TRUST_PROXY),
+    trustProxy,
     allowRegistration: env.ALLOW_REGISTRATION !== '0',
     maxUserBytes: /^\d+$/.test(env.MAX_USER_BYTES ?? '') ? Number(env.MAX_USER_BYTES) : DEFAULT_MAX_USER_BYTES,
   });

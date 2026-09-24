@@ -202,7 +202,7 @@ export function documentStats(src) {
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/[#>*_`~[\]()!-]/g, ' ');
   const words = (text.match(/[\p{L}\p{N}'’]+/gu) ?? []).length;
-  return { words, chars: src.length, minutes: Math.max(1, Math.round(words / 230)) };
+  return { words, chars: src.length, minutes: words ? Math.max(1, Math.round(words / 230)) : 0 };
 }
 
 // ---- Preview pane controller --------------------------------------------

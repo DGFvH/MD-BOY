@@ -3,12 +3,19 @@ import { api } from '../api.js';
 import { h, icons, modal, toast } from '../ui.js';
 
 function section(title, ...children) {
-  return h('section', { class: 'stack', style: 'gap:8px;padding-top:14px;border-top:1px solid var(--border)' },
-    h('h3', { style: 'margin:0;font-size:14px' }, title), ...children);
+  return h('section', { class: 'modal-section' }, h('h3', {}, title), ...children);
 }
 
-function passwordField(label, autocomplete, extra = {}) {
-  return h('input', { type: 'password', required: true, autocomplete, 'aria-label': label, placeholder: label, ...extra });
+/** A password input with a visible label; `hint` is shown under it. */
+function passwordField(id, label, autocomplete, { hint, ...extra } = {}) {
+  const input = h('input', {
+    type: 'password', id, required: true, autocomplete, 'aria-describedby': hint ? `${id}-hint` : null, ...extra,
+  });
+  const row = h('div', { class: 'form-row' },
+    h('label', { for: id }, label),
+    input,
+    hint && h('small', { class: 'muted', id: `${id}-hint` }, hint));
+  return { input, row };
 }
 
 /**
@@ -20,24 +27,23 @@ export function showAccount({ user, beforeExport, onDeleted }) {
     title: 'Account',
     render: (close) => {
       // Change password
-      const current = passwordField('Current password', 'current-password', { autofocus: true });
-      const next = passwordField('New password (at least 8 characters)', 'new-password', { minlength: '8' });
+      const current = passwordField('acc-current', 'Current password', 'current-password', { autofocus: true });
+      const next = passwordField('acc-new', 'New password', 'new-password', { minlength: '8', hint: 'At least 8 characters.' });
       const pwError = h('div', { class: 'auth-error', role: 'alert' });
       const pwSubmit = h('button', { type: 'submit', class: 'btn' }, 'Change password');
       const pwForm = h('form', {
         class: 'stack',
-        style: 'gap:8px',
         onSubmit: async (e) => {
           e.preventDefault();
           pwError.textContent = '';
           pwSubmit.disabled = true;
           try {
-            await api.changePassword(current.value, next.value);
-            current.value = next.value = '';
+            await api.changePassword(current.input.value, next.input.value);
+            current.input.value = next.input.value = '';
             toast('Password changed. Other devices were signed out.');
           } catch (err) {
             pwError.textContent = err.message;
-            current.focus();
+            current.input.focus();
           } finally {
             pwSubmit.disabled = false;
           }
@@ -45,8 +51,8 @@ export function showAccount({ user, beforeExport, onDeleted }) {
       },
       // Lets password managers know which account the new password belongs to.
       h('input', { type: 'text', autocomplete: 'username', value: user?.email ?? '', hidden: true, readonly: true, tabindex: '-1', 'aria-hidden': 'true' }),
-      current, next, pwError,
-      h('div', {}, pwSubmit));
+      current.row, next.row, pwError,
+      h('div', { class: 'form-actions' }, pwSubmit));
 
       // Download everything
       const exportBtn = h('button', {
@@ -70,38 +76,37 @@ export function showAccount({ user, beforeExport, onDeleted }) {
       });
 
       // Delete the account
-      const delPassword = passwordField('Your password', 'current-password');
+      const delPassword = passwordField('acc-delete', 'Your password', 'current-password');
       const delError = h('div', { class: 'auth-error', role: 'alert' });
       const delSubmit = h('button', { type: 'submit', class: 'btn btn-danger' }, 'Delete my account');
       const delForm = h('form', {
         class: 'stack',
-        style: 'gap:8px',
         onSubmit: async (e) => {
           e.preventDefault();
           delError.textContent = '';
           delSubmit.disabled = true;
           try {
-            await api.deleteAccount(delPassword.value);
+            await api.deleteAccount(delPassword.input.value);
             close(true);
             onDeleted?.();
           } catch (err) {
             delError.textContent = err.message;
             delSubmit.disabled = false;
-            delPassword.focus();
+            delPassword.input.focus();
           }
         },
       },
       h('p', { class: 'muted' }, 'This permanently deletes your account, all documents, folders and history. It cannot be undone. Type your password to confirm.'),
-      delPassword, delError,
-      h('div', {}, delSubmit));
+      delPassword.row, delError,
+      h('div', { class: 'form-actions' }, delSubmit));
 
-      return h('div', { class: 'stack', style: 'gap:14px' },
+      return h('div', { class: 'stack' },
         h('p', { class: 'muted' }, 'Signed in as ', h('strong', {}, user?.email ?? '')),
         section('Change password', pwForm),
         section('Your documents',
           h('p', { class: 'muted' }, 'Get every document as a Markdown file, in folders like in the sidebar.'),
-          h('div', {}, exportBtn)),
-        section('Delete account', delForm));
+          h('div', { class: 'form-actions' }, exportBtn)),
+        h('section', { class: 'modal-section danger-zone' }, h('h3', {}, 'Delete account'), delForm));
     },
   });
 }

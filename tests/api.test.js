@@ -192,11 +192,24 @@ describe('cross-origin protection', () => {
     assert.equal(plain.headers['strict-transport-security'], undefined);
   });
 
-  test('TRUST_PROXY accepts a hop count or a list of addresses', () => {
+  test('TRUST_PROXY accepts a hop count, a list of addresses, or true/false', async () => {
     assert.equal(parseTrustProxy(undefined), false);
+    assert.equal(parseTrustProxy(''), false);
     assert.equal(parseTrustProxy('0'), false);
+    assert.equal(parseTrustProxy('false'), false);
     assert.equal(parseTrustProxy('1'), 1);
+    assert.equal(parseTrustProxy('true'), true);
+    assert.equal(parseTrustProxy(' TRUE '), true);
     assert.deepEqual(parseTrustProxy('loopback, 10.0.0.0/8'), ['loopback', '10.0.0.0/8']);
+    // Express takes each of them (it throws at startup on anything it cannot parse).
+    const hsts = async (value) => {
+      const { app: proxiedApp } = setup({ trustProxy: parseTrustProxy(value) });
+      const res = await request(proxiedApp).get('/api/health').set('X-Forwarded-Proto', 'https').expect(200);
+      return res.headers['strict-transport-security'];
+    };
+    assert.ok(await hsts('true'));
+    assert.ok(await hsts('loopback, 10.0.0.0/8'));
+    assert.equal(await hsts('false'), undefined);
   });
 });
 
@@ -361,6 +374,7 @@ describe('documents', () => {
     const list = await agent.get('/api/docs').expect(200);
     assert.ok(list.body.documents.some((d) => d.id === doc.id));
     assert.equal(list.body.documents[0].content, undefined, 'list returns metadata only');
+    assert.equal(list.body.documents[0].excerpt, undefined, 'excerpts are only for search results');
   });
 
   test('stale version returns 409 with the current document', async () => {
@@ -369,6 +383,30 @@ describe('documents', () => {
     await agent.put(`/api/docs/${id}`).send({ content: 'tab A', version: 1 }).expect(200);
     const res = await agent.put(`/api/docs/${id}`).send({ content: 'tab B', version: 1 }).expect(409);
     assert.equal(res.body.current.content, 'tab A');
+  });
+
+  test('a retried save of text that is already stored is not a conflict', async () => {
+    const { body } = await agent.post('/api/docs').send({ title: 'Retry', content: 'v1' }).expect(201);
+    const id = body.document.id;
+    await agent.put(`/api/docs/${id}`).send({ content: 'v2', version: 1 }).expect(200);
+    // The reply was lost, so the tab sends the same text with its old version again.
+    const res = await agent.put(`/api/docs/${id}`).send({ content: 'v2', version: 1 }).expect(200);
+    assert.equal(res.body.document.version, 2);
+    await agent.put(`/api/docs/${id}`).send({ content: 'v3', version: 1 }).expect(409);
+  });
+
+  test('a snapshot of the unchanged stored text still lands in history', async () => {
+    // "Overwrite" in the conflict dialog first saves the other tab's text as a version.
+    const { body } = await agent.post('/api/docs').send({ title: 'Theirs', content: 'mine' }).expect(201);
+    const id = body.document.id;
+    const theirs = (await agent.put(`/api/docs/${id}`).send({ content: 'theirs', version: 1 }).expect(200)).body.document;
+    assert.deepEqual(await revisionTexts(id), ['mine']);
+    const keep = { content: theirs.content, version: theirs.version, snapshot: true };
+    const res = await agent.put(`/api/docs/${id}`).send(keep).expect(200);
+    assert.equal(res.body.document.version, theirs.version);
+    assert.deepEqual(await revisionTexts(id), ['theirs', 'mine']);
+    await agent.put(`/api/docs/${id}`).send(keep).expect(200);
+    assert.deepEqual(await revisionTexts(id), ['theirs', 'mine'], 'the same text is not stored twice');
   });
 
   test('version only changes with the content; renames and moves never conflict', async () => {
