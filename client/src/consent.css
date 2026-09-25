@@ -1,0 +1,38 @@
+/* The storage notice, shared by the public pages and the app. Uses the tokens from markdown.css. */
+.cookie-notice {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 12px 12px 16px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.15);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.cookie-notice p { margin: 0; flex: 1; }
+.cookie-notice a { color: var(--accent); }
+.cookie-ok {
+  flex-shrink: 0;
+  min-width: 64px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: inherit;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}
+.cookie-ok:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
+@media print { .cookie-notice { display: none; } }

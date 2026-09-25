@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { h, modal, toast } from '../ui.js';
 import { getPrefs, setPref } from '../storage.js';
 import { APP_NAME } from '../brand.js';
+import { pendingGuestDraft } from '../guest.js';
 
 let configPromise = null;
 let screenSeq = 0;
@@ -26,7 +27,9 @@ export async function showAuth(root, { mode, notice = '', email: emailValue = ''
   const config = await loadConfig();
   if (seq !== screenSeq) return; // a newer screen was requested meanwhile
   const registration = config?.registration !== false;
-  if (!registration || !mode) mode = registration && !getPrefs().hasAccount ? 'register' : 'login';
+  // Someone who chose "Save" in the editor on the home page is asked to create an account first.
+  const saving = Boolean(pendingGuestDraft());
+  if (!registration || !mode) mode = registration && (saving || !getPrefs().hasAccount) ? 'register' : 'login';
   const isLogin = mode === 'login';
   const again = (next) => showAuth(root, { mode: next, email: email.value, onSignedIn });
 
@@ -73,6 +76,9 @@ export async function showAuth(root, { mode, notice = '', email: emailValue = ''
       h('div', { class: 'auth-card' },
         h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), APP_NAME),
         h('h1', {}, isLogin ? 'Welcome back' : 'Create your account'),
+        saving && h('p', { class: 'muted auth-intro' }, isLogin
+          ? 'Sign in to save the document you started.'
+          : 'Create a free account to save the document you started.'),
         form,
         isLogin && h('div', { class: 'auth-switch' },
           h('button', { type: 'button', class: 'link-btn', onClick: () => showForgot(root, email.value, onSignedIn) }, 'Forgot password?')),

@@ -79,6 +79,7 @@ npm run build      # static site in dist/
    - **URL configuration:** Site URL `https://your-domain`, and redirect URLs `https://your-domain/app` and `http://localhost:5173/app`.
    - **Email:** keep "Confirm email" on, and add your own **SMTP** sender before launch. The built-in sender allows only a few emails per hour.
    - **Password security:** turn on leaked-password protection.
+   - **Email templates:** paste the Hashlite-styled emails from [`supabase/templates/`](supabase/templates/README.md) (sign-up confirmation, password reset, email change, magic link).
    - **Sign-ups:** turn them off there if you want a closed instance.
 
 ## Deploying
@@ -129,8 +130,11 @@ client/                 Vite frontend (vanilla JS, no framework)
   src/preview.js        markdown-it pipeline, sanitizing, scroll mapping
   src/render/           block re-rendering, Mermaid, front matter, callouts
   src/zip.js            "download all" as a zip, built in the browser
+  src/landing.js        the try-it editor on the home page (src/guest.js keeps its text)
+  src/consent.js        the one-time storage notice
 build/site.mjs          public page list, PUBLIC_URL, robots/sitemap/llms.txt
 supabase/migrations/    database schema, RLS policies, functions, storage bucket
+supabase/templates/     styled Auth emails to paste into the dashboard
 tests/                  Playwright tests, a static server like the hosts, test-account helper
 docs/                   review, SEO plan, LLM research
 ```

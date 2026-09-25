@@ -257,7 +257,8 @@ test('every colour theme can be picked and is remembered', async ({ page }) => {
   const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   const seen = new Set();
   for (const [label, id] of [['Light', 'light'], ['Dark', 'dark'], ['Sepia', 'sepia'], ['High contrast', 'contrast']]) {
-    await page.getByRole('button', { name: 'Theme' }).click();
+    await page.getByRole('button', { name: 'More actions' }).click();
+    await page.getByRole('menuitem', { name: 'Theme…' }).click();
     await page.getByRole('menuitemcheckbox', { name: label, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', id);
     seen.add(await bg());
@@ -275,10 +276,10 @@ test.describe('on a phone', () => {
     page.on('pageerror', (err) => errors.push(err.message));
     await register(page);
 
-    // The theme choices move from the top bar into the ⋯ menu.
-    await expect(page.getByRole('button', { name: 'Theme' })).toBeHidden();
+    // The theme choices are in the ⋯ menu.
     await page.getByRole('button', { name: 'More actions' }).click();
-    await page.getByRole('menuitemcheckbox', { name: 'Dark theme' }).click();
+    await page.getByRole('menuitem', { name: 'Theme…' }).click();
+    await page.getByRole('menuitemcheckbox', { name: 'Dark', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     const menuButton = page.getByRole('button', { name: 'Show sidebar' });
@@ -296,21 +297,60 @@ test.describe('on a phone', () => {
   });
 });
 
-test('the landing page is static, crawlable HTML that leads to the editor', async ({ page, request }) => {
-  const scripts = [];
-  page.on('request', (r) => { if (r.resourceType() === 'script') scripts.push(r.url()); });
+test('the landing page is crawlable HTML with a working editor', async ({ page, request }) => {
   await page.goto('/');
   await expect(page.locator('h1')).toHaveCount(1);
   await expect(page.locator('h1')).toContainText('Free online Markdown editor');
-  expect(scripts).toEqual([]); // no editor JavaScript on the landing page
   const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
   for (const block of ld) JSON.parse(block);
-  await page.getByRole('link', { name: /Start writing/ }).first().click();
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+
+  // The preview is in the HTML before any script runs, then follows the text.
+  const preview = page.locator('#try-preview');
+  await expect(preview.locator('h2')).toHaveText('Hello, Markdown');
+  await expect(preview.locator('.katex').first()).toBeVisible(); // the renderer has loaded
+  await page.fill('#try-input', '## My notes\n\n- [ ] one');
+  await expect(preview.locator('h2')).toHaveText('My notes');
+  await expect(preview.locator('input[type="checkbox"]')).toHaveCount(1);
+  await page.reload(); // kept in this browser
+  await expect(page.locator('#try-input')).toHaveValue('## My notes\n\n- [ ] one');
 
   for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt', '/sitemap.xml']) expect((await request.get(path)).status()).toBe(200);
   expect((await request.get('/nope')).status()).toBe(404);
+});
+
+test('saving from the landing editor asks for an account, then keeps the document', async ({ page }) => {
+  await resetTestAccount();
+  await page.goto('/');
+  await page.fill('#try-input', '# From the home page\n\nHello there.');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page).toHaveURL(/\/app$/);
+  await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+  await expect(page.getByText('Create a free account to save the document you started.')).toBeVisible();
+
+  await page.locator('.auth-switch .link-btn', { hasText: 'Sign in' }).click();
+  await expect(page.getByText('Sign in to save the document you started.')).toBeVisible();
+  await page.fill('#auth-email', TEST_EMAIL);
+  await page.fill('#auth-password', TEST_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.locator('.title-input')).toHaveValue('From the home page', { timeout: 15_000 });
+  await expect(page.locator('.cm-content')).toContainText('Hello there.');
+  expect(await page.evaluate(() => localStorage.getItem('hashlite:guest'))).toBeNull();
+});
+
+test.describe('storage notice', () => {
+  test.use({ storageNotice: true });
+
+  test('shows once and is remembered', async ({ page }) => {
+    await page.goto('/');
+    const notice = page.getByRole('region', { name: 'Cookies and storage' });
+    await expect(notice).toBeVisible();
+    await expect(notice.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy#cookies');
+    await notice.getByRole('button', { name: 'OK' }).click();
+    await expect(notice).toBeHidden();
+    await page.goto('/app');
+    await expect(page.getByRole('heading', { name: /Create your account|Welcome back/ })).toBeVisible();
+    await expect(notice).toBeHidden();
+  });
 });
 
 test('the /learn articles are crawlable pages with valid structured data', async ({ page }) => {

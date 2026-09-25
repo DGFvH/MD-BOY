@@ -72,7 +72,7 @@
               {
                 "@type": "Question",
                 "name": "Do I need an account?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Yes, you sign up with an email address and a password. The account keeps your documents in sync on every device." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Not to try it: the editor on this page works without one. To save documents, you sign up with an email address and a password, and your documents stay in sync on every device." }
               },
               {
                 "@type": "Question",
@@ -102,7 +102,7 @@
               {
                 "@type": "Question",
                 "name": "Is my data private?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Your documents are private unless you create a read-only share link. Hashlite sets no cookies and has no tracking, analytics or ads." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Your documents are private unless you create a read-only share link. Hashlite uses no tracking cookies and has no analytics or ads." }
               }
             ]
           }
@@ -129,17 +129,43 @@
         <div class="container">
           <h1 id="title">Free online Markdown editor</h1>
           <p class="tagline">Write Markdown. See it live.</p>
-          <div class="actions">
-            <a class="btn btn-primary" href="/app">Start writing</a>
-          </div>
-          <div class="shot">
-            <img
-              src="/screenshot.webp"
-              width="1440"
-              height="900"
-              fetchpriority="high"
-              alt="The Hashlite editor: a sidebar with folders, Markdown source on the left and the live preview on the right, showing highlighted code, a rendered math formula and a flowchart diagram"
-            />
+          <div class="demo" id="try">
+            <div class="demo-bar">
+              <span>Try it, no account needed</span>
+              <button class="btn btn-primary" type="button" id="try-save" title="Save to your Hashlite account">Save</button>
+            </div>
+            <div class="demo-panes">
+              <textarea class="demo-input" id="try-input" spellcheck="false" aria-label="Markdown">
+## Hello, Markdown
+
+Type here and watch the preview **update live**.
+
+- *Italic*, **bold** and `code`
+- [x] Task lists
+- ==Highlights== and emoji :sparkles:
+- Math: $e^{i\pi} + 1 = 0$
+
+| Feature  | Free |
+| -------- | :--: |
+| Autosave | ✅   |
+| Export   | ✅   |
+
+> [!TIP]
+> Save this to your account to keep editing it later.
+</textarea>
+              <div class="demo-preview markdown-body" id="try-preview" aria-label="Preview">
+                <h2>Hello, Markdown</h2>
+                <p>Type here and watch the preview <strong>update live</strong>.</p>
+                <ul>
+                  <li><em>Italic</em>, <strong>bold</strong> and <code>code</code></li>
+                  <li>Task lists</li>
+                  <li>Highlights and emoji ✨</li>
+                  <li>Math: e<sup>iπ</sup> + 1 = 0</li>
+                </ul>
+                <div class="table-wrap"><table><thead><tr><th>Feature</th><th style="text-align:center">Free</th></tr></thead><tbody><tr><td>Autosave</td><td style="text-align:center">✅</td></tr><tr><td>Export</td><td style="text-align:center">✅</td></tr></tbody></table></div>
+                <blockquote><p>Save this to your account to keep editing it later.</p></blockquote>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -198,7 +224,7 @@
           </details>
           <details>
             <summary><h3>Do I need an account?</h3></summary>
-            <div class="answer"><p>Yes, you sign up with an email address and a password. The account keeps your documents in sync on every device.</p></div>
+            <div class="answer"><p>Not to try it: the editor on this page works without one. To save documents, you sign up with an email address and a password, and your documents stay in sync on every device.</p></div>
           </details>
           <details>
             <summary><h3>Where are my documents stored?</h3></summary>
@@ -222,7 +248,7 @@
           </details>
           <details>
             <summary><h3>Is my data private?</h3></summary>
-            <div class="answer"><p>Your documents are private unless you create a read-only share link. Hashlite sets no cookies and has no tracking, analytics or ads.</p></div>
+            <div class="answer"><p>Your documents are private unless you create a read-only share link. Hashlite uses no tracking cookies and has no analytics or ads.</p></div>
           </details>
         </div>
       </section>
@@ -241,5 +267,7 @@
         </nav>
       </div>
     </footer>
+    <script type="module" src="/src/site.js"></script>
+    <script type="module" src="/src/landing.js"></script>
   </body>
 </html>

@@ -120,3 +120,17 @@ Accounts and documents moved from the built-in SQLite server to the Supabase pro
 - **Images:** stored in Supabase Storage.
 - **Hosting:** the site is static files (Netlify, Cloudflare Pages or Vercel). The Node server, Docker image and SQLite code were removed; they are in git history.
 - **Deviation from the plan:** creating a Supabase development branch kept timing out, so the migrations were applied to the new, empty HASHLITE project directly and tested there with temporary SQL test users, which were removed afterwards.
+
+## Simpler UI, try-it editor, storage notice, styled emails (2026-09-25)
+
+- **Simpler editor UI:**
+  - The top bar has one button less: the colour themes moved into the ⋯ menu ("Theme…").
+  - The formatting toolbar keeps the ten most used buttons. Strikethrough, inline code, image link, math and horizontal rule still work with their shortcuts and Markdown.
+  - The status bar no longer shows the cursor position, and "Save version now" lives only in the history panel (and on Ctrl/⌘+S).
+- **Editor on the home page:** the screenshot became a live editor with a preview that works without an account.
+  - The text is kept in the browser.
+  - **Save** opens /app with the sign-up form and "Create a free account to save the document you started". Signing in works too.
+  - After sign-in the text becomes a document in the account and opens.
+  - The renderer loads after the page, so the first paint stays plain HTML.
+- **Storage notice:** a small one-time notice on every page. Hashlite has no tracking cookies and only stores what it needs (sign-in session, drafts, preferences), so it informs rather than asks for consent. The privacy page says the same.
+- **Styled emails:** Hashlite-styled templates for Supabase Auth are in `supabase/templates/`. They are pasted into the Supabase dashboard, because the Supabase tools can't set Auth templates.

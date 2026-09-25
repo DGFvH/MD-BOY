@@ -27,8 +27,12 @@ export async function viaNode(route) {
 }
 
 export const test = base.extend({
-  context: async ({ context }, use) => {
+  // The storage notice is dismissed up front, so it never covers what a test clicks.
+  // test.use({ storageNotice: true }) shows it.
+  storageNotice: [false, { option: true }],
+  context: async ({ context, storageNotice }, use) => {
     if (PROXIED) await context.route(/^https:\/\/[a-z0-9]+\.supabase\.co\//, viaNode);
+    if (!storageNotice) await context.addInitScript(() => localStorage.setItem('hashlite:notice', '1'));
     await use(context);
   },
 });

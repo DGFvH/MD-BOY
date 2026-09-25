@@ -17,6 +17,9 @@ import { WELCOME_TITLE, WELCOME_CONTENT } from './welcome.js';
 import { pageTitle } from './brand.js';
 import { showAuth, showNewPassword } from './app/auth.js';
 import { showAccount } from './app/account.js';
+import { pendingGuestDraft, clearGuestDraft } from './guest.js';
+import { frontMatterTitle } from './render/front-matter.js';
+import { showStorageNotice } from './consent.js';
 
 const root = document.getElementById('app');
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -95,12 +98,33 @@ async function welcomeOnce(u) {
   }
 }
 
+// Text written in the editor on the home page, which the visitor chose to save: it becomes
+// a document in their account and opens first.
+async function claimGuestDraft() {
+  const draft = pendingGuestDraft();
+  if (!draft) return;
+  try {
+    const title = frontMatterTitle(draft.content) || /^#{1,6}\s+(.+)$/m.exec(draft.content)?.[1].trim() || 'Untitled';
+    const { document: doc } = await api.createDoc({ title: title.slice(0, 200), content: draft.content });
+    clearGuestDraft();
+    history.replaceState(null, '', `#/doc/${doc.id}`);
+  } catch {
+    // Kept for the next sign-in.
+  }
+}
+
+async function afterSignIn(u) {
+  await welcomeOnce(u);
+  await claimGuestDraft();
+}
+
 api.onPasswordRecovery(() => showNewPassword());
+showStorageNotice();
 
 async function boot() {
   try {
     ({ user } = await api.me());
-    await welcomeOnce(user);
+    await afterSignIn(user);
     mountApp();
   } catch (err) {
     if (err.status === 401) openAuth();
@@ -120,7 +144,7 @@ function openAuth(opts = {}) {
     ...opts,
     onSignedIn: async (signedIn) => {
       user = signedIn;
-      await welcomeOnce(signedIn);
+      await afterSignIn(signedIn);
       mountApp();
     },
   });
@@ -214,12 +238,10 @@ function createApp() {
   };
   const outlineBtn = iconButton('list', 'Outline', () => togglePanel('outline'), { class: 'icon-btn desktop-only' });
   const historyBtn = iconButton('history', 'Version history', () => togglePanel('history'));
-  const themeItems = (suffix = '') => {
+  const themeItems = () => {
     const cur = currentTheme();
-    return THEMES.map((t) => ({ label: `${t.label}${suffix}`, icon: t.icon, checked: cur === t.id, onClick: () => setTheme(t.id) }));
+    return THEMES.map((t) => ({ label: t.label, icon: t.icon, checked: cur === t.id, onClick: () => setTheme(t.id) }));
   };
-  // On phones the theme choices are in the ⋯ menu instead, to leave room for the title.
-  const themeBtn = iconButton('auto', 'Theme', (e) => showMenu(e.currentTarget, themeItems()), { class: 'icon-btn desktop-only' });
   const moreBtn = iconButton('more', 'More actions', (e) => showMenu(e.currentTarget, moreMenuItems()));
   const menuBtn = iconButton('menu', 'Show sidebar', () => {
     if (mobileQuery.matches) setMobileSidebar(true);
@@ -229,14 +251,13 @@ function createApp() {
   const topbar = h('header', { class: 'topbar' },
     menuBtn, titleInput, saveStatus, resolveBtn,
     h('div', { class: 'segmented', role: 'group', 'aria-label': 'View' }, viewButtons.edit, viewButtons.split, viewButtons.preview),
-    h('span', { class: 'divider desktop-only' }), outlineBtn, historyBtn, themeBtn, moreBtn);
+    outlineBtn, historyBtn, moreBtn);
 
   const tb = (icon, label, cmd) => iconButton(icon, label, () => editor.run(cmd));
   const toolbar = h('div', { class: 'toolbar', role: 'toolbar', 'aria-label': 'Formatting' },
     tb('heading', 'Heading (cycle H1–H3)', commands.cycleHeading),
     tb('bold', `Bold (${MOD}+B)`, commands.bold),
     tb('italic', `Italic (${MOD}+I)`, commands.italic),
-    tb('strike', `Strikethrough (${MOD}+Shift+X)`, commands.strike),
     h('span', { class: 'sep' }),
     tb('ul', `Bulleted list (${MOD}+Shift+8)`, commands.ul),
     tb('ol', `Numbered list (${MOD}+Shift+7)`, commands.ol),
@@ -244,13 +265,9 @@ function createApp() {
     tb('quote', 'Quote', commands.quote),
     h('span', { class: 'sep' }),
     tb('link', `Link (${MOD}+K)`, commands.link),
-    tb('image', 'Image link', commands.image),
-    tb('upload', 'Upload image (or paste / drop one)', commands.uploadImage),
-    tb('code', `Inline code (${MOD}+E)`, commands.code),
+    tb('upload', 'Image (or paste / drop one)', commands.uploadImage),
     tb('codeBlock', `Code block (${MOD}+Shift+K)`, commands.codeBlock),
-    tb('table', 'Table', commands.table),
-    tb('math', 'Math', commands.math),
-    tb('hr', 'Horizontal rule', commands.hr));
+    tb('table', 'Table', commands.table));
 
   // The toolbar is one Tab stop; the arrow keys, Home and End move between its buttons.
   const toolButtons = [...toolbar.querySelectorAll('.icon-btn')];
@@ -277,9 +294,8 @@ function createApp() {
   const workspace = h('div', { class: 'workspace', 'data-view': prefs.view }, editorPane, previewPane, sidePanel);
 
   const statWords = h('span');
-  const statCursor = h('span', { class: 'hide-sm' });
   const statUpdated = h('span', { class: 'hide-sm' });
-  const statusbar = h('footer', { class: 'statusbar' }, statWords, h('span', { class: 'spacer' }), statUpdated, statCursor);
+  const statusbar = h('footer', { class: 'statusbar' }, statWords, h('span', { class: 'spacer' }), statUpdated);
 
   const emptyTitle = h('h2', {}, 'No document open');
   const emptyText = h('p', {}, 'Pick a document from the sidebar, or start a new one.');
@@ -332,9 +348,6 @@ function createApp() {
     onScroll: () => {
       syncFrom('editor');
       scheduleOutlineActive();
-    },
-    onCursor: ({ line, col, selected }) => {
-      statCursor.textContent = `Ln ${line}, Col ${col}${selected ? ` (${selected} selected)` : ''}`;
     },
   });
   editor.setLineNumbers(prefs.lineNumbers);
@@ -1442,8 +1455,6 @@ function createApp() {
     const items = [];
     if (doc) {
       items.push(
-        { label: 'Save version now', icon: 'history', onClick: saveVersion },
-        'separator',
         { label: 'Download Markdown (.md)', icon: 'download', onClick: () => exportMarkdown(cleanTitle(doc.title), doc.content) },
         { label: 'Download HTML (.html)', icon: 'download', onClick: downloadHtml },
         { label: 'Print / Save as PDF', icon: 'printer', onClick: printDoc },
@@ -1452,8 +1463,8 @@ function createApp() {
       );
     }
     items.push({ label: 'Import Markdown files…', icon: 'upload', onClick: importFiles }, 'separator');
-    if (mobileQuery.matches) items.push(...themeItems(' theme'), 'separator'); // the theme button is desktop-only
     items.push(
+      { label: 'Theme…', icon: THEMES.find((t) => t.id === currentTheme()).icon, onClick: () => showMenu(moreBtn, themeItems()) },
       { label: 'Line numbers', checked: p.lineNumbers, onClick: () => editor.setLineNumbers(setPref('lineNumbers', !p.lineNumbers).lineNumbers) },
       { label: 'Sync scrolling', checked: p.syncScroll, onClick: () => setPref('syncScroll', !p.syncScroll) },
       { label: 'Keyboard shortcuts', onClick: showShortcuts },
@@ -1679,7 +1690,6 @@ function createApp() {
   }
 
   function onThemeChange() {
-    themeBtn.innerHTML = icons[THEMES.find((t) => t.id === currentTheme()).icon];
     if (!printing) preview.rerender();
   }
 
