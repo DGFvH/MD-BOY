@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to Convert Markdown to PDF (3 Ways) | Hashmark</title>
+    <meta name="description" content="Convert Markdown to PDF in your browser with Hashmark, on the command line with pandoc, or in VS Code. Step-by-step, with the exact commands and common fixes." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/learn/markdown-to-pdf" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashmark" />
+    <meta property="og:title" content="How to convert Markdown to PDF" />
+    <meta property="og:description" content="Convert Markdown to PDF in your browser with Hashmark, on the command line with pandoc, or in VS Code. Step-by-step, with the exact commands and common fixes." />
+    <meta property="og:url" content="%PUBLIC_URL%/learn/markdown-to-pdf" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How to convert Markdown to PDF" />
+    <meta name="twitter:description" content="Convert Markdown to PDF in your browser with Hashmark, on the command line with pandoc, or in VS Code. Step-by-step, with the exact commands and common fixes." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "HowTo",
+            "name": "How to convert Markdown to PDF",
+            "description": "Convert Markdown to PDF in your browser with Hashmark, on the command line with pandoc, or in VS Code. Step-by-step, with the exact commands and common fixes.",
+            "url": "%PUBLIC_URL%/learn/markdown-to-pdf",
+            "image": "%PUBLIC_URL%/og.png",
+            "inLanguage": "en",
+            "tool": [
+              {
+                "@type": "HowToTool",
+                "name": "A web browser"
+              }
+            ],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Open your document",
+                "text": "Open the Hashmark editor and create a document, or import an existing .md file from the ⋯ menu with Import Markdown files.",
+                "url": "%PUBLIC_URL%/learn/markdown-to-pdf#hashmark"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Check the preview",
+                "text": "Tables, code, math and diagrams in the preview are printed as you see them.",
+                "url": "%PUBLIC_URL%/learn/markdown-to-pdf#hashmark"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Choose Print / Save as PDF",
+                "text": "Open the ⋯ (More actions) menu and choose Print / Save as PDF, or press Ctrl+P (⌘P on a Mac).",
+                "url": "%PUBLIC_URL%/learn/markdown-to-pdf#hashmark"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Save as PDF",
+                "text": "In the print dialog, pick Save as PDF as the destination and click Save.",
+                "url": "%PUBLIC_URL%/learn/markdown-to-pdf#hashmark"
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Learn",
+                "item": "%PUBLIC_URL%/learn"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "How to convert Markdown to PDF",
+                "item": "%PUBLIC_URL%/learn/markdown-to-pdf"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/learn" aria-current="page">Learn</a></li>
+            <li><a class="nav-cta" href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="container narrow prose">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/learn">Learn</a></li><li aria-current="page">How to convert Markdown to PDF</li></ol></nav>
+        <div class="page-head">
+          <h1>How to convert Markdown to PDF</h1>
+          <p>The quickest way is to open the file in an editor with a preview and print it to PDF. For scripts and batch jobs, use pandoc.</p>
+        </div>
+<h2 id="hashmark">In the browser with Hashmark</h2>
+        <p>No install needed, and math and Mermaid diagrams come out rendered.</p>
+        <ol>
+          <li><strong>Open your document.</strong> Open the <a href="/app">Hashmark editor</a> and create a document, or import an existing .md file from the ⋯ menu with Import Markdown files.</li>
+          <li><strong>Check the preview.</strong> Tables, code, math and diagrams in the preview are printed as you see them.</li>
+          <li><strong>Choose Print / Save as PDF.</strong> Open the ⋯ (More actions) menu and choose Print / Save as PDF, or press Ctrl+P (⌘P on a Mac).</li>
+          <li><strong>Save as PDF.</strong> In the print dialog, pick Save as PDF as the destination and click Save.</li>
+        </ol>
+        <p>Hashmark always prints in the light theme and avoids splitting code blocks, table rows and diagrams across pages. To remove the date and URL at the top and bottom of each page, turn off <strong>Headers and footers</strong> in the print dialog's settings.</p>
+        <p>Need a file to print later or on another computer? Choose <strong>⋯ › Download HTML (.html)</strong>. The file is self-contained and works offline; open it in any browser and print it to PDF the same way.</p>
+
+        <h2 id="pandoc">On the command line with pandoc</h2>
+        <p><a href="https://pandoc.org">Pandoc</a> converts between document formats. The basic command:</p>
+        <pre><code>pandoc notes.md -o notes.pdf</code></pre>
+        <p>By default pandoc typesets the PDF with LaTeX, so you also need a LaTeX distribution such as TeX Live (Linux, macOS) or MiKTeX (Windows). Useful variations:</p>
+        <pre><code># Better Unicode and system fonts
+pandoc notes.md -o notes.pdf --pdf-engine=xelatex
+
+# Smaller margins and a table of contents
+pandoc notes.md -o notes.pdf -V geometry:margin=2cm --toc
+
+# No LaTeX: render through HTML instead
+pandoc notes.md -o notes.pdf --pdf-engine=wkhtmltopdf</code></pre>
+        <p>The last one needs <code>wkhtmltopdf</code> installed; <code>--pdf-engine=weasyprint</code> is another HTML-based option. LaTeX math works out of the box with pandoc; Mermaid diagrams need a filter, otherwise they appear as code.</p>
+
+        <h2 id="vscode">In VS Code</h2>
+        <ol>
+          <li>Install the <strong>Markdown PDF</strong> extension from the Extensions view.</li>
+          <li>Open your <code>.md</code> file.</li>
+          <li>Open the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, or <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and run <strong>Markdown PDF: Export (pdf)</strong>.</li>
+        </ol>
+        <p>The PDF is saved next to the Markdown file. The extension prints through Chromium, which it may download the first time you use it.</p>
+
+        <h2 id="compare">Which method to use</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Method</th><th>What you install</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td>Hashmark</td><td>Nothing</td><td>One-off documents, documents with diagrams</td></tr>
+            <tr><td>pandoc</td><td>pandoc and a LaTeX engine</td><td>Batch jobs, scripts, precise typesetting</td></tr>
+            <tr><td>VS Code</td><td>VS Code and an extension</td><td>Files you already edit in VS Code</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 id="problems">Common problems</h2>
+        <ul>
+          <li><strong>Images are missing.</strong> Use full <code>https://</code> URLs, or paths relative to the Markdown file. With pandoc, run it from the file's folder or pass <code>--resource-path</code>.</li>
+          <li><strong>Wide tables or code are cut off.</strong> Switch the print layout to landscape, or shorten long lines.</li>
+          <li><strong>You need a page break.</strong> When printing from a browser, insert <code>&lt;div style="break-after: page"&gt;&lt;/div&gt;</code> where the new page should start. With pandoc and LaTeX, use <code>\newpage</code>.</li>
+        </ul>
+
+        <div class="try"><p><strong>Try it in Hashmark:</strong> <a href="/app">open the free editor</a> and see the result as you type.</p></div>
+
+        <nav class="related" aria-labelledby="related-h">
+          <h2 id="related-h">Related</h2>
+          <ul>
+            <li><a href="/learn/markdown-tables">Markdown tables</a></li>
+            <li><a href="/learn/markdown-math-and-diagrams">Math and diagrams in Markdown</a></li>
+            <li><a href="/learn/markdown-vs-rich-text">Markdown vs rich text</a></li>
+            <li><a href="/guide">Markdown cheat sheet</a></li>
+          </ul>
+        </nav>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashmark</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

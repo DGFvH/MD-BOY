@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown vs Rich Text: Which Should You Use? | Hashmark</title>
+    <meta name="description" content="Markdown or rich text? Compare portability, version control, formatting control, collaboration and learning curve, and learn when each one is the better choice." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/learn/markdown-vs-rich-text" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashmark" />
+    <meta property="og:title" content="Markdown vs rich text" />
+    <meta property="og:description" content="Markdown or rich text? Compare portability, version control, formatting control, collaboration and learning curve, and learn when each one is the better choice." />
+    <meta property="og:url" content="%PUBLIC_URL%/learn/markdown-vs-rich-text" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Markdown vs rich text" />
+    <meta name="twitter:description" content="Markdown or rich text? Compare portability, version control, formatting control, collaboration and learning curve, and learn when each one is the better choice." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "TechArticle",
+            "headline": "Markdown vs rich text",
+            "description": "Markdown or rich text? Compare portability, version control, formatting control, collaboration and learning curve, and learn when each one is the better choice.",
+            "url": "%PUBLIC_URL%/learn/markdown-vs-rich-text",
+            "image": "%PUBLIC_URL%/og.png",
+            "inLanguage": "en",
+            "datePublished": "2026-09-25",
+            "dateModified": "2026-09-25",
+            "author": {
+              "@type": "Organization",
+              "name": "Hashmark"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Hashmark"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashmark",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Learn",
+                "item": "%PUBLIC_URL%/learn"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown vs rich text",
+                "item": "%PUBLIC_URL%/learn/markdown-vs-rich-text"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/learn" aria-current="page">Learn</a></li>
+            <li><a class="nav-cta" href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="container narrow prose">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/learn">Learn</a></li><li aria-current="page">Markdown vs rich text</li></ol></nav>
+        <div class="page-head">
+          <h1>Markdown vs rich text</h1>
+          <p>Use Markdown when text must stay portable, live in version control or end up on the web. Use rich text when page layout matters or your collaborators expect a word processor.</p>
+        </div>
+<h2 id="difference">The difference</h2>
+        <p><strong>Markdown</strong> is plain text with a few symbols for formatting. You type <code>**bold**</code> and a preview shows <strong>bold</strong>; the file itself stays readable in any text editor.</p>
+        <p><strong>Rich text</strong> (Word, Google Docs, most email and note apps) stores formatting in the document format. You select text and click <strong>B</strong>; what you see is what you get, but the file needs an app that understands its format.</p>
+        <pre><code># Meeting notes
+
+- **Decision:** ship on Friday
+- Owner: [Sam](mailto:sam@example.com)</code></pre>
+
+        <h2 id="comparison">Comparison</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th></th><th>Markdown</th><th>Rich text</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Portability</th><td>A <code>.md</code> file opens anywhere and converts to HTML, PDF or Word.</td><td>Tied to a format (<code>.docx</code>, Google Docs); copying between apps can lose formatting.</td></tr>
+            <tr><th scope="row">Version control</th><td>Line-by-line diffs in Git; easy to review and merge.</td><td>Binary or app-specific; relies on the app's own history.</td></tr>
+            <tr><th scope="row">Formatting control</th><td>Structure only: headings, lists, tables, code. No fonts, colours or page layout.</td><td>Full control over fonts, colours, spacing and page layout.</td></tr>
+            <tr><th scope="row">Collaboration</th><td>Through Git and pull requests, or by sharing files and links.</td><td>Real-time co-editing, comments and suggestions built in.</td></tr>
+            <tr><th scope="row">Learning curve</th><td>A dozen symbols; the basics take minutes, with a <a href="/guide">cheat sheet</a> at hand.</td><td>None for basic use; everyone knows the toolbar.</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 id="use-markdown">Choose Markdown for</h2>
+        <ul>
+          <li>READMEs, documentation and wikis, especially next to code.</li>
+          <li>Notes you want to keep for years without depending on one app.</li>
+          <li>Content published to the web: blogs, static sites, knowledge bases.</li>
+          <li>Technical writing with code, <a href="/learn/markdown-math-and-diagrams">math or diagrams</a>.</li>
+        </ul>
+
+        <h2 id="use-rich-text">Choose rich text for</h2>
+        <ul>
+          <li>Documents where the printed layout matters: letters, contracts, brochures.</li>
+          <li>Teams who co-edit in real time and do not use Git.</li>
+          <li>Documents with complex tables, merged cells or tracked changes.</li>
+        </ul>
+
+        <h2 id="both">Using both</h2>
+        <p>You don't have to choose once. Pandoc converts in both directions:</p>
+        <pre><code>pandoc notes.md -o notes.docx     # Markdown to Word
+pandoc report.docx -o report.md   # Word to Markdown</code></pre>
+        <p>Without tools, copy the rendered preview from a Markdown editor and paste it into Word or Google Docs: headings, lists, links and tables keep their formatting. To share a finished Markdown document, <a href="/learn/markdown-to-pdf">export it to PDF</a>.</p>
+
+        <div class="try"><p><strong>Try it in Hashmark:</strong> <a href="/app">open the free editor</a> and see the result as you type.</p></div>
+
+        <nav class="related" aria-labelledby="related-h">
+          <h2 id="related-h">Related</h2>
+          <ul>
+            <li><a href="/learn/markdown-to-pdf">How to convert Markdown to PDF</a></li>
+            <li><a href="/learn/markdown-tables">Markdown tables</a></li>
+            <li><a href="/learn/markdown-math-and-diagrams">Math and diagrams in Markdown</a></li>
+            <li><a href="/guide">Markdown cheat sheet</a></li>
+          </ul>
+        </nav>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashmark</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Math and Diagrams in Markdown: KaTeX and Mermaid | Hashmark</title>
+    <meta name="description" content="Write LaTeX math in Markdown with $ and $$, and draw flowcharts, sequence diagrams and Gantt charts with Mermaid code blocks. Examples you can copy and paste." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/learn/markdown-math-and-diagrams" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashmark" />
+    <meta property="og:title" content="Math and diagrams in Markdown" />
+    <meta property="og:description" content="Write LaTeX math in Markdown with $ and $$, and draw flowcharts, sequence diagrams and Gantt charts with Mermaid code blocks. Examples you can copy and paste." />
+    <meta property="og:url" content="%PUBLIC_URL%/learn/markdown-math-and-diagrams" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Math and diagrams in Markdown" />
+    <meta name="twitter:description" content="Write LaTeX math in Markdown with $ and $$, and draw flowcharts, sequence diagrams and Gantt charts with Mermaid code blocks. Examples you can copy and paste." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="module" src="/src/site.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "TechArticle",
+            "headline": "Math and diagrams in Markdown",
+            "description": "Write LaTeX math in Markdown with $ and $$, and draw flowcharts, sequence diagrams and Gantt charts with Mermaid code blocks. Examples you can copy and paste.",
+            "url": "%PUBLIC_URL%/learn/markdown-math-and-diagrams",
+            "image": "%PUBLIC_URL%/og.png",
+            "inLanguage": "en",
+            "datePublished": "2026-09-25",
+            "dateModified": "2026-09-25",
+            "author": {
+              "@type": "Organization",
+              "name": "Hashmark"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Hashmark"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashmark",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Learn",
+                "item": "%PUBLIC_URL%/learn"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Math and diagrams in Markdown",
+                "item": "%PUBLIC_URL%/learn/markdown-math-and-diagrams"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/learn" aria-current="page">Learn</a></li>
+            <li><a class="nav-cta" href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="container narrow prose">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/learn">Learn</a></li><li aria-current="page">Math and diagrams in Markdown</li></ol></nav>
+        <div class="page-head">
+          <h1>Math and diagrams in Markdown</h1>
+          <p>Write LaTeX between <code>$…$</code> for inline math and <code>$$…$$</code> for a block. Draw diagrams in a code block with the language <code>mermaid</code>. Neither is part of standard Markdown, but GitHub and Hashmark render both.</p>
+        </div>
+<section id="math">
+          <h2>Math with LaTeX</h2>
+          <p>Hashmark renders math with KaTeX, a fast renderer for the math part of LaTeX. Single dollar signs keep a formula in the line of text; double dollar signs put it on its own line.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>The area of a circle is $A = \pi r^2$.
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>The area of a circle is <span class="katex"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mi>π</mi><msup><mi>r</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">A = \pi r^2</annotation></semantics></math></span></span>.</p>
+<p class="katex-block"><span class="katex"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>x</mi><mo>=</mo><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><mrow><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></mrow></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</annotation></semantics></math></span></span></p></div>
+            </figure>
+          </div>
+          <h3 id="math-examples">Common formulas</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>What</th><th>LaTeX</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Superscript, subscript</td><td><code>x^2, \; a_i</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup><mo separator="true">,</mo><mtext>  </mtext><msub><mi>a</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x^2, \; a_i</annotation></semantics></math></span></td></tr>
+              <tr><td>Fraction</td><td><code>\frac{a+b}{2}</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi>a</mi><mo>+</mo><mi>b</mi></mrow><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex">\frac{a+b}{2}</annotation></semantics></math></span></td></tr>
+              <tr><td>Square root</td><td><code>\sqrt{x^2 + y^2}</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{x^2 + y^2}</annotation></semantics></math></span></td></tr>
+              <tr><td>Sum</td><td><code>\sum_{i=1}^{n} i = \frac{n(n+1)}{2}</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><mi>i</mi><mo>=</mo><mfrac><mrow><mi>n</mi><mo stretchy="false">(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex">\sum_{i=1}^{n} i = \frac{n(n+1)}{2}</annotation></semantics></math></span></td></tr>
+              <tr><td>Integral</td><td><code>\int_0^1 x^2 \, dx = \frac{1}{3}</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mo>∫</mo><mn>0</mn><mn>1</mn></msubsup><msup><mi>x</mi><mn>2</mn></msup><mtext> </mtext><mi>d</mi><mi>x</mi><mo>=</mo><mfrac><mn>1</mn><mn>3</mn></mfrac></mrow><annotation encoding="application/x-tex">\int_0^1 x^2 \, dx = \frac{1}{3}</annotation></semantics></math></span></td></tr>
+              <tr><td>Greek letters</td><td><code>\alpha, \beta, \pi, \Delta</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo separator="true">,</mo><mi>β</mi><mo separator="true">,</mo><mi>π</mi><mo separator="true">,</mo><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\alpha, \beta, \pi, \Delta</annotation></semantics></math></span></td></tr>
+              <tr><td>Matrix</td><td><code>\begin{pmatrix} 1 &amp; 2 \\ 3 &amp; 4 \end{pmatrix}</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo fence="true">(</mo><mtable rowspacing="0.16em" columnalign="center center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>2</mn></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>3</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>4</mn></mstyle></mtd></mtr></mtable><mo fence="true">)</mo></mrow><annotation encoding="application/x-tex">\begin{pmatrix} 1 &amp; 2 \\ 3 &amp; 4 \end{pmatrix}</annotation></semantics></math></span></td></tr>
+              <tr><td>Cases</td><td><code>f(x) = \begin{cases} 1 &amp; x \ge 0 \\ 0 &amp; x &lt; 0 \end{cases}</code></td><td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mrow><mo fence="true">{</mo><mtable rowspacing="0.36em" columnalign="left left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>x</mi><mo>≥</mo><mn>0</mn></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>x</mi><mo>&lt;</mo><mn>0</mn></mrow></mstyle></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">f(x) = \begin{cases} 1 &amp; x \ge 0 \\ 0 &amp; x &lt; 0 \end{cases}</annotation></semantics></math></span></td></tr>
+            </tbody>
+          </table></div>
+          <ul>
+            <li>Write a literal dollar sign as <code>\$</code> when it could be read as math.</li>
+            <li>A <code>```math</code> code block also works as a math block on GitHub and in Hashmark.</li>
+            <li>KaTeX covers math only: <code>\usepackage</code> and document commands are not available.</li>
+          </ul>
+        </section>
+
+        <section id="diagrams">
+          <h2>Diagrams with Mermaid</h2>
+          <p>Mermaid turns a short text description into a diagram. Put it in a fenced code block with the language <code>mermaid</code>; editors that support it draw the diagram, others show the source.</p>
+          <h3 id="flowchart">Flowchart</h3>
+          <p><code>TD</code> draws top-down, <code>LR</code> left to right. Square brackets make a box, curly braces a decision.</p>
+          <pre><code>```mermaid
+flowchart TD
+    A[Write draft] --&gt; B{Reviewed?}
+    B -- Yes --&gt; C[Publish]
+    B -- No --&gt; A
+```</code></pre>
+          <h3 id="sequence">Sequence diagram</h3>
+          <p><code>-&gt;&gt;</code> is a request, <code>--&gt;&gt;</code> a reply.</p>
+          <pre><code>```mermaid
+sequenceDiagram
+    participant Browser
+    participant Server
+    Browser-&gt;&gt;Server: Save document
+    Server--&gt;&gt;Browser: Saved
+```</code></pre>
+          <h3 id="gantt">Gantt chart</h3>
+          <p>Each task has an optional id, a start (a date or <code>after</code> another task) and a duration.</p>
+          <pre><code>```mermaid
+gantt
+    title Docs release
+    dateFormat YYYY-MM-DD
+    section Writing
+    Draft       :a1, 2026-10-01, 5d
+    Review      :after a1, 3d
+    section Launch
+    Publish     :2026-10-09, 1d
+```</code></pre>
+          <p>Other types include <code>classDiagram</code>, <code>stateDiagram-v2</code>, <code>erDiagram</code>, <code>pie</code> and <code>mindmap</code>.</p>
+        </section>
+
+        <section id="support">
+          <h2>Where it works</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Platform</th><th>Math</th><th>Mermaid</th></tr></thead>
+            <tbody>
+              <tr><td>GitHub</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Hashmark</td><td>Yes (KaTeX)</td><td>Yes</td></tr>
+              <tr><td>GitLab</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Obsidian</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>VS Code preview</td><td>Yes</td><td>With an extension</td></tr>
+              <tr><td>Plain CommonMark</td><td>No</td><td>No</td></tr>
+            </tbody>
+          </table></div>
+          <p>Where it is not supported, math shows as the LaTeX source and a diagram as a code block, so the text still makes sense.</p>
+        </section>
+
+        <div class="try"><p><strong>Try it in Hashmark:</strong> <a href="/app">open the free editor</a> and see the result as you type.</p></div>
+
+        <nav class="related" aria-labelledby="related-h">
+          <h2 id="related-h">Related</h2>
+          <ul>
+            <li><a href="/learn/markdown-to-pdf">How to convert Markdown to PDF</a></li>
+            <li><a href="/learn/markdown-tables">Markdown tables</a></li>
+            <li><a href="/learn/markdown-vs-rich-text">Markdown vs rich text</a></li>
+            <li><a href="/guide">Markdown cheat sheet</a></li>
+          </ul>
+        </nav>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashmark</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -17,6 +17,11 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 | --- | --- | --- | --- |
 | `/` | free online markdown editor, markdown editor with live preview | markdown editor online, markdown preview, markdown to pdf/html, mermaid / math markdown editor, self-hosted markdown editor | Transactional: find a tool and start writing |
 | `/guide` | markdown cheat sheet | markdown syntax, markdown table, markdown task list, markdown footnote, markdown callout, markdown math | Informational: learn or look up syntax |
+| `/learn` | learn markdown | markdown tutorial, markdown guide | Informational hub |
+| `/learn/markdown-to-pdf` | markdown to pdf | convert markdown to pdf, pandoc markdown to pdf, vs code markdown pdf | Informational / task (HowTo) |
+| `/learn/markdown-tables` | markdown table | markdown table alignment, escape pipe in markdown table, markdown table line break, merge cells | Informational |
+| `/learn/markdown-math-and-diagrams` | markdown math, mermaid markdown | latex in markdown, katex markdown, mermaid flowchart / sequence / gantt, github math | Informational |
+| `/learn/markdown-vs-rich-text` | markdown vs rich text | markdown vs word, markdown vs google docs, why use markdown | Informational / comparison |
 | `/privacy` | hashmark privacy | — | Navigational / trust |
 | `/app` | — (noindex) | — | The app itself |
 | `/404.html` | — (noindex) | — | — |
@@ -32,8 +37,14 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 - [x] Real app screenshot (`public/screenshot.webp`, 1440×900, ~65 KB) with descriptive alt text
       and explicit width/height (no layout shift).
 - [x] JSON-LD: landing has `WebSite` + `SoftwareApplication` (free `Offer`, `featureList`,
-      `screenshot`) + `FAQPage` that mirrors the visible FAQ word for word; guide has `TechArticle`.
-- [x] Internal links: header, hero, footer and CTAs link `/`, `/guide`, `/privacy` and `/app`.
+      `screenshot`) + `FAQPage` that mirrors the visible FAQ word for word; guide has `TechArticle`;
+      `/learn` has `CollectionPage` + `BreadcrumbList`; each article has `TechArticle` (PDF article:
+      `HowTo` with the Hashmark steps) + `BreadcrumbList` (Home › Learn › Article).
+- [x] Short copy: hero is H1 + one line + one button; FAQ answers are at most two sentences.
+- [x] Learn articles open with a direct answer, use real copyable examples (`.pair` Markdown/result
+      blocks), end with one "Try it in Hashmark" link and a Related list (other articles + `/guide`).
+- [x] Internal links: header (Learn, Open editor) and footer (Learn, Cheat sheet, Privacy, Open
+      editor) on every page; the guide links to the tables and math articles.
 - [x] Semantic landmarks (`header`, `nav`, `main`, `footer`), skip link, visible focus, WCAG AA
       contrast, light/dark via `prefers-color-scheme`, no horizontal scroll at 360 px.
 - [x] `404.html` has `<meta name="robots" content="noindex">`.
@@ -46,9 +57,10 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
   `<link>`/`<meta>` lines containing it and replaces it with `""` inside JSON-LD, so no relative or
   wrong absolute URLs are published. **Set `PUBLIC_URL` in production** — canonical and social
   previews depend on it. Vite leaves the placeholder untouched in the build.
-- **Canonical URLs**: `/`, `/guide`, `/privacy` (no trailing slash, no `index.html`).
+- **Canonical URLs**: `/`, `/guide`, `/privacy`, `/learn`, `/learn/<slug>` (no trailing slash, no `index.html`).
 - **`robots.txt`**: allows the public pages, disallows `/api/`, `/app`, `/s/`, `/i/`, and points to the sitemap.
-- **`sitemap.xml`**: `/`, `/guide`, `/privacy` with absolute URLs from `PUBLIC_URL`.
+- **`sitemap.xml`**: `/`, `/guide`, `/privacy` and the `/learn` pages with absolute URLs from `PUBLIC_URL`
+  (the `/learn` pages must be listed in `server/site.js` and added as Vite inputs).
 - **`llms.txt`**: a plain-text summary of what Hashmark is, its features and key URLs, for LLM crawlers.
 - **noindex** (`X-Robots-Tag: noindex` or meta): `/app`, shared documents `/s/…` (user content,
   may be private-ish), `/api/…`, uploaded images `/i/…`.
@@ -59,10 +71,10 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 ## GEO tactics
 
 - **Answer-first copy**: the first sentence of the landing intro is a self-contained definition
-  ("Hashmark is a free online Markdown editor that…"). The guide opens with what Markdown is.
+  ("Hashmark is a free online Markdown editor with live preview…"). The guide and every `/learn`
+  article open with a one- or two-sentence answer.
 - **FAQ + `FAQPage` schema** with direct, factual answers to the questions people ask assistants.
 - **Factual feature list**: only real features, stated plainly (same list in HTML and JSON-LD).
-  Planned features are labelled "planned" (AI chat about your documents).
 - **Crawlable static HTML**: all content is in the HTML; no JavaScript is needed to read it.
 - **`llms.txt`** for LLM crawlers.
 - **Consistent naming**: always "Hashmark", always described as "free online Markdown editor".
@@ -70,7 +82,7 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 
 ## Performance / Core Web Vitals
 
-- Landing HTML ≈ 20 KB (≈ 4 KB brotli), shared CSS ≈ 19 KB (≈ 5 KB brotli). No web fonts, no
+- Landing HTML ≈ 13 KB, shared CSS ≈ 20 KB (≈ 4 KB brotli). No web fonts, no
   third-party requests, no JavaScript on `/`; the guide loads a tiny module for copy buttons.
 - LCP: the hero heading or the screenshot (`fetchpriority="high"`, WebP, explicit dimensions).
 - CLS ≈ 0: every image has width/height; no late-injected content.
@@ -86,8 +98,20 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 - [ ] GitHub README: one-line definition, screenshot, link to the hosted site; repo topics
       (`markdown-editor`, `markdown`, `self-hosted`).
 - [ ] Submit to awesome lists (awesome-markdown, awesome-selfhosted).
-- [ ] Write 2–3 useful articles, e.g. "Markdown to PDF", "Markdown tables", "Math in Markdown",
-      each linking to the guide and the app.
+
+## Content calendar
+
+Next `/learn` articles, one every two weeks. Same format: answer first, 400–800 words, real
+examples, `TechArticle` (or `HowTo`) + `BreadcrumbList`, Related list.
+
+| # | Article | Target query |
+| --- | --- | --- |
+| 1 | How to write a good README in Markdown | readme markdown template |
+| 2 | Markdown links and images: every syntax | markdown link / markdown image size |
+| 3 | Code blocks and syntax highlighting in Markdown | markdown code block |
+| 4 | Markdown callouts (GitHub alerts) | github markdown note / warning |
+| 5 | Markdown task lists and checklists | markdown checkbox |
+| 6 | Convert Word or Google Docs to Markdown | docx to markdown |
 
 ## How to measure
 

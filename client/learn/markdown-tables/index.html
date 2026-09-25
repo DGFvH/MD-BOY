@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown Tables: Syntax, Alignment and Examples | Hashmark</title>
+    <meta name="description" content="How to make a table in Markdown: pipes and dashes, column alignment with colons, escaping pipes, formatting inside cells, line breaks and merged cells in HTML." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/learn/markdown-tables" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashmark" />
+    <meta property="og:title" content="Markdown tables" />
+    <meta property="og:description" content="How to make a table in Markdown: pipes and dashes, column alignment with colons, escaping pipes, formatting inside cells, line breaks and merged cells in HTML." />
+    <meta property="og:url" content="%PUBLIC_URL%/learn/markdown-tables" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Markdown tables" />
+    <meta name="twitter:description" content="How to make a table in Markdown: pipes and dashes, column alignment with colons, escaping pipes, formatting inside cells, line breaks and merged cells in HTML." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="module" src="/src/site.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "TechArticle",
+            "headline": "Markdown tables",
+            "description": "How to make a table in Markdown: pipes and dashes, column alignment with colons, escaping pipes, formatting inside cells, line breaks and merged cells in HTML.",
+            "url": "%PUBLIC_URL%/learn/markdown-tables",
+            "image": "%PUBLIC_URL%/og.png",
+            "inLanguage": "en",
+            "datePublished": "2026-09-25",
+            "dateModified": "2026-09-25",
+            "author": {
+              "@type": "Organization",
+              "name": "Hashmark"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Hashmark"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashmark",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Learn",
+                "item": "%PUBLIC_URL%/learn"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown tables",
+                "item": "%PUBLIC_URL%/learn/markdown-tables"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/learn" aria-current="page">Learn</a></li>
+            <li><a class="nav-cta" href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="container narrow prose">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/learn">Learn</a></li><li aria-current="page">Markdown tables</li></ol></nav>
+        <div class="page-head">
+          <h1>Markdown tables</h1>
+          <p>A Markdown table is rows of cells separated by pipes (<code>|</code>), with a row of dashes under the header. Tables come from GitHub-flavoured Markdown and work on GitHub, GitLab, in Hashmark and in most modern editors.</p>
+        </div>
+<section id="syntax">
+          <h2>Basic syntax</h2>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>| Name  | Role     |
+| ----- | -------- |
+| Ada   | Engineer |
+| Grace | Admiral  |</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ada</td>
+<td>Engineer</td>
+</tr>
+<tr>
+<td>Grace</td>
+<td>Admiral</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+            </figure>
+          </div>
+          <ul>
+            <li>The first row is the header. It is required.</li>
+            <li>The second row is the delimiter row: at least one dash per column (three is common). It needs the same number of cells as the header.</li>
+            <li>The pipes at the start and end of a row are optional, and the columns do not have to line up.</li>
+            <li>Leave a blank line before and after the table.</li>
+          </ul>
+        </section>
+
+        <section id="alignment">
+          <h2>Column alignment</h2>
+          <p>Colons in the delimiter row set the alignment: <code>:---</code> left, <code>:---:</code> center, <code>---:</code> right. Right-align columns of numbers so the digits line up.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>| Item   | Qty | Price |
+| :----- | :-: | ----: |
+| Coffee |  2  |  3.50 |
+| Bagel  |  1  | 12.25 |</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Item</th>
+<th style="text-align:center">Qty</th>
+<th style="text-align:right">Price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Coffee</td>
+<td style="text-align:center">2</td>
+<td style="text-align:right">3.50</td>
+</tr>
+<tr>
+<td style="text-align:left">Bagel</td>
+<td style="text-align:center">1</td>
+<td style="text-align:right">12.25</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="formatting">
+          <h2>Formatting inside cells</h2>
+          <p>Inline Markdown works in cells: bold, italic, <code>code</code>, links and images. Block elements such as lists, headings and code blocks do not.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>| Feature   | Status        |
+| --------- | ------------- |
+| **Login** | ~~Beta~~ Done |
+| `export`  | [Docs](/guide) |</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Login</strong></td>
+<td><s>Beta</s> Done</td>
+</tr>
+<tr>
+<td><code>export</code></td>
+<td><a href="/guide">Docs</a></td>
+</tr>
+</tbody>
+</table>
+</div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="escaping">
+          <h2>Escaping pipes</h2>
+          <p>A pipe inside a cell ends the cell. Write <code>\|</code> to show a literal pipe; this also works inside inline code.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>| Operator | Meaning     |
+| -------- | ----------- |
+| `a \|\| b` | logical OR  |
+| x \| y    | a pipe      |</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a || b</code></td>
+<td>logical OR</td>
+</tr>
+<tr>
+<td>x | y</td>
+<td>a pipe</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="line-breaks">
+          <h2>Line breaks in a cell</h2>
+          <p>Each row must stay on one line. For a line break inside a cell, use the HTML tag <code>&lt;br&gt;</code>.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>| Step | Notes                        |
+| ---- | ---------------------------- |
+| 1    | Install&lt;br&gt;Then restart      |</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Install<br>Then restart</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="merged-cells">
+          <h2>Merged cells</h2>
+          <p>Markdown has no syntax for merged cells. Where HTML is allowed (GitHub, Hashmark and most editors), write an HTML table and use <code>colspan</code> or <code>rowspan</code>.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>&lt;table&gt;
+  &lt;tr&gt;&lt;th&gt;Quarter&lt;/th&gt;&lt;th colspan="2"&gt;Sales&lt;/th&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td rowspan="2"&gt;Q1&lt;/td&gt;&lt;td&gt;Jan&lt;/td&gt;&lt;td&gt;120&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;Feb&lt;/td&gt;&lt;td&gt;135&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+  <tr><th>Quarter</th><th colspan="2">Sales</th></tr>
+  <tr><td rowspan="2">Q1</td><td>Jan</td><td>120</td></tr>
+  <tr><td>Feb</td><td>135</td></tr>
+</table></div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="tips">
+          <h2>Tips</h2>
+          <ul>
+            <li><strong>Don't align by hand.</strong> Spacing is ignored, so only line columns up if it helps you read the source.</li>
+            <li><strong>No header wanted?</strong> Leave the header cells empty: <code>| | |</code> followed by <code>|---|---|</code>.</li>
+            <li><strong>Keep cells short.</strong> Long text makes tables scroll on phones; put details in a list below the table.</li>
+            <li><strong>Empty cell?</strong> Just leave it blank between two pipes. Missing cells at the end of a row are filled in as empty.</li>
+          </ul>
+        </section>
+
+        <div class="try"><p><strong>Try it in Hashmark:</strong> <a href="/app">open the free editor</a> and see the result as you type.</p></div>
+
+        <nav class="related" aria-labelledby="related-h">
+          <h2 id="related-h">Related</h2>
+          <ul>
+            <li><a href="/learn/markdown-to-pdf">How to convert Markdown to PDF</a></li>
+            <li><a href="/learn/markdown-math-and-diagrams">Math and diagrams in Markdown</a></li>
+            <li><a href="/learn/markdown-vs-rich-text">Markdown vs rich text</a></li>
+            <li><a href="/guide">Markdown cheat sheet</a></li>
+          </ul>
+        </nav>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashmark</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

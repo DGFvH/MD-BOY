@@ -50,24 +50,15 @@
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "featureList": [
               "Live preview with split view and synced scrolling",
-              "Automatic saving to the server plus a local draft",
-              "Folders with drag and drop",
-              "Full-text search",
-              "Trash with restore",
+              "Automatic saving with a local offline draft",
               "Version history with preview and restore",
-              "Conflict protection across tabs and devices",
-              "GitHub-flavoured Markdown: tables, task lists, footnotes, autolinks",
-              "Syntax highlighting",
+              "Folders, full-text search and trash",
+              "GitHub-flavoured Markdown: tables, task lists, footnotes",
               "KaTeX math",
               "Mermaid diagrams",
-              "Callouts, highlights, emoji shortcodes and YAML front matter",
-              "Images by paste, drop or upload",
-              "Read-only share links",
-              "Import .md files",
-              "Export to .md, standalone HTML, print/PDF and .zip",
-              "Light and dark theme",
-              "Keyboard shortcuts and keyboard accessible",
-              "Open source and self-hostable with Node.js, SQLite and Docker"
+              "Syntax highlighting",
+              "Export to .md, standalone HTML, PDF and .zip",
+              "Read-only share links"
             ]
           },
           {
@@ -76,42 +67,42 @@
               {
                 "@type": "Question",
                 "name": "Is Hashmark free?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Hashmark is free to use and has no ads. It is also open source, so you can run your own copy." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Hashmark is free, has no ads and is open source." }
               },
               {
                 "@type": "Question",
                 "name": "Do I need an account?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Yes, you sign up with an email address and a password. The account is what lets Hashmark save your documents and give you the same documents on every device." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes, you sign up with an email address and a password. The account keeps your documents in sync on every device." }
               },
               {
                 "@type": "Question",
                 "name": "Where are my documents stored?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Documents are saved automatically to the Hashmark server as you type. Your browser also keeps a local draft, so an edit is not lost if the connection drops. Version history keeps earlier versions you can preview and restore." }
+                "acceptedAnswer": { "@type": "Answer", "text": "On the Hashmark server, saved as you type, with a local draft in your browser as a backup. Version history lets you restore earlier versions." }
               },
               {
                 "@type": "Question",
                 "name": "Can I export to PDF or HTML?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can export a document as a .md file or as a standalone HTML file that works offline, print it or save it as PDF from the print dialog, and download all your documents at once as a .zip." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Download a document as .md or standalone HTML, print it or save it as PDF, or download everything as a .zip." }
               },
               {
                 "@type": "Question",
                 "name": "Does it support math and diagrams?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Write LaTeX math between $ or $$ and it is rendered with KaTeX. Write a Mermaid diagram in a mermaid code block and it is drawn in the preview. Tables, task lists, footnotes, callouts and syntax highlighting are supported too." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. LaTeX math between $ or $$ is rendered with KaTeX, and mermaid code blocks are drawn as diagrams." }
               },
               {
                 "@type": "Question",
                 "name": "Can I use it offline?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Partly. If your connection drops while you write, Hashmark keeps a local draft in your browser and saves it to the server when you are back online. Opening the app and signing in needs a connection." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Partly. If your connection drops, your edits are kept as a local draft and saved when you are back online." }
               },
               {
                 "@type": "Question",
                 "name": "Can I self-host it?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Hashmark is open source and runs on Node.js with SQLite. You can run it directly or with Docker on your own server." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Hashmark is open source and runs on Node.js with SQLite, directly or with Docker." }
               },
               {
                 "@type": "Question",
                 "name": "Is my data private?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Your documents are private to your account unless you create a read-only share link. Hashmark uses one session cookie to keep you signed in, and has no tracking, no analytics and no ads. You can export everything or delete your account at any time." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Your documents are private unless you create a read-only share link. Hashmark uses one session cookie and has no tracking, analytics or ads." }
               }
             ]
           }
@@ -126,8 +117,7 @@
         <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
         <nav class="site-nav" aria-label="Main">
           <ul>
-            <li class="hide-xs"><a href="/guide">Cheat sheet</a></li>
-            <li class="hide-sm"><a href="#faq">FAQ</a></li>
+            <li class="hide-xs"><a href="/learn">Learn</a></li>
             <li><a class="nav-cta" href="/app">Open editor</a></li>
           </ul>
         </nav>
@@ -137,13 +127,11 @@
     <main id="main">
       <section class="hero" aria-labelledby="title">
         <div class="container">
-          <h1 id="title">Hashmark – a free online Markdown editor with live preview</h1>
-          <p class="tagline">Write Markdown. See it live. Keep it safe.</p>
+          <h1 id="title">Free online Markdown editor</h1>
+          <p class="tagline">Write Markdown. See it live.</p>
           <div class="actions">
-            <a class="btn btn-primary" href="/app">Start writing — it's free</a>
-            <a class="btn btn-secondary" href="/guide">Markdown cheat sheet</a>
+            <a class="btn btn-primary" href="/app">Start writing</a>
           </div>
-          <p class="note">No ads. Works in your browser on desktop and phone.</p>
           <div class="shot">
             <img
               src="/screenshot.webp"
@@ -159,174 +147,96 @@
       <section class="section" aria-labelledby="what">
         <div class="container intro">
           <h2 id="what">What is Hashmark?</h2>
-          <p class="lead">
-            Hashmark is a free online Markdown editor that shows a live preview as you type and saves your documents
-            automatically to your account. It runs in any modern browser on desktop and phone, supports
-            GitHub-flavoured Markdown with math and diagrams, and exports to Markdown, HTML, PDF or a .zip of everything.
-          </p>
-          <p>
-            It is built for notes, documentation, READMEs, meeting minutes and anything else you would rather write in
-            plain text. Hashmark is open source and can be self-hosted with Node.js and SQLite.
-          </p>
+          <p class="lead">Hashmark is a free online Markdown editor with live preview. It saves as you type, handles math and diagrams, and exports to HTML or PDF.</p>
         </div>
       </section>
 
       <section class="section alt" aria-labelledby="features">
         <div class="container">
-          <div class="section-head">
-            <h2 id="features">Everything you need to write in Markdown</h2>
-            <p>A focused editor with the features you actually use, and nothing in your way.</p>
-          </div>
-          <ul class="grid grid-3">
+          <h2 id="features">Features</h2>
+          <ul class="grid">
             <li class="card">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M12 4v16" /></svg></span>
               <h3>Live preview</h3>
-              <p>Split view with synced scrolling, or switch to editor-only or preview-only. Toolbar and keyboard shortcuts included.</p>
-            </li>
-            <li class="card">
-              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10" /></svg></span>
-              <h3>Autosave you can trust</h3>
-              <p>Every change is saved to the server automatically, with a local draft in your browser so nothing is lost if you go offline.</p>
+              <p>Split view with synced scrolling as you type.</p>
             </li>
             <li class="card">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2" /><circle cx="12" cy="12" r="9" /></svg></span>
-              <h3>Version history</h3>
-              <p>Automatic and manual versions you can preview and restore. Editing in two tabs or devices? Both versions are kept.</p>
+              <h3>Autosave and history</h3>
+              <p>Saved as you type. Restore any earlier version.</p>
             </li>
             <li class="card">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg></span>
-              <h3>Folders, search and trash</h3>
-              <p>Organise documents in folders with drag and drop, find anything with full-text search, and restore from the trash.</p>
+              <h3>Folders and search</h3>
+              <p>Drag and drop folders, full-text search, trash.</p>
             </li>
             <li class="card">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h4L18 5l-4-0L4 19zM14 5l4 4" /><path d="M13 19h7" /></svg></span>
               <h3>GitHub-flavoured Markdown</h3>
-              <p>Tables, task lists you can tick in the preview, footnotes, autolinks, callouts, ==highlights==, :emoji: and YAML front matter.</p>
+              <p>Tables, task lists, footnotes and callouts.</p>
             </li>
             <li class="card">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h6M4 12h4M4 18h6" /><circle cx="17" cy="7" r="3" /><circle cx="17" cy="17" r="3" /><path d="M17 10v4" /></svg></span>
-              <h3>Math, diagrams and code</h3>
-              <p>KaTeX math, Mermaid diagrams and syntax highlighting for code blocks, all rendered live in the preview.</p>
-            </li>
-            <li class="card">
-              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-8 8" /></svg></span>
-              <h3>Images made easy</h3>
-              <p>Paste, drop or upload an image and Hashmark inserts the Markdown for you.</p>
+              <h3>Math, diagrams, code</h3>
+              <p>KaTeX, Mermaid and syntax highlighting.</p>
             </li>
             <li class="card">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 21h14" /></svg></span>
-              <h3>Import, export and share</h3>
-              <p>Import .md files. Export as .md, standalone offline HTML or PDF, download everything as .zip, or share a read-only link.</p>
+              <h3>Export and share</h3>
+              <p>.md, HTML, PDF or .zip, and read-only links.</p>
             </li>
-            <li class="card">
-              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z" /></svg></span>
-              <h3>Light, dark and accessible</h3>
-              <p>Light and dark themes, fully keyboard accessible, and comfortable on a phone as well as a large screen.</p>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="how">
-        <div class="container">
-          <div class="section-head">
-            <h2 id="how">How it works</h2>
-          </div>
-          <ol class="steps">
-            <li>
-              <h3>Create a free account</h3>
-              <p>Sign up with your email address and a password. There is nothing to install.</p>
-            </li>
-            <li>
-              <h3>Write in Markdown</h3>
-              <p>Type on the left and see the formatted result on the right. Use the toolbar if you don't know the syntax yet.</p>
-            </li>
-            <li>
-              <h3>Keep, share or export</h3>
-              <p>Your work is saved automatically. Share a read-only link, or export to HTML, PDF or a .zip whenever you like.</p>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <section class="section alt" aria-labelledby="why">
-        <div class="container">
-          <div class="section-head">
-            <h2 id="why">Why Hashmark?</h2>
-            <p>What sets it apart from a plain text box or a heavy note-taking app.</p>
-          </div>
-          <ul class="checks">
-            <li><strong>Free, with no ads.</strong> No trial, no paywalled export, no banners between you and your text.</li>
-            <li><strong>Your documents are safe.</strong> Autosave, a local offline draft, version history, a trash and conflict protection work together so edits are not lost.</li>
-            <li><strong>Plain Markdown, no lock-in.</strong> Your notes stay portable .md files. Import them, export them, or download everything as a .zip.</li>
-            <li><strong>Rich when you need it.</strong> Math, diagrams, callouts and syntax highlighting without plugins or setup.</li>
-            <li><strong>Works everywhere.</strong> Any modern browser on desktop or phone, with the same documents on every device.</li>
-            <li><strong>Open source and self-hostable.</strong> Run your own instance with Node.js and SQLite, or with Docker.</li>
           </ul>
         </div>
       </section>
 
       <section class="section" aria-labelledby="faq">
         <div class="container faq">
-          <div class="section-head">
-            <h2 id="faq">Frequently asked questions</h2>
-          </div>
+          <h2 id="faq">Frequently asked questions</h2>
           <details>
             <summary><h3>Is Hashmark free?</h3></summary>
-            <div class="answer"><p>Yes. Hashmark is free to use and has no ads. It is also open source, so you can run your own copy.</p></div>
+            <div class="answer"><p>Yes. Hashmark is free, has no ads and is open source.</p></div>
           </details>
           <details>
             <summary><h3>Do I need an account?</h3></summary>
-            <div class="answer"><p>Yes, you sign up with an email address and a password. The account is what lets Hashmark save your documents and give you the same documents on every device.</p></div>
+            <div class="answer"><p>Yes, you sign up with an email address and a password. The account keeps your documents in sync on every device.</p></div>
           </details>
           <details>
             <summary><h3>Where are my documents stored?</h3></summary>
-            <div class="answer"><p>Documents are saved automatically to the Hashmark server as you type. Your browser also keeps a local draft, so an edit is not lost if the connection drops. Version history keeps earlier versions you can preview and restore.</p></div>
+            <div class="answer"><p>On the Hashmark server, saved as you type, with a local draft in your browser as a backup. Version history lets you restore earlier versions.</p></div>
           </details>
           <details>
             <summary><h3>Can I export to PDF or HTML?</h3></summary>
-            <div class="answer"><p>Yes. You can export a document as a .md file or as a standalone HTML file that works offline, print it or save it as PDF from the print dialog, and download all your documents at once as a .zip.</p></div>
+            <div class="answer"><p>Yes. Download a document as .md or standalone HTML, print it or save it as PDF, or download everything as a .zip.</p></div>
           </details>
           <details>
             <summary><h3>Does it support math and diagrams?</h3></summary>
-            <div class="answer"><p>Yes. Write LaTeX math between $ or $$ and it is rendered with KaTeX. Write a Mermaid diagram in a mermaid code block and it is drawn in the preview. Tables, task lists, footnotes, callouts and syntax highlighting are supported too.</p></div>
+            <div class="answer"><p>Yes. LaTeX math between $ or $$ is rendered with KaTeX, and mermaid code blocks are drawn as diagrams.</p></div>
           </details>
           <details>
             <summary><h3>Can I use it offline?</h3></summary>
-            <div class="answer"><p>Partly. If your connection drops while you write, Hashmark keeps a local draft in your browser and saves it to the server when you are back online. Opening the app and signing in needs a connection.</p></div>
+            <div class="answer"><p>Partly. If your connection drops, your edits are kept as a local draft and saved when you are back online.</p></div>
           </details>
           <details>
             <summary><h3>Can I self-host it?</h3></summary>
-            <div class="answer"><p>Yes. Hashmark is open source and runs on Node.js with SQLite. You can run it directly or with Docker on your own server.</p></div>
+            <div class="answer"><p>Yes. Hashmark is open source and runs on Node.js with SQLite, directly or with Docker.</p></div>
           </details>
           <details>
             <summary><h3>Is my data private?</h3></summary>
-            <div class="answer"><p>Your documents are private to your account unless you create a read-only share link. Hashmark uses one session cookie to keep you signed in, and has no tracking, no analytics and no ads. You can export everything or delete your account at any time.</p></div>
+            <div class="answer"><p>Your documents are private unless you create a read-only share link. Hashmark uses one session cookie and has no tracking, analytics or ads.</p></div>
           </details>
-          <p class="tip">Chatting with AI models about your documents is planned for a later version. See the <a href="/privacy">privacy page</a> for exactly what is stored.</p>
-        </div>
-      </section>
-
-      <section class="section alt cta-band" aria-labelledby="start">
-        <div class="container">
-          <h2 id="start">Start writing in Markdown now</h2>
-          <p class="lead">Free, no ads, and your documents are saved as you type.</p>
-          <div class="actions">
-            <a class="btn btn-primary" href="/app">Start writing — it's free</a>
-            <a class="btn btn-secondary" href="/guide">Learn the syntax</a>
-          </div>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
       <div class="container">
-        <p>© Hashmark · Free, open-source Markdown editor</p>
+        <p>© Hashmark</p>
         <nav aria-label="Footer">
           <ul>
-            <li><a href="/app">Editor</a></li>
-            <li><a href="/guide">Markdown cheat sheet</a></li>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
             <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/app">Open editor</a></li>
           </ul>
         </nav>
       </div>

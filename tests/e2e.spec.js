@@ -275,7 +275,7 @@ test('the landing page is static, crawlable HTML that leads to the editor', asyn
   page.on('request', (r) => { if (r.resourceType() === 'script') scripts.push(r.url()); });
   await page.goto('/');
   await expect(page.locator('h1')).toHaveCount(1);
-  await expect(page.locator('h1')).toContainText('free online Markdown editor');
+  await expect(page.locator('h1')).toContainText('Free online Markdown editor');
   expect(scripts).toEqual([]); // no editor JavaScript on the landing page
   const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
   for (const block of ld) JSON.parse(block);
@@ -285,4 +285,13 @@ test('the landing page is static, crawlable HTML that leads to the editor', asyn
 
   for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt']) expect((await request.get(path)).status()).toBe(200);
   expect((await request.get('/nope')).status()).toBe(404);
+});
+
+test('the /learn articles are crawlable pages with valid structured data', async ({ page }) => {
+  for (const path of ['/learn', '/learn/markdown-to-pdf', '/learn/markdown-tables', '/learn/markdown-math-and-diagrams', '/learn/markdown-vs-rich-text']) {
+    const res = await page.goto(path);
+    expect(res.status(), path).toBe(200);
+    await expect(page.locator('h1')).toHaveCount(1);
+    for (const block of await page.locator('script[type="application/ld+json"]').allTextContents()) JSON.parse(block);
+  }
 });
