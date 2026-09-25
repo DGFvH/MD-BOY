@@ -412,19 +412,41 @@ test('saving from the home editor asks for an account, then keeps the document',
   await expect(page.locator('#nav-account')).toHaveText('My documents');
 });
 
-test.describe('storage notice', () => {
+test.describe('cookie banner', () => {
   test.use({ storageNotice: true });
 
-  test('shows once and is remembered', async ({ page }) => {
+  test('analytics loads only after Allow, without document text or queries', async ({ page }) => {
+    const gaRequests = [];
+    page.on('request', (r) => { if (/googletagmanager\.com/.test(r.url())) gaRequests.push(r.url()); });
+
     await page.goto('/');
-    const notice = page.getByRole('region', { name: 'Cookies and storage' });
-    await expect(notice).toBeVisible();
-    await expect(notice.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy#cookies');
-    await notice.getByRole('button', { name: 'OK' }).click();
-    await expect(notice).toBeHidden();
+    const banner = page.getByRole('region', { name: 'Cookies and storage' });
+    await expect(banner).toBeVisible();
+    await expect(banner.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy#cookies');
+    await banner.getByRole('button', { name: 'Decline' }).click();
+    await expect(banner).toBeHidden();
     await page.goto('/app');
     await expect(page.getByRole('heading', { name: /Create your account|Welcome back/ })).toBeVisible();
-    await expect(notice).toBeHidden();
+    await expect(banner).toBeHidden(); // the answer is remembered
+    expect(gaRequests).toEqual([]);
+
+    // Changing the answer from the footer.
+    await page.goto(`/?q=secret#text=${encodeURIComponent('# Private text')}`);
+    await page.getByRole('button', { name: 'Cookie settings' }).click();
+    await banner.getByRole('button', { name: 'Allow' }).click();
+    await expect.poll(() => gaRequests.length).toBeGreaterThan(0);
+    expect(gaRequests[0]).toContain('id=G-');
+    const config = await page.evaluate(() => [...window.dataLayer].find((args) => args[0] === 'config')?.[2]);
+    expect(config.page_location).toBe(new URL(page.url()).origin + '/');
+    expect(config.allow_ad_personalization_signals).toBe(false);
+
+    // Loaded on later pages without asking again, and switched off by Decline.
+    await page.goto('/privacy');
+    await expect(banner).toBeHidden();
+    await expect.poll(() => gaRequests.length).toBeGreaterThan(1);
+    await page.getByRole('button', { name: 'Cookie settings' }).first().click();
+    await banner.getByRole('button', { name: 'Decline' }).click();
+    expect(await page.evaluate(() => Object.keys(window).some((k) => k.startsWith('ga-disable-') && window[k] === true))).toBe(true);
   });
 });
 

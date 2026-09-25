@@ -27,12 +27,19 @@ export async function viaNode(route) {
 }
 
 export const test = base.extend({
-  // The storage notice is dismissed up front, so it never covers what a test clicks.
-  // test.use({ storageNotice: true }) shows it.
+  // The cookie banner is answered ("Decline") up front, so it never covers what a test
+  // clicks. test.use({ storageNotice: true }) shows it.
   storageNotice: [false, { option: true }],
   context: async ({ context, storageNotice }, use) => {
     if (PROXIED) await context.route(/^https:\/\/[a-z0-9]+\.supabase\.co\//, viaNode);
-    if (!storageNotice) await context.addInitScript(() => localStorage.setItem('hashlite:notice', '1'));
+    if (!storageNotice) {
+      await context.addInitScript(() => {
+        localStorage.setItem('hashlite:notice', '1');
+        localStorage.setItem('hashlite:consent', 'denied');
+      });
+    }
+    // Tests never talk to Google Analytics; the consent test watches these requests.
+    await context.route(/googletagmanager\.com|google-analytics\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
     await use(context);
   },
 });

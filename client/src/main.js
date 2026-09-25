@@ -18,7 +18,8 @@ import { pageTitle } from './brand.js';
 import { showAuth, showNewPassword } from './app/auth.js';
 import { showAccount } from './app/account.js';
 import { pendingGuestDraft, clearGuestDraft } from './guest.js';
-import { showStorageNotice } from './consent.js';
+import { showStorageNotice, openCookieSettings } from './consent.js';
+import { GA_ID } from './analytics.js';
 import { THEMES, currentTheme, isDark, applyTheme, setTheme as storeTheme, onSystemThemeChange, themeMenuItems } from './theme.js';
 
 const root = document.getElementById('app');
@@ -1449,6 +1450,7 @@ function createApp() {
       { label: 'Line numbers', checked: p.lineNumbers, onClick: () => editor.setLineNumbers(setPref('lineNumbers', !p.lineNumbers).lineNumbers) },
       { label: 'Sync scrolling', checked: p.syncScroll, onClick: () => setPref('syncScroll', !p.syncScroll) },
       { label: 'Keyboard shortcuts', onClick: showShortcuts },
+      ...(GA_ID ? [{ label: 'Cookie settings', onClick: openCookieSettings }] : []),
       { label: 'Account…', icon: 'settings', onClick: openAccount },
     );
     if (doc) {

@@ -137,6 +137,6 @@ examples, `TechArticle` (or `HowTo`) + `BreadcrumbList`, Related list.
 - **AI visibility**: every month, ask ChatGPT, Perplexity, Gemini and Claude "free online Markdown
   editor with live preview / math / diagrams" and note whether and how Hashlite is described.
 - **Sign-ups**: new accounts per week, from server data.
-- **Optional analytics**: only a privacy-friendly, cookieless tool (e.g. Plausible, Umami or
-  GoatCounter, self-hosted). Adding one requires updating `/privacy`, which currently says there
-  is no analytics.
+- **Analytics**: Google Analytics 4 (`VITE_GA_ID`), loaded only after the visitor chooses
+  "Allow" in the cookie banner. Page addresses are sent without query or fragment, share-link
+  tokens are removed, and Google signals and ad personalisation are off. See `/privacy`.

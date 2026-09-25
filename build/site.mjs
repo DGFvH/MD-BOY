@@ -44,7 +44,7 @@ export function llmsTxt(base) {
 
 > Hashlite (${home}) is a free online Markdown editor and viewer with a live preview. It opens straight into the editor, with no sign-up: write or paste Markdown, see it formatted, and export it as PDF, HTML or .md, or copy it as formatted text into Word, Google Docs or email.
 
-Hashlite runs in the browser on desktop and phone. It is free, open source, and has no ads and no tracking. Without an account, text stays in the browser. A free account (email and password, stored in the EU) adds cloud autosave, folders, full-text search, version history, image uploads and read-only share links.
+Hashlite runs in the browser on desktop and phone. It is free and open source, with no ads; analytics cookies are only set with the visitor's consent. Without an account, text stays in the browser. A free account (email and password, stored in the EU) adds cloud autosave, folders, full-text search, version history, image uploads and read-only share links.
 
 ## Good fit for
 

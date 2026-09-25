@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Privacy – Hashlite Markdown Editor</title>
-    <meta name="description" content="What Hashlite stores and why: your email, a password hash and your documents. Stored in the EU, no tracking, no analytics, no ads. Export or delete anytime." />
+    <meta name="description" content="What Hashlite stores and why: your email, a password hash and your documents. Stored in the EU, no ads, analytics only with your consent. Export or delete anytime." />
     <meta name="theme-color" content="#4f46e5" />
     <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href="%PUBLIC_URL%/privacy" />
@@ -15,7 +15,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Hashlite" />
     <meta property="og:title" content="Privacy – Hashlite" />
-    <meta property="og:description" content="What Hashlite stores and why. Stored in the EU, no tracking, no analytics, no ads. Export or delete your account at any time." />
+    <meta property="og:description" content="What Hashlite stores and why. Stored in the EU, no ads, analytics only with your consent. Export or delete your account at any time." />
     <meta property="og:url" content="%PUBLIC_URL%/privacy" />
     <meta property="og:image" content="%PUBLIC_URL%/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -40,7 +40,7 @@
       <div class="container narrow prose">
         <div class="page-head">
           <h1>Privacy</h1>
-          <p>Hashlite stores only what it needs to keep your documents safe. No tracking, no analytics, no ads.</p>
+          <p>Hashlite stores only what it needs to keep your documents safe. No ads, and analytics only if you allow it.</p>
         </div>
 
         <h2 id="what-we-store">What is stored</h2>
@@ -57,17 +57,26 @@
 
         <h2 id="cookies">Cookies</h2>
         <p>
-          Hashlite uses <strong>no tracking cookies</strong>. There is no analytics, no advertising and no
-          third-party script. It only stores what is strictly needed for the site to work, in your browser's local
-          storage (see below). A short notice says so on your first visit; once you close it, that choice is remembered.
+          Hashlite asks before it sets any cookie that isn't needed for the site to work. On your first visit, a banner
+          asks whether you allow <strong>analytics cookies</strong>. If you choose <strong>Decline</strong>, or don't answer,
+          no analytics script is loaded and no analytics cookie is set.
         </p>
+        <p>
+          If you choose <strong>Allow</strong>, Hashlite loads <strong>Google Analytics</strong> (Google Ireland Ltd.), which sets
+          cookies (<code>_ga</code>, <code>_ga_*</code>) to count visits and see which pages are used. Hashlite sends only the page
+          address without anything after <code>?</code> or <code>#</code>, never the content of your documents, and never the
+          token of a share link. Google signals and ad personalisation are turned off. Google may process this data outside the EU;
+          see <a href="https://policies.google.com/privacy" rel="noopener">Google's privacy policy</a>.
+        </p>
+        <p><button type="button" class="btn btn-secondary" data-cookie-settings>Cookie settings</button> Choosing Decline later stops analytics and removes its cookies.</p>
+        <p>There is no advertising, and there are no other third-party scripts.</p>
 
         <h2 id="browser-storage">Storage in your browser</h2>
         <p>
           Hashlite uses your browser's local storage for: your <strong>sign-in session</strong>; an unsaved
           <strong>draft</strong> of the document you are editing, so nothing is lost if your connection drops; the text you type
           in the <strong>editor on the home page</strong>, until you save it to an account; your <strong>preferences</strong>,
-          such as the theme and the layout; and whether you have seen the storage notice. This data stays on your device and is
+          such as the theme and the layout; and your answer to the cookie question. This data stays on your device and is
           removed when you clear your browser's site data.
         </p>
 
@@ -99,6 +108,7 @@
             <li><a href="/learn">Learn</a></li>
             <li><a href="/guide">Cheat sheet</a></li>
             <li><a href="/privacy">Privacy</a></li>
+            <li><button type="button" class="footer-link" data-cookie-settings>Cookie settings</button></li>
             <li><a href="/">Open editor</a></li>
           </ul>
         </nav>

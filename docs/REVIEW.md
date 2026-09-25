@@ -146,3 +146,10 @@ Accounts and documents moved from the built-in SQLite server to the Supabase pro
 - The page is still static HTML with its h1, example document, AI-chat steps, features and FAQ, for search engines and AI crawlers. See `docs/SEO.md`.
 - Also new: **Copy as formatted text** in the app's ⋯ menu; a `/learn/ai-chat-to-document` guide; a rewritten `llms.txt`.
 - Theme code moved to `src/theme.js`; menus, toasts and icon buttons to `src/widgets.css`, so both pages share them.
+
+## Google Analytics, with consent (2026-09-25)
+
+- GA4 tag `G-SBBVL7JEWM`, set as `VITE_GA_ID` in `.env`. It is loaded by `src/analytics.js`, and only after the visitor chooses **Allow** in the cookie banner (`src/consent.js`). Before that, and after **Decline**, no Google script loads and no cookie is set.
+- What is sent: the page address without `?…` or `#…`, so no document ids and no `#text=` content; share links as `/s` without their token. Google signals and ad personalisation are off. Share pages (`/s/…`) never load analytics.
+- **Cookie settings** in every footer, on the privacy page and in the app's ⋯ menu ask again. **Decline** stops sending and removes the `_ga` cookies.
+- The CSP allows `www.googletagmanager.com` scripts and the Google Analytics endpoints. The privacy page, FAQ and `llms.txt` no longer say "no analytics".
