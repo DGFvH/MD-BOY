@@ -163,8 +163,9 @@ export function createSidebar(root, actions) {
   function buildDocRow(id) {
     const r = {};
     r.label = h('span', { class: 'label' });
+    r.shared = h('span', { class: 'tree-badge', title: 'Shared with a read-only link', hidden: true }, icon('link'));
     r.link = h('a', { class: 'tree-main', href: `#/doc/${id}`, draggable: 'false' },
-      h('span', { class: 'tree-icon' }, icon('file')), r.label);
+      h('span', { class: 'tree-icon' }, icon('file')), r.label, r.shared);
     r.more = iconButton('more', 'Actions', (e) => {
       e.stopPropagation();
       // The current object: the app updates the one it is given.
@@ -203,6 +204,7 @@ export function createSidebar(root, actions) {
       r.label.textContent = r.label.title = title;
       setLabel(r.more, `Actions for ${title}`);
     }
+    r.shared.hidden = !doc.share_token;
     setDepth(r, depth);
     return r.el;
   }
@@ -303,7 +305,7 @@ export function createSidebar(root, actions) {
     const key = JSON.stringify([
       collapsed,
       state.folders.map((f) => [f.id, f.parent_id, f.name]),
-      state.docs.map((d) => [d.id, d.folder_id, d.title]),
+      state.docs.map((d) => [d.id, d.folder_id, d.title, !!d.share_token]),
     ]);
     // Nothing shown changed (e.g. only the open document did): keep the tree as it is.
     if (key === treeKey && !force) return;

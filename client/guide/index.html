@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown Cheat Sheet – Syntax Guide with Examples | Hashmark</title>
+    <meta name="description" content="Markdown cheat sheet with examples: headings, lists, links, images, code, tables, task lists, footnotes, callouts, math, diagrams and more. Try it live." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/guide" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashmark" />
+    <meta property="og:title" content="Markdown Cheat Sheet – Syntax Guide with Examples" />
+    <meta property="og:description" content="Markdown cheat sheet with examples: headings, lists, links, images, code, tables, task lists, footnotes, callouts, math, diagrams and more. Try it live." />
+    <meta property="og:url" content="%PUBLIC_URL%/guide" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Markdown Cheat Sheet – Syntax Guide with Examples" />
+    <meta name="twitter:description" content="Markdown cheat sheet with examples: headings, lists, links, images, code, tables, task lists, footnotes, callouts, math, diagrams and more. Try it live." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="module" src="/src/site.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "Markdown cheat sheet",
+        "description": "Markdown cheat sheet with examples: headings, lists, links, images, code, tables, task lists, footnotes, callouts, math, diagrams and more. Try it live.",
+        "url": "%PUBLIC_URL%/guide",
+        "image": "%PUBLIC_URL%/og.png",
+        "inLanguage": "en",
+        "about": "Markdown syntax",
+        "author": {
+          "@type": "Organization",
+          "name": "Hashmark"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Hashmark"
+        },
+        "dateModified": "2026-09-25",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "Hashmark",
+          "url": "%PUBLIC_URL%/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/guide" aria-current="page">Cheat sheet</a></li>
+            <li><a class="nav-cta" href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="container narrow">
+        <div class="page-head">
+          <h1>Markdown cheat sheet</h1>
+          <p>
+            Markdown is a simple way to format plain text: you write symbols like <code>#</code>, <code>*</code> and
+            <code>-</code>, and they turn into headings, bold text and lists. This cheat sheet shows every common
+            Markdown syntax with an example and the result, including GitHub-flavoured extras such as tables, task
+            lists and footnotes.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/app">Try it in Hashmark — free</a>
+          </div>
+        </div>
+
+        <nav class="toc" aria-labelledby="toc-h">
+          <h2 id="toc-h">On this page</h2>
+          <ol>
+              <li><a href="#headings">Headings</a></li>
+              <li><a href="#paragraphs">Paragraphs and line breaks</a></li>
+              <li><a href="#emphasis">Bold, italic and strikethrough</a></li>
+              <li><a href="#lists">Lists</a></li>
+              <li><a href="#task-lists">Task lists</a></li>
+              <li><a href="#links">Links</a></li>
+              <li><a href="#images">Images</a></li>
+              <li><a href="#code">Code and syntax highlighting</a></li>
+              <li><a href="#tables">Tables</a></li>
+              <li><a href="#blockquotes">Blockquotes</a></li>
+              <li><a href="#callouts">Callouts (alerts)</a></li>
+              <li><a href="#horizontal-rules">Horizontal rules</a></li>
+              <li><a href="#footnotes">Footnotes</a></li>
+              <li><a href="#math">Math (LaTeX)</a></li>
+              <li><a href="#diagrams">Diagrams (Mermaid)</a></li>
+              <li><a href="#highlight">Highlight</a></li>
+              <li><a href="#emoji">Emoji</a></li>
+              <li><a href="#front-matter">YAML front matter</a></li>
+              <li><a href="#escaping">Escaping characters</a></li>
+          </ol>
+        </nav>
+
+        <section class="ex" id="headings" aria-labelledby="headings-h">
+          <h2 id="headings-h">Headings</h2>
+          <p>Start a line with one to six <code>#</code> characters and a space. One <code>#</code> is the biggest heading (the document title); use each level in order.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code># Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p class="md-h md-h1">Heading 1</p>
+<p class="md-h md-h2">Heading 2</p>
+<p class="md-h md-h3">Heading 3</p>
+<p class="md-h md-h4">Heading 4</p></div>
+            </figure>
+          </div>
+          <p class="tip">Alternative: underline a line with <code>===</code> (level 1) or <code>---</code> (level 2).</p>
+        </section>
+
+        <section class="ex" id="paragraphs" aria-labelledby="paragraphs-h">
+          <h2 id="paragraphs-h">Paragraphs and line breaks</h2>
+          <p>Separate paragraphs with a blank line. For a line break inside a paragraph, end the line with a backslash (or two spaces).</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>This is the first paragraph.
+
+This is the second one,\
+with a line break.</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>This is the first paragraph.</p>
+<p>This is the second one,<br>
+with a line break.</p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="emphasis" aria-labelledby="emphasis-h">
+          <h2 id="emphasis-h">Bold, italic and strikethrough</h2>
+          <p>Wrap text in one asterisk for italic, two for bold, three for both, and two tildes to strike it through. Underscores work too.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>*italic* or _italic_
+**bold** or __bold__
+***bold and italic***
+~~strikethrough~~</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p><em>italic</em> or <em>italic</em>
+<strong>bold</strong> or <strong>bold</strong>
+<em><strong>bold and italic</strong></em>
+<s>strikethrough</s></p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="lists" aria-labelledby="lists-h">
+          <h2 id="lists-h">Lists</h2>
+          <p>Start lines with <code>-</code>, <code>*</code> or <code>+</code> for a bulleted list, or a number and a period for a numbered list. Indent by two to four spaces to nest.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>- Apples
+- Oranges
+  - Blood oranges
+
+1. First
+2. Second
+3. Third</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><ul>
+<li>Apples</li>
+<li>Oranges
+<ul>
+<li>Blood oranges</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>First</li>
+<li>Second</li>
+<li>Third</li>
+</ol></div>
+            </figure>
+          </div>
+          <p class="tip">Numbered lists count from the first number, so you can write <code>1.</code> on every line and still get 1, 2, 3.</p>
+        </section>
+
+        <section class="ex" id="task-lists" aria-labelledby="task-lists-h">
+          <h2 id="task-lists-h">Task lists</h2>
+          <p>A list item starting with <code>[ ]</code> becomes a checkbox; <code>[x]</code> is ticked. In Hashmark you can tick a box by clicking it in the preview.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>- [x] Write the draft
+- [ ] Review it
+- [ ] Publish</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write the draft</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Review it</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Publish</li>
+</ul></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="links" aria-labelledby="links-h">
+          <h2 id="links-h">Links</h2>
+          <p>Put the link text in square brackets and the URL in parentheses, with an optional title in quotes. Bare URLs become links automatically.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>[Hashmark](https://example.com &quot;Optional title&quot;)
+
+Visit https://example.com
+
+[Reference link][docs]
+
+[docs]: https://example.com/docs</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p><a href="https://example.com" rel="nofollow" title="Optional title">Hashmark</a></p>
+<p>Visit <a href="https://example.com" rel="nofollow">https://example.com</a></p>
+<p><a href="https://example.com/docs" rel="nofollow">Reference link</a></p></div>
+            </figure>
+          </div>
+          <p class="tip">Link to a heading in the same document with <code>[text](#heading-id)</code>.</p>
+        </section>
+
+        <section class="ex" id="images" aria-labelledby="images-h">
+          <h2 id="images-h">Images</h2>
+          <p>Like a link, with an exclamation mark in front. The text in brackets is the alt text that describes the image for screen readers and search engines.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>![A purple hash sign](https://example.com/cat.jpg)</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p><img loading="lazy" src="/favicon.svg" width="48" height="48" alt="A purple hash sign"></p></div>
+            </figure>
+          </div>
+          <p class="tip">In Hashmark you can also paste, drop or upload an image and the Markdown is written for you.</p>
+        </section>
+
+        <section class="ex" id="code" aria-labelledby="code-h">
+          <h2 id="code-h">Code and syntax highlighting</h2>
+          <p>Wrap inline code in backticks. For a code block, put three backticks on the lines above and below; add a language name for syntax highlighting.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>Run `npm start` to begin.
+
+```js
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+```</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>Run <code>npm start</code> to begin.</p>
+<pre data-lang="js"><code class="language-js"><span class="hljs-keyword">function</span> <span class="hljs-title function_">greet</span>(<span class="hljs-params">name</span>) {
+  <span class="hljs-keyword">return</span> <span class="hljs-string">`Hello, <span class="hljs-subst">${name}</span>!`</span>;
+}
+</code></pre></div>
+            </figure>
+          </div>
+          <p class="tip">Common language names: <code>js</code>, <code>ts</code>, <code>python</code>, <code>bash</code>, <code>json</code>, <code>html</code>, <code>css</code>, <code>sql</code>.</p>
+        </section>
+
+        <section class="ex" id="tables" aria-labelledby="tables-h">
+          <h2 id="tables-h">Tables</h2>
+          <p>Separate columns with pipes <code>|</code> and put a line of dashes under the header row. Colons in that line align a column left, center or right.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>| Item    | Qty | Price |
+| :------ | :-: | ----: |
+| Coffee  |  2  | $3.50 |
+| Bagel   |  1  | $2.25 |</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Item</th>
+<th style="text-align:center">Qty</th>
+<th style="text-align:right">Price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Coffee</td>
+<td style="text-align:center">2</td>
+<td style="text-align:right">$3.50</td>
+</tr>
+<tr>
+<td style="text-align:left">Bagel</td>
+<td style="text-align:center">1</td>
+<td style="text-align:right">$2.25</td>
+</tr>
+</tbody>
+</table></div></div>
+            </figure>
+          </div>
+          <p class="tip">The columns don't need to line up in the source; the pipes are what count. Hashmark's toolbar can insert a table for you.</p>
+        </section>
+
+        <section class="ex" id="blockquotes" aria-labelledby="blockquotes-h">
+          <h2 id="blockquotes-h">Blockquotes</h2>
+          <p>Start a line with <code>&gt;</code> to quote it. Quotes can contain other Markdown and can be nested with <code>&gt;&gt;</code>.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>&gt; Simplicity is the ultimate sophistication.
+&gt;
+&gt; &gt; A nested quote.</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><blockquote>
+<p>Simplicity is the ultimate sophistication.</p>
+<blockquote>
+<p>A nested quote.</p>
+</blockquote>
+</blockquote></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="callouts" aria-labelledby="callouts-h">
+          <h2 id="callouts-h">Callouts (alerts)</h2>
+          <p>A blockquote that starts with <code>[!NOTE]</code>, <code>[!TIP]</code>, <code>[!IMPORTANT]</code>, <code>[!WARNING]</code> or <code>[!CAUTION]</code> becomes a highlighted callout, the same syntax GitHub uses.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>&gt; [!NOTE]
+&gt; Useful information worth knowing.
+
+&gt; [!WARNING]
+&gt; Something that needs attention.</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="markdown-alert markdown-alert-note">
+<p class="markdown-alert-title">Note</p>
+<p>Useful information worth knowing.</p>
+</div>
+<div class="markdown-alert markdown-alert-warning">
+<p class="markdown-alert-title">Warning</p>
+<p>Something that needs attention.</p>
+</div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="horizontal-rules" aria-labelledby="horizontal-rules-h">
+          <h2 id="horizontal-rules-h">Horizontal rules</h2>
+          <p>Three or more dashes, asterisks or underscores on a line of their own draw a dividing line. Leave a blank line above dashes, or they turn the line above into a heading.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>Above the line
+
+---
+
+Below the line</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>Above the line</p>
+<hr>
+<p>Below the line</p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="footnotes" aria-labelledby="footnotes-h">
+          <h2 id="footnotes-h">Footnotes</h2>
+          <p>Add <code>[^label]</code> where the note belongs and define it anywhere in the document. Footnotes are numbered and collected at the bottom.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>Markdown was created in 2004.[^1]
+
+[^1]: By John Gruber, with Aaron Swartz.</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>Markdown was created in 2004.<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>By John Gruber, with Aaron Swartz. <a href="#fnref1" class="footnote-backref">↩︎</a></p>
+</li>
+</ol>
+</section></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="math" aria-labelledby="math-h">
+          <h2 id="math-h">Math (LaTeX)</h2>
+          <p>Write LaTeX between single dollar signs for inline math and between double dollar signs for a block. Hashmark renders it with KaTeX.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>Euler: $e^{i\pi} + 1 = 0$
+
+$$
+\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+$$</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>Euler: <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mi>i</mi><mi>π</mi></mrow></msup><mo>+</mo><mn>1</mn><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">e^{i\pi} + 1 = 0</annotation></semantics></math></span></p>
+<p class="katex-block"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>k</mi><mo>=</mo><mfrac><mrow><mi>n</mi><mo stretchy="false">(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex">\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+</annotation></semantics></math></span></p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="diagrams" aria-labelledby="diagrams-h">
+          <h2 id="diagrams-h">Diagrams (Mermaid)</h2>
+          <p>Write a Mermaid diagram in a code block with the language <code>mermaid</code>: flowcharts, sequence diagrams, Gantt charts, pie charts and more are drawn in the preview.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>```mermaid
+flowchart LR
+  Write --&gt; Preview --&gt; Share
+```</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><div class="mock-diagram" role="img" aria-label="Flowchart: Write, then Preview, then Share"><span>Write</span><i aria-hidden="true">→</i><span>Preview</span><i aria-hidden="true">→</i><span>Share</span></div></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="highlight" aria-labelledby="highlight-h">
+          <h2 id="highlight-h">Highlight</h2>
+          <p>Wrap text in two equals signs to highlight it, like a marker pen.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>This is ==really important==.</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>This is <mark>really important</mark>.</p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="emoji" aria-labelledby="emoji-h">
+          <h2 id="emoji-h">Emoji</h2>
+          <p>Type an emoji name between colons. You can of course also paste emoji directly.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>Ship it :rocket: :tada: :white_check_mark:</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>Ship it 🚀 🎉 ✅</p></div>
+            </figure>
+          </div>
+          <p class="tip">A few favourites: <code>:smile:</code>, <code>:+1:</code>, <code>:heart:</code>, <code>:warning:</code>, <code>:bulb:</code>, <code>:memo:</code>.</p>
+        </section>
+
+        <section class="ex" id="front-matter" aria-labelledby="front-matter-h">
+          <h2 id="front-matter-h">YAML front matter</h2>
+          <p>A block of YAML between <code>---</code> lines at the very top of a document holds metadata such as a title, date or tags. Static site generators read it; Hashmark shows it as a small collapsible box instead of as text.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>---
+title: Release notes
+date: 2026-09-01
+tags: [docs, release]
+---
+
+# Release notes</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><details class="front-matter"><summary>Front matter</summary><pre>title: Release notes
+date: 2026-09-01
+tags: [docs, release]</pre></details><p class="md-h md-h1">Release notes</p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex" id="escaping" aria-labelledby="escaping-h">
+          <h2 id="escaping-h">Escaping characters</h2>
+          <p>Put a backslash before a character that Markdown would otherwise treat as formatting, such as <code>\*</code>, <code>\_</code>, <code>\#</code>, <code>\[</code>, <code>\`</code> or <code>\|</code>.</p>
+          <div class="pair">
+            <figure>
+              <figcaption>Markdown</figcaption>
+              <pre><code>\*Not italic\* and 1\. not a list
+
+Use \`backticks\` literally.</code></pre>
+            </figure>
+            <figure>
+              <figcaption>Result</figcaption>
+              <div class="markdown-body"><p>*Not italic* and 1. not a list</p>
+<p>Use `backticks` literally.</p></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="ex cta-band" aria-labelledby="try-h">
+          <h2 id="try-h">Try it with a live preview</h2>
+          <p>
+            Hashmark is a free online Markdown editor: type on the left and see the result on the right, with every
+            syntax on this page supported. Your documents are saved automatically.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/app">Start writing — it's free</a>
+            <a class="btn btn-secondary" href="/">About Hashmark</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashmark · Free, open-source Markdown editor</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/app">Editor</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

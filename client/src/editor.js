@@ -253,6 +253,47 @@ function fenceLines(view) {
   return true;
 }
 
+/** Is the selection the "https://" a link or image command just inserted? Then running it again keeps it. */
+function onUrlPlaceholder(view) {
+  const { state } = view;
+  const r = state.selection.main;
+  return state.sliceDoc(r.from, r.to) === 'https://' && state.sliceDoc(r.from - 2, r.from) === '](' && state.sliceDoc(r.to, r.to + 1) === ')';
+}
+
+// ---- Image uploads ------------------------------------------------------
+
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+const imageFiles = (list) => [...(list ?? [])].filter((f) => IMAGE_TYPES.includes(f.type));
+const uploaders = new WeakMap(); // view → pickImage(), for commands.uploadImage
+let uploadCount = 0;
+
+/** Inserts a placeholder per image over from..to, uploads each and swaps in the final Markdown. */
+function insertImages(view, files, from, to, { uploadImage, onUploadError }, userEvent) {
+  // Unique placeholders, found again by their text wherever later edits have moved them.
+  const tags = files.map(() => `![Uploading image-${Date.now().toString(36)}${++uploadCount}…]()`);
+  const insert = tags.join('\n');
+  view.dispatch({ changes: { from, to, insert }, selection: { anchor: from + insert.length }, scrollIntoView: true, userEvent });
+  view.focus();
+  const swap = (tag, text) => {
+    if (!view.dom.isConnected) return; // the editor was closed meanwhile
+    const pos = view.state.doc.toString().indexOf(tag);
+    if (pos >= 0) view.dispatch({ changes: { from: pos, to: pos + tag.length, insert: text }, userEvent: 'input' });
+  };
+  files.forEach((file, i) => {
+    Promise.resolve()
+      .then(() => uploadImage(file))
+      .then((url) => {
+        const alt = file.name.replace(/\.[^.]*$/, '').replace(/[[\]\\]/g, '') || 'image';
+        const safeUrl = String(url).replace(/[ ()]/g, (c) => ({ ' ': '%20', '(': '%28', ')': '%29' })[c]);
+        swap(tags[i], `![${alt}](${safeUrl})`);
+      })
+      .catch((err) => {
+        swap(tags[i], '');
+        onUploadError?.(err);
+      });
+  });
+}
+
 export const commands = {
   bold: (v) => wrap(v, '**', 'bold text'),
   italic: (v) => wrap(v, '*', 'italic text'),
@@ -273,6 +314,7 @@ export const commands = {
   task: (v) => setLinePrefix(v, () => '- [ ] '),
   link: (v) => {
     const r = v.state.selection.main;
+    if (onUrlPlaceholder(v)) return (v.focus(), true);
     const text = v.state.sliceDoc(r.from, r.to);
     const isUrl = /^https?:\/\/\S+$/.test(text);
     const insert = isUrl ? `[link text](${text})` : `[${text || 'link text'}](https://)`;
@@ -284,6 +326,7 @@ export const commands = {
   },
   image: (v) => {
     const r = v.state.selection.main;
+    if (onUrlPlaceholder(v)) return (v.focus(), true);
     const alt = v.state.sliceDoc(r.from, r.to) || 'alt text';
     const insert = `![${alt}](https://)`;
     const start = r.from + insert.length - 9;
@@ -300,11 +343,13 @@ export const commands = {
   },
   table: (v) => insertBlock(v, '| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |', 2, 8),
   hr: (v) => insertBlock(v, '---'),
+  /** Opens a file chooser and uploads the images at the cursor (only when the editor has uploadImage). */
+  uploadImage: (v) => (uploaders.get(v)?.() ?? false),
 };
 
 // ---- Editor factory -----------------------------------------------------
 
-export function createEditor(parent, { onChange, onSave, onScroll, onCursor, onCycleView }) {
+export function createEditor(parent, { onChange, onSave, onScroll, onCursor, onCycleView, uploadImage, onUploadError }) {
   // Line numbers live in a compartment; the setting is kept here so load() can restore it.
   const lineNumbersCompartment = new Compartment();
   let showLineNumbers = false;
@@ -314,6 +359,27 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor, onC
     parent,
     state: EditorState.create({ doc: '', extensions: [] }),
   });
+
+  const upload = { uploadImage, onUploadError };
+  /** Lets the user choose images and uploads them at the cursor; false without uploadImage. */
+  function pickImage() {
+    if (!uploadImage) return false;
+    const input = document.createElement('input');
+    Object.assign(input, { type: 'file', accept: IMAGE_TYPES.join(','), multiple: true });
+    input.style.display = 'none';
+    const done = () => input.remove();
+    input.addEventListener('change', () => {
+      done();
+      const files = imageFiles(input.files);
+      const r = view.state.selection.main;
+      if (files.length) insertImages(view, files, r.from, r.to, upload, 'input');
+    });
+    input.addEventListener('cancel', done);
+    document.body.append(input);
+    input.click();
+    return true;
+  }
+  uploaders.set(view, pickImage);
 
   const extensions = [
     highlightSpecialChars(),
@@ -367,6 +433,24 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor, onC
     }),
     EditorView.domEventHandlers({
       scroll: () => onScroll?.(),
+      // Pasted or dropped images are uploaded; anything else is left to CodeMirror.
+      paste: (e, v) => {
+        const files = uploadImage ? imageFiles(e.clipboardData?.files) : [];
+        if (!files.length) return false;
+        // Office apps put a picture of copied text next to the text: paste the text then.
+        const text = e.clipboardData.getData('text/plain').trim();
+        if (text && !files.some((f) => text.includes(f.name))) return false;
+        const r = v.state.selection.main;
+        insertImages(v, files, r.from, r.to, upload, 'input.paste');
+        return true;
+      },
+      drop: (e, v) => {
+        const files = uploadImage ? imageFiles(e.dataTransfer?.files) : [];
+        if (!files.length) return false;
+        const pos = v.posAtCoords({ x: e.clientX, y: e.clientY }) ?? v.state.selection.main.head;
+        insertImages(v, files, pos, pos, upload, 'input.drop');
+        return true;
+      },
     }),
   ];
 
@@ -389,6 +473,7 @@ export function createEditor(parent, { onChange, onSave, onScroll, onCursor, onC
     getValue: () => view.state.doc.toString(),
     focus: () => view.focus(),
     run: (cmd) => cmd(view),
+    pickImage,
     setLineNumbers(on) {
       showLineNumbers = !!on;
       view.dispatch({ effects: lineNumbersCompartment.reconfigure(gutter()) });

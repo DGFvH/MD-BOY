@@ -12,8 +12,16 @@ ${APP_NAME} is a simple Markdown editor that lives in your browser. Everything y
 - Use the toolbar, or keyboard shortcuts like **Ctrl/⌘ + B**, *Ctrl/⌘ + I* and \`Ctrl/⌘ + K\`.
 - Save a point in the *version history* with **Save version now** in the ⋯ menu, or press **Ctrl/⌘ + S** on a keyboard.
 - Organise documents in folders: drag a document onto a folder, or use its ⋯ menu to move it.
+- Paste or drop images into the editor to upload them.
 
 ## Things you can write
+
+### Callouts, highlights and emoji
+
+> [!TIP]
+> Start a quote with \`[!NOTE]\`, \`[!TIP]\`, \`[!IMPORTANT]\`, \`[!WARNING]\` or \`[!CAUTION]\`.
+
+Make words ==stand out==, and add emoji with shortcodes like \`:sparkles:\` :sparkles:
 
 ### Task lists
 

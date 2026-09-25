@@ -20,7 +20,7 @@ import { showAccount } from './app/account.js';
 
 const root = document.getElementById('app');
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-const mobileQuery = window.matchMedia('(max-width: 820px)');
+const mobileQuery = window.matchMedia('(max-width: 700px)');
 const touchQuery = window.matchMedia('(pointer: coarse)'); // no keyboard shortcuts to mention
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
@@ -220,7 +220,8 @@ function createApp() {
     tb('quote', 'Quote', commands.quote),
     h('span', { class: 'sep' }),
     tb('link', `Link (${MOD}+K)`, commands.link),
-    tb('image', 'Image', commands.image),
+    tb('image', 'Image link', commands.image),
+    tb('upload', 'Upload image (or paste / drop one)', commands.uploadImage),
     tb('code', `Inline code (${MOD}+E)`, commands.code),
     tb('codeBlock', `Code block (${MOD}+Shift+K)`, commands.codeBlock),
     tb('table', 'Table', commands.table),
@@ -287,7 +288,12 @@ function createApp() {
     },
     onSave: () => saveVersion(),
     onCycleView: () => cycleView(),
-    onScroll: () => syncFrom('editor'),
+    uploadImage: async (file) => (await api.uploadImage(file)).url,
+    onUploadError: (err) => toast(`Image not uploaded: ${err.message}`, { type: 'error' }),
+    onScroll: () => {
+      syncFrom('editor');
+      scheduleOutlineActive();
+    },
     onCursor: ({ line, col, selected }) => {
       statCursor.textContent = `Ln ${line}, Col ${col}${selected ? ` (${selected} selected)` : ''}`;
     },
@@ -446,6 +452,7 @@ function createApp() {
       updateMeta();
       if (dirty) scheduleSave();
     }
+    notifyOtherTabs();
     if (snapshot) revisionsCache = null;
     if (announce) toast('Saved to the version history.');
     if (getPrefs().panel === 'history' && snapshot && doc === target) renderPanel();
@@ -566,6 +573,7 @@ function createApp() {
         setDoc(fresh, { skipDraft: true });
       } else if (choice === 'restore') {
         const { document: restored } = await api.restoreDoc(target.id);
+        notifyOtherTabs();
         if (doc !== target) return;
         if (!docs.some((d) => d.id === restored.id)) docs.unshift(restored);
         renderSidebar();
@@ -600,6 +608,7 @@ function createApp() {
   async function saveCopy(src, suffix) {
     const folderId = folders.some((f) => f.id === src.folder_id) ? src.folder_id : null;
     const { document: copy } = await api.createDoc({ title: `${cleanTitle(src.title)}${suffix}`, content: src.content, folder_id: folderId });
+    notifyOtherTabs();
     if (!destroyed) {
       docs.unshift(copy);
       renderSidebar();
@@ -826,6 +835,7 @@ function createApp() {
     if (!(await leaveDoc()) || seq !== navSeq) return null;
     try {
       const { document: d } = await api.createDoc({ title: 'Untitled', content: '', folder_id: folderId, ...init });
+      notifyOtherTabs();
       if (destroyed) return null;
       docs.unshift(d);
       if (seq !== navSeq) {
@@ -884,6 +894,7 @@ function createApp() {
     }
     try {
       const { document: saved } = await api.saveDoc(d.id, { title });
+      notifyOtherTabs();
       Object.assign(d, { title: saved.title, version: saved.version });
       renderSidebar();
     } catch (err) {
@@ -895,6 +906,7 @@ function createApp() {
     try {
       if (doc?.id === id) await flush();
       const { document: saved } = await api.saveDoc(id, { folder_id: folderId });
+      notifyOtherTabs();
       if (destroyed) return;
       const meta = docs.find((d) => d.id === id);
       if (meta) Object.assign(meta, { folder_id: saved.folder_id, version: saved.version });
@@ -973,6 +985,7 @@ function createApp() {
         if (issueDialogOpen) return; // the save hit a conflict: resolve it first
       }
       await api.trashDoc(d.id);
+      notifyOtherTabs();
       if (destroyed) return;
       const wasOpen = doc?.id === d.id;
       docs = docs.filter((x) => x.id !== d.id);
@@ -990,6 +1003,7 @@ function createApp() {
   async function undoTrash(id, reopen) {
     try {
       const { document: restored } = await api.restoreDoc(id);
+      notifyOtherTabs();
       if (destroyed) return;
       if (!docs.some((x) => x.id === id)) docs.unshift(restored);
       renderSidebar();
@@ -1007,6 +1021,7 @@ function createApp() {
     if (!name || destroyed) return;
     try {
       const { folder } = await api.createFolder(name, parentId);
+      notifyOtherTabs();
       folders.push(folder);
       if (parentId) {
         const c = { ...getPrefs().collapsed };
@@ -1024,6 +1039,7 @@ function createApp() {
     if (!name || destroyed) return;
     try {
       const { folder } = await api.updateFolder(f.id, { name });
+      notifyOtherTabs();
       Object.assign(f, folder);
       renderSidebar();
     } catch (err) {
@@ -1036,6 +1052,7 @@ function createApp() {
     if (!res || destroyed) return;
     try {
       const { folder } = await api.updateFolder(f.id, { parent_id: res.id });
+      notifyOtherTabs();
       Object.assign(f, folder);
       renderSidebar();
     } catch (err) {
@@ -1050,6 +1067,7 @@ function createApp() {
     if (!ok || destroyed) return;
     try {
       await api.deleteFolder(f.id);
+      notifyOtherTabs();
       await refreshLists();
       if (doc && !folders.some((x) => x.id === doc.folder_id)) doc.folder_id = null;
     } catch (err) {
@@ -1104,6 +1122,7 @@ function createApp() {
         onClick: async () => {
           try {
             const { document: restored } = await api.restoreDoc(d.id);
+            notifyOtherTabs();
             if (destroyed) return;
             if (!docs.some((x) => x.id === d.id)) docs.unshift(restored);
             renderTrash(items.filter((x) => x.id !== d.id));
@@ -1123,6 +1142,7 @@ function createApp() {
           if (!(await confirmDialog('Delete forever?', `“${d.title}” and its history will be permanently deleted.`, { ok: 'Delete forever', danger: true }))) return;
           try {
             await api.deleteDoc(d.id);
+            notifyOtherTabs();
             clearDraft(d.id);
             if (!destroyed) renderTrash(items.filter((x) => x.id !== d.id));
           } catch (err) {
@@ -1140,6 +1160,7 @@ function createApp() {
             if (!(await confirmDialog('Empty trash?', `${items.length} document(s) will be permanently deleted.`, { ok: 'Empty trash', danger: true }))) return;
             try {
               await api.emptyTrash();
+              notifyOtherTabs();
               for (const x of items) clearDraft(x.id);
               if (!destroyed) renderTrash([]);
             } catch (err) {
@@ -1158,6 +1179,7 @@ function createApp() {
     for (const f of files) {
       try {
         const { document: d } = await api.createDoc({ title: f.title, content: f.content, folder_id: doc?.folder_id ?? null });
+        notifyOtherTabs();
         if (destroyed) return;
         docs.unshift(d);
         last = d;
@@ -1181,7 +1203,22 @@ function createApp() {
   const dropOverlay = h('div', { class: 'drop-overlay', hidden: true }, 'Drop Markdown files to import');
   document.body.append(dropOverlay);
   cleanups.push(() => dropOverlay.remove());
-  const hasFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+  const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  // Images dropped on the editor are uploaded by the editor itself; the overlay is for Markdown files.
+  const onlyImages = (e) => {
+    const items = [...(e.dataTransfer?.items ?? [])].filter((i) => i.kind === 'file');
+    return items.length > 0 && items.every((i) => IMAGE_TYPES.includes(i.type));
+  };
+  const hasFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files') && !onlyImages(e);
+  listen(window, 'dragover', (e) => {
+    // Don't let the browser open an image dropped next to the editor.
+    if (onlyImages(e) && !editorPane.contains(e.target)) e.preventDefault();
+  });
+  listen(window, 'drop', (e) => {
+    if (!onlyImages(e) || editorPane.contains(e.target)) return;
+    e.preventDefault();
+    toast('Drop images into the editor to upload them.');
+  }, { capture: true });
   listen(window, 'dragenter', (e) => {
     if (!hasFiles(e)) return;
     dragDepth++;
@@ -1238,6 +1275,115 @@ function createApp() {
     preview.setVisible(shownView() !== 'edit');
   }
 
+  // ---- Share links ----
+  function shareUrl(token) {
+    return `${location.origin}/s/${token}`;
+  }
+
+  function setShareToken(id, token) {
+    for (const d of [docs.find((x) => x.id === id), doc?.id === id ? doc : null]) if (d) d.share_token = token;
+    renderSidebar();
+    notifyOtherTabs();
+  }
+
+  function openShare(target) {
+    modal({
+      title: 'Share a read-only link',
+      render: (close) => {
+        const body = h('div', { class: 'stack' });
+        const draw = () => {
+          const token = target.share_token;
+          if (!token) {
+            body.replaceChildren(
+              h('p', {}, 'Anyone with the link can read this document (not edit it). Search engines are asked not to index it. You can stop sharing at any time.'),
+              h('div', { class: 'modal-actions' },
+                h('button', { type: 'button', class: 'btn', onClick: () => close() }, 'Cancel'),
+                h('button', {
+                  type: 'button', class: 'btn btn-primary', autofocus: true,
+                  onClick: async (e) => {
+                    e.currentTarget.disabled = true;
+                    try {
+                      await flush();
+                      const { token: t } = await api.shareDoc(target.id);
+                      setShareToken(target.id, t);
+                      draw();
+                    } catch (err) {
+                      toast(err.message, { type: 'error' });
+                      close();
+                    }
+                  },
+                }, 'Create link')),
+            );
+            return;
+          }
+          const url = shareUrl(token);
+          const input = h('input', { type: 'text', value: url, readonly: true, 'aria-label': 'Share link', onFocus: (e) => e.target.select() });
+          body.replaceChildren(
+            h('p', {}, 'Anyone with this link can read the latest saved version:'),
+            input,
+            h('div', { class: 'modal-actions' },
+              h('button', {
+                type: 'button', class: 'btn btn-danger',
+                onClick: async () => {
+                  try {
+                    await api.unshareDoc(target.id);
+                    setShareToken(target.id, null);
+                    toast('The link no longer works.');
+                    close();
+                  } catch (err) {
+                    toast(err.message, { type: 'error' });
+                  }
+                },
+              }, 'Stop sharing'),
+              h('a', { class: 'btn', href: url, target: '_blank', rel: 'noopener' }, 'Open'),
+              h('button', {
+                type: 'button', class: 'btn btn-primary', autofocus: true,
+                onClick: async () => {
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    toast('Link copied.');
+                  } catch {
+                    input.focus();
+                    input.select();
+                  }
+                },
+              }, 'Copy link')),
+          );
+          queueMicrotask(() => body.querySelector('[autofocus]')?.focus());
+        };
+        draw();
+        return body;
+      },
+    });
+  }
+
+  // ---- Other tabs in this browser ----
+  // A tab that changed something tells the others, which refresh their list and
+  // pick up the new text of the open document if they have nothing unsaved.
+  const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('hashmark') : null;
+  let channelTimer;
+  function notifyOtherTabs() {
+    try {
+      channel?.postMessage({ type: 'changed', user: user?.id });
+    } catch {
+      // Closed channel (the app was torn down).
+    }
+  }
+  if (channel) {
+    channel.onmessage = (e) => {
+      if (e.data?.type !== 'changed' || e.data.user !== user?.id) return;
+      clearTimeout(channelTimer);
+      channelTimer = setTimeout(() => {
+        lastRefresh = 0;
+        refreshOnReturn();
+      }, 150);
+    };
+    cleanups.push(() => {
+      clearTimeout(channelTimer);
+      channel.close();
+    });
+  }
+
   function openAccount() {
     showAccount({
       user,
@@ -1262,6 +1408,8 @@ function createApp() {
         { label: 'Download Markdown (.md)', icon: 'download', onClick: () => exportMarkdown(cleanTitle(doc.title), doc.content) },
         { label: 'Download HTML (.html)', icon: 'download', onClick: downloadHtml },
         { label: 'Print / Save as PDF', icon: 'printer', onClick: printDoc },
+        'separator',
+        { label: doc.share_token ? 'Shared link…' : 'Share read-only link…', icon: 'link', onClick: () => openShare(doc) },
       );
     }
     items.push({ label: 'Import Markdown files…', icon: 'upload', onClick: importFiles }, 'separator');
@@ -1366,13 +1514,36 @@ function createApp() {
     else renderHistory();
   }
 
+  // Highlights the outline entry of the section at the top of the editor.
+  let outlineFrame = 0;
+  function scheduleOutlineActive() {
+    if (getPrefs().panel !== 'outline' || outlineFrame) return;
+    outlineFrame = requestAnimationFrame(() => {
+      outlineFrame = 0;
+      updateOutlineActive();
+    });
+  }
+
+  function updateOutlineActive() {
+    const items = [...panelBody.querySelectorAll('.outline-item')];
+    if (!items.length || !doc) return;
+    const top = editor.topLine() + 1;
+    let active = null;
+    for (const item of items) if (Number(item.dataset.line) <= top) active = item;
+    for (const item of items) {
+      item.classList.toggle('active', item === active);
+      if (item === active) item.setAttribute('aria-current', 'location');
+      else item.removeAttribute('aria-current');
+    }
+  }
+
   function renderOutline() {
     panelTitle.textContent = 'Outline';
     const headings = extractHeadings(doc.content);
     panelBody.replaceChildren(
       ...(headings.length
         ? headings.map((hd) => h('button', {
-            type: 'button', class: 'outline-item', 'data-level': hd.level, style: `--level:${hd.level}`,
+            type: 'button', class: 'outline-item', 'data-level': hd.level, 'data-line': hd.line, style: `--level:${hd.level}`,
             onClick: () => {
               editor.scrollToLine(hd.line, { select: true });
               preview.scrollToId(hd.id);
@@ -1380,6 +1551,7 @@ function createApp() {
           }, hd.text))
         : [h('p', { class: 'muted', style: 'padding:8px' }, 'Add headings (# Title) to see an outline.')]),
     );
+    updateOutlineActive();
   }
 
   async function renderHistory() {
@@ -1450,6 +1622,7 @@ function createApp() {
     try {
       if (!(await leaveDoc()) || doc !== target) return;
       const { document: restored } = await api.restoreRevision(target.id, r.id);
+      notifyOtherTabs();
       if (doc !== target) return;
       setDoc(restored, { skipDraft: true }); // changes that could not be saved stay in the draft
       toast('Version restored. The previous text is kept in the history.');

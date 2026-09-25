@@ -13,15 +13,16 @@ export function setUnauthorizedHandler(fn) {
   onUnauthorized = fn;
 }
 
-async function request(method, path, body, { keepalive = false } = {}) {
+async function request(method, path, body, { keepalive = false, raw = false } = {}) {
   let res;
   try {
     res = await fetch(`/api${path}`, {
       method,
       credentials: 'same-origin',
       keepalive,
-      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      // raw: send a File/Blob as it is (image uploads)
+      headers: body === undefined ? {} : { 'Content-Type': raw ? body.type || 'application/octet-stream' : 'application/json' },
+      body: body === undefined || raw ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, 'You appear to be offline.');
@@ -51,6 +52,9 @@ export const api = {
   getDoc: (id) => request('GET', `/docs/${id}`),
   createDoc: (doc) => request('POST', '/docs', doc),
   saveDoc: (id, patch, opts) => request('PUT', `/docs/${id}`, patch, opts),
+  shareDoc: (id) => request('POST', `/docs/${id}/share`),
+  unshareDoc: (id) => request('DELETE', `/docs/${id}/share`),
+  uploadImage: (file) => request('POST', '/images', file, { raw: true }),
   trashDoc: (id) => request('DELETE', `/docs/${id}`),
   deleteDoc: (id) => request('DELETE', `/docs/${id}?permanent=1`),
   restoreDoc: (id) => request('POST', `/docs/${id}/restore`),

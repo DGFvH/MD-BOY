@@ -12,6 +12,8 @@ Hashmark is a simple, capable **online Markdown editor**. Write in the browser, 
 - Toolbar and shortcuts for headings, bold, italic, strikethrough, lists, task lists, quotes, links, images, code, tables, math and horizontal rules
 - GitHub-flavoured Markdown: tables, task lists (tick them off in the preview), footnotes, autolinks
 - Syntax-highlighted code blocks, **KaTeX math** (`$…$`, `$$…$$`) and **Mermaid diagrams**
+- Callouts (`> [!NOTE]`, `[!TIP]`, `[!WARNING]`…), `==highlight==` and `:emoji:` shortcodes
+- **Images**: paste, drop or upload them; they are stored on the server
 - YAML front matter at the top of a document is shown as a small metadata block
 - Outline panel, word and character count, reading time, cursor position
 - Light and dark theme (follows your system, or pick one)
@@ -24,6 +26,8 @@ Hashmark is a simple, capable **online Markdown editor**. Write in the browser, 
 - **Conflict detection**: editing the same document in two tabs never silently overwrites; the default choice keeps both versions
 - **Version history**: the text is kept before it is overwritten, at most every few minutes, plus a snapshot on <kbd>Ctrl</kbd>+<kbd>S</kbd>; preview and restore any version
 - **Full-text search** across all your documents (SQLite FTS5)
+- **Read-only share links**: anyone with the link can read the document; turn it off at any time
+- Tabs in the same browser stay in sync
 - **Trash** with restore and permanent delete
 
 **Import and export**
@@ -65,7 +69,8 @@ docker run -p 3000:3000 -v hashmark-data:/data hashmark
 | `COOKIE_SECURE`      | unset       | Set to `1` when served over HTTPS, so session cookies are marked `Secure` (automatic behind an HTTPS proxy when `TRUST_PROXY` is set) |
 | `TRUST_PROXY`        | unset       | Set behind a reverse proxy (nginx, Caddy, Fly.io, Render…) so rate limiting sees real client IPs: a hop count (`1`), or the proxies' addresses or subnets (`loopback`, `172.17.0.0/16`, comma-separated). `true` trusts every hop and is only safe when the app can be reached solely through the proxy |
 | `ALLOW_REGISTRATION` | `1`         | Set to `0` to close sign-ups; existing accounts keep working |
-| `MAX_USER_BYTES`     | `104857600` | Storage limit per account for document content, trash included (100 MB); `0` means no limit |
+| `MAX_USER_BYTES`     | `104857600` | Storage limit per account for document text and images, trash included (100 MB); `0` means no limit |
+| `PUBLIC_URL`         | unset       | The site's public address, e.g. `https://hashmark.example`. Used for canonical links, social previews, `sitemap.xml` and `llms.txt`. Without it those absolute tags are left out |
 
 Behind nginx, pass the original host and scheme so the same-origin check and secure cookies work:
 
@@ -89,6 +94,19 @@ node server/admin.js reset-password user@example.com
 docker exec <container> node server/admin.js reset-password user@example.com   # in Docker
 ```
 
+## Website and SEO
+
+| Path | What |
+| ---- | ---- |
+| `/` | Landing page (static HTML, no editor JavaScript). Signed-in visitors are redirected to `/app` |
+| `/guide` | Markdown cheat sheet |
+| `/privacy` | Privacy page |
+| `/app` | The editor (not indexed) |
+| `/s/<token>` | A shared, read-only document (not indexed) |
+| `/robots.txt`, `/sitemap.xml`, `/llms.txt` | For search engines and AI crawlers; the sitemap needs `PUBLIC_URL` |
+
+See [docs/SEO.md](docs/SEO.md) for the SEO/GEO plan and the steps to take after deploying.
+
 ## Tests
 
 ```bash
@@ -109,9 +127,14 @@ server/                 Express 5 API + static file server
   documents.js          documents, search, trash, revisions, storage limit
   folders.js            folders
   export.js, zip.js     "download everything" as a zip (no dependencies)
+  images.js             image upload (type sniffing, storage limit) and /i/<id>
+  share.js, render.js   read-only share links, rendered on the server
+  site.js               public pages, PUBLIC_URL, robots.txt, sitemap.xml, llms.txt, 404
   static.js             static files: immutable caching, precompressed .br/.gz
   admin.js              command-line password reset
 client/                 Vite frontend (vanilla JS, no framework)
+  index.html, guide/, privacy/, 404.html   public pages (plain HTML + src/site.css)
+  app/index.html        the editor
   src/brand.js          product name and tagline
   src/main.js           app shell, autosave, conflicts, panels, routing
   src/app/              sign-in screen and Account dialog
@@ -137,6 +160,8 @@ All endpoints use JSON and need a session cookie, except `/api/config`, register
 | `POST` | `/api/auth/password` | Change password `{ current_password, new_password }`; signs out other sessions |
 | `DELETE` | `/api/auth/account` | Delete the account and all its data `{ password }` |
 | `GET`  | `/api/export` | Download all documents as a zip |
+| `POST` | `/api/images` | Upload an image (raw body); returns `{ url }` |
+| `POST` `DELETE` | `/api/docs/:id/share` | Turn the read-only link on (returns `{ url }`) or off |
 | `GET`  | `/api/docs` · `?q=search` · `?trash=1` | List, search, or list the trash |
 | `POST` | `/api/docs` | Create `{ title, content, folder_id }` |
 | `GET`  | `/api/docs/:id` | Fetch one document |

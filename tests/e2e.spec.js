@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // A first visit opens the sign-up form.
 async function register(page) {
-  await page.goto('/');
+  await page.goto('/app');
   await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
   await page.fill('#auth-email', `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`);
   await page.fill('#auth-password', 'a-very-good-password');
@@ -163,6 +163,67 @@ test('a saved version opens read-only, and its in-page links keep the route', as
   expect(await page.evaluate(() => location.hash)).toBe(hash);
 
   expect(errors).toEqual([]);
+});
+
+async function newDocWith(page, text) {
+  await page.getByRole('button', { name: 'New doc' }).click();
+  await page.keyboard.press('Enter');
+  await page.locator('.cm-content').click();
+  await page.keyboard.insertText(text);
+  await expect(page.locator('.save-status')).toHaveText('Saved', { timeout: 5000 });
+}
+
+test('a pasted image is uploaded and shown in the preview', async ({ page }) => {
+  await register(page);
+  await newDocWith(page, '# Pictures\n\n');
+  await page.evaluate(async () => {
+    // A 1×1 PNG.
+    const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], 'dot.png', { type: 'image/png' }));
+    document.querySelector('.cm-content').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+  });
+  await expect(page.locator('.cm-content')).toContainText(/!\[dot\]\(\/i\/[\w-]{22}\)/);
+  const img = page.locator('.pane-preview .markdown-body img[alt="dot"]');
+  await expect(img).toBeVisible();
+  await expect.poll(() => img.evaluate((el) => el.naturalWidth)).toBe(1);
+});
+
+test('a read-only share link opens for someone who is signed out', async ({ page, browser }) => {
+  await register(page);
+  await newDocWith(page, '# Shared notes\n\n> [!NOTE]\n> Visible to anyone with the link.\n');
+  await expect(page.locator('.pane-preview .markdown-alert-note')).toBeVisible();
+
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: /Share read-only link/ }).click();
+  await page.getByRole('button', { name: 'Create link' }).click();
+  const url = await page.getByRole('textbox', { name: 'Share link' }).inputValue();
+  expect(url).toMatch(/\/s\/[\w-]{22}$/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.tree-row.active .tree-badge')).toBeVisible();
+
+  const stranger = await browser.newContext();
+  const view = await stranger.newPage();
+  await view.goto(url);
+  await expect(view.locator('h1')).toHaveText('Shared notes');
+  await expect(view.locator('.markdown-alert-note')).toContainText('Visible to anyone');
+  await expect(view.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+  await stranger.close();
+});
+
+test('another tab showing the same document picks up saved changes', async ({ page, context }) => {
+  await register(page);
+  await newDocWith(page, '# Two tabs\n\nfirst');
+  const other = await context.newPage();
+  await other.goto(page.url());
+  await expect(other.locator('.cm-content')).toContainText('first');
+
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.insertText(' and second');
+  await expect(page.locator('.save-status')).toHaveText('Saved', { timeout: 5000 });
+  await expect(other.locator('.cm-content')).toContainText('first and second', { timeout: 5000 });
 });
 
 test.describe('on a phone', () => {

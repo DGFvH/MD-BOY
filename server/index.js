@@ -8,6 +8,9 @@ import { createDocumentsRouter } from './documents.js';
 import { createFoldersRouter } from './folders.js';
 import { createExportRouter } from './export.js';
 import { serveStatic } from './static.js';
+import { createSite } from './site.js';
+import { createImagesRouter, createImageServer } from './images.js';
+import { createShareRouter, createSharePage } from './share.js';
 import { HttpError } from './errors.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -70,6 +73,7 @@ export function createApp({
   trustProxy = false,
   allowRegistration = true,
   maxUserBytes = DEFAULT_MAX_USER_BYTES,
+  publicUrl = '',
   limits,
 } = {}) {
   const app = express();
@@ -89,7 +93,7 @@ export function createApp({
 
   app.use('/api', express.json({ limit: '5mb' }));
   app.use('/api', (_req, res, next) => {
-    res.set('Cache-Control', 'no-store');
+    res.set({ 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
     next();
   });
 
@@ -101,9 +105,19 @@ export function createApp({
   app.use('/api/docs', auth.requireUser, createDocumentsRouter(db, { maxUserBytes }));
   app.use('/api/folders', auth.requireUser, createFoldersRouter(db));
   app.use('/api/export', auth.requireUser, createExportRouter(db));
+  app.use('/api/images', auth.requireUser, createImagesRouter(db, { maxUserBytes }));
+  app.use('/api/docs', auth.requireUser, createShareRouter(db));
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Not found.')));
 
-  if (existsSync(staticDir)) app.use(serveStatic(staticDir));
+  app.get('/i/:id', createImageServer(db));
+  app.get('/s/:token', createSharePage(db));
+
+  if (existsSync(staticDir)) {
+    const site = createSite({ staticDir, publicUrl, sessionMiddleware: auth.sessionMiddleware });
+    app.use(site.router);
+    app.use(serveStatic(staticDir));
+    app.use(site.notFoundPage);
+  }
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, _req, res, _next) => {
@@ -140,6 +154,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     trustProxy,
     allowRegistration: env.ALLOW_REGISTRATION !== '0',
     maxUserBytes: /^\d+$/.test(env.MAX_USER_BYTES ?? '') ? Number(env.MAX_USER_BYTES) : DEFAULT_MAX_USER_BYTES,
+    publicUrl: env.PUBLIC_URL,
   });
   const server = app.listen(port, host, (err) => {
     if (err) throw err;

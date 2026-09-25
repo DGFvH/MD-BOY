@@ -78,21 +78,34 @@ The app is now called **Hashmark**, with the tagline *"Write Markdown. See it li
 - **Accessibility:** the whole app was a live region, which made screen readers read out every change. It now has a skip link, focus returns where it should after dialogs and menus, menus work with the arrow keys, and the folder buttons work from the keyboard.
 - **Updates:** after a new version is deployed, the app offers to reload.
 
-## Not done yet (possible next steps)
+## Follow-up round (2026-09-25)
 
-These are ordered roughly by value. Each one was left out on purpose, to keep the product simple for now.
+The "not done yet" list from the review, and what happened to each item.
 
-1. **Talking to LLMs.** Chat with a document, rewrite a selection, and accept or reject suggested edits. The research and plan are in [LLM-INTEGRATION.md](LLM-INTEGRATION.md). The first step is milestone M1: stored API keys and a chat panel, about 1.5–2 weeks.
-2. **Images.** Paste or drop an image, stored on the server. Today images can only be linked by URL.
-3. **Password reset by email.** This needs an email (SMTP) service. For now the admin runs `node server/admin.js reset-password <email>`.
-4. **Sharing.** A read-only public link for a document, and later shared folders.
-5. **Live updates between tabs and devices.** Today the app warns about a conflict when you save. It could instead reload the other tab's changes as they happen.
-6. **A lighter first load.** The main script is about 250 KB compressed (Brotli). The math and code-highlighting libraries could be loaded only when a document needs them. That would need extra re-render logic, so it was left out.
-7. **More Markdown extras.** GitHub-style callouts (`> [!NOTE]`), `==highlight==` and emoji shortcodes.
-8. **Small polish items:**
-   - The three conflict-dialog buttons wrap onto two rows.
-   - Clicking Link twice nests a link inside the first.
-   - Restoring a version can add a history entry identical to that version.
-   - The outline doesn't highlight the section you are reading.
-   - Tablets get the phone layout below 820px.
-9. **Storage limit:** the limit counts document text only. Old versions are capped by the thinning instead.
+### Done
+
+- **Images.** Paste or drop an image into the editor, or use the Upload image button. It is stored on the server and inserted as `![name](/i/…)`. PNG, JPEG, GIF and WebP are accepted, up to 5 MB each. The type is checked from the file's contents, and SVG is refused because it can carry scripts. Images count toward the account's storage limit and are deleted with the account.
+- **Read-only share links.** Use "Share read-only link…" in the ⋯ menu. Anyone with the link sees a plain page that the server renders: raw HTML is shown as text, math appears as MathML, and search engines are asked not to index it. "Stop sharing" turns the link off at once, and so does moving the document to the trash. Shared documents show a link icon in the sidebar.
+- **Live updates between tabs.** Tabs in the same browser tell each other when something changes. The other tabs refresh the document list, and they load the new text of the open document if they have nothing unsaved. If they do have unsaved changes, the usual conflict choice appears.
+- **Markdown extras:**
+  - GitHub-style callouts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
+  - `==highlight==`.
+  - `:emoji:` shortcodes, the full GitHub set. Text smileys like `:)` stay as typed.
+  - All of these work in the editor preview, the HTML export and shared pages.
+- **Polish:**
+  - The conflict dialog shows one full-width button per row.
+  - Clicking Link or Image again keeps the URL selected instead of nesting a second link.
+  - Restoring a version no longer adds a duplicate history entry.
+  - The outline highlights the section at the top of the editor.
+  - Tablets from 701px wide get the split view (it was 821px).
+
+### Deferred
+
+| Item | Why it waits |
+| --- | --- |
+| **Talking to AI models** (milestone M1 in [LLM-INTEGRATION.md](LLM-INTEGRATION.md)) | Deferred on request. The research and plan are ready: about 1.5–2 weeks for key storage and a chat panel. |
+| **Password reset by email** | Needs an email (SMTP) provider and its settings. Until then the admin runs `node server/admin.js reset-password <email>`. |
+| **Live sync between devices** | Tabs in one browser sync now. Other devices pick up changes when their tab regains focus and are protected by the conflict check. True live sync needs a server push channel. |
+| **A lighter first load for the editor** | Loading KaTeX and highlight.js only when a document needs them requires re-render plumbing. The editor is about 250 KB compressed, and the new public pages load almost no JavaScript. |
+| **Old versions in the storage limit** | The limit counts document text and images. Old versions are capped by the history thinning instead. |
+| **Managing uploaded images** | Images are kept until the account is deleted, even if no document uses them any more. A later "unused images" cleanup could free the space. |

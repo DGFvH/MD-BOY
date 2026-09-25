@@ -60,6 +60,17 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1500,
+    // Public pages (landing, guide, privacy, 404) are plain HTML + a little CSS;
+    // the editor lives at /app.
+    rollupOptions: {
+      input: {
+        landing: fileURLToPath(new URL('./client/index.html', import.meta.url)),
+        app: fileURLToPath(new URL('./client/app/index.html', import.meta.url)),
+        guide: fileURLToPath(new URL('./client/guide/index.html', import.meta.url)),
+        privacy: fileURLToPath(new URL('./client/privacy/index.html', import.meta.url)),
+        notFound: fileURLToPath(new URL('./client/404.html', import.meta.url)),
+      },
+    },
   },
   server: {
     port: 5173,

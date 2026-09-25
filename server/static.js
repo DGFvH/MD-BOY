@@ -34,11 +34,11 @@ function send(req, res, root, name, cacheControl) {
 }
 
 /**
- * Serves the built frontend. Hashed files under /assets/ are cached for a year;
- * everything else is revalidated on each load, so a deploy shows up at once.
- * Paths without a file extension get index.html (the app); a missing file, such
- * as an old chunk after a redeploy, is a real 404 so the browser does not try to
- * run index.html as JavaScript.
+ * Serves the built frontend's files. Hashed files under /assets/ are cached for a
+ * year; everything else is revalidated on each load, so a deploy shows up at once.
+ * HTML pages and extension-less paths are left to the site router (server/site.js),
+ * which fills in the public URL. A missing file, such as an old chunk after a
+ * redeploy, is a real 404 so the browser does not try to run a page as JavaScript.
  */
 export function serveStatic(dir) {
   const root = resolve(dir);
@@ -50,12 +50,12 @@ export function serveStatic(dir) {
     } catch {
       return res.sendStatus(400);
     }
+    if (!extname(path) || extname(path) === '.html') return next();
     const file = resolve(root, `.${path}`);
     const safe = file.startsWith(root + sep) && !path.includes('\0') && !path.includes('/.');
     if (safe && isFile(file)) {
       return send(req, res, root, file.slice(root.length + 1), path.startsWith('/assets/') ? IMMUTABLE : 'no-cache');
     }
-    if (path.startsWith('/assets/') || extname(path)) return res.sendStatus(404);
-    send(req, res, root, 'index.html', 'no-cache');
+    res.sendStatus(404);
   };
 }

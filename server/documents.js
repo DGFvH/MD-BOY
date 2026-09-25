@@ -9,7 +9,7 @@ const MAX_TITLE = 200;
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-const META_COLUMNS = 'id, folder_id, title, version, created_at, updated_at, deleted_at';
+const META_COLUMNS = 'id, folder_id, title, version, created_at, updated_at, deleted_at, share_token';
 
 function cleanTitle(title) {
   if (title === undefined) return undefined;
@@ -65,7 +65,7 @@ export function createDocumentsRouter(db, { maxUserBytes = 0 } = {}) {
     ),
     // Matches are marked with \u0002 ... \u0003, which do not occur in normal text.
     search: db.prepare(
-      `SELECT d.id, d.folder_id, d.title, d.version, d.created_at, d.updated_at, d.deleted_at,
+      `SELECT d.id, d.folder_id, d.title, d.version, d.created_at, d.updated_at, d.deleted_at, d.share_token,
               snippet(documents_fts, 1, char(2), char(3), '…', 16) AS excerpt
        FROM documents_fts JOIN documents d ON d.rowid = documents_fts.rowid
        WHERE documents_fts MATCH ? AND d.user_id = ? AND d.deleted_at IS NULL
@@ -255,8 +255,9 @@ export function createDocumentsRouter(db, { maxUserBytes = 0 } = {}) {
     const rev = s.getRevision.get(Number(req.params.rid), req.params.id);
     if (!rev) throw notFound('Revision not found.');
     // keepCurrent: the current text goes into history first, so the restore itself can be undone.
+    // The restored text is already in history (it is this revision), so no new entry for it.
     const patch = { title: rev.title, content: rev.content };
-    res.json({ document: saveDoc(uid, req.params.id, patch, { force: true, keepCurrent: true }) });
+    res.json({ document: saveDoc(uid, req.params.id, patch, { keepCurrent: true }) });
   });
 
   return router;

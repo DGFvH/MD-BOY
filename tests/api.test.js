@@ -489,7 +489,7 @@ describe('documents', () => {
 
     const restored = await agent.post(`/api/docs/${id}/revisions/${oldest.id}/restore`).expect(200);
     assert.equal(restored.body.document.content, 'v1');
-    assert.deepEqual(await revisionTexts(id), ['v1', 'v3', 'v2', 'v1'], 'the pre-restore state (v3) is kept');
+    assert.deepEqual(await revisionTexts(id), ['v3', 'v2', 'v1'], 'the pre-restore state (v3) is kept, and v1 is not duplicated');
   });
 
   test('history keeps the text that a later session overwrites', async () => {
@@ -622,6 +622,8 @@ describe('static files', () => {
   const js = 'console.log("hello from a chunk");\n'.repeat(100);
   mkdirSync(join(dir, 'assets'));
   writeFileSync(join(dir, 'index.html'), '<!doctype html><title>Hashmark</title>');
+  mkdirSync(join(dir, 'app'));
+  writeFileSync(join(dir, 'app', 'index.html'), '<!doctype html><title>Hashmark</title>');
   writeFileSync(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
   writeFileSync(join(dir, '.env'), 'SECRET=1');
   writeFileSync(join(dir, 'assets', 'index-abc123.js'), js);
@@ -637,13 +639,15 @@ describe('static files', () => {
     await request(app).get('/favicon.ico').expect(404);
   });
 
-  test('app routes get index.html, revalidated on each load', async () => {
-    for (const path of ['/', '/some/route', '/index.html']) {
+  test('HTML is left to the site router; unknown pages are a 404', async () => {
+    for (const path of ['/', '/app', '/app/anything']) {
       const res = await request(app).get(path).expect(200);
       assert.match(res.headers['content-type'], /text\/html/);
       assert.equal(res.headers['cache-control'], 'no-cache');
       assert.match(res.text, /<title>Hashmark/);
     }
+    await request(app).get('/index.html').expect(301).expect('Location', '/');
+    await request(app).get('/some/route').expect(404);
     const env = await request(app).get('/.env');
     assert.doesNotMatch(env.text, /SECRET/);
     await request(app).get('/api/nope').expect(404).expect('Content-Type', /json/);
@@ -669,5 +673,146 @@ describe('static files', () => {
     assert.equal(font.headers.vary, undefined);
     const icon = await request(app).get('/favicon.svg').expect(200);
     assert.equal(icon.headers['cache-control'], 'no-cache');
+  });
+});
+
+describe('public site and crawler files', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hashmark-site-'));
+  for (const d of ['app', 'guide', 'privacy']) mkdirSync(join(dir, d));
+  const landing = [
+    '<!doctype html><html><head><title>Hashmark landing</title>',
+    '    <link rel="canonical" href="%PUBLIC_URL%/">',
+    '    <meta property="og:image" content="%PUBLIC_URL%/og.png">',
+    '<script type="application/ld+json">{"url":"%PUBLIC_URL%/"}</script>',
+    '</head><body><h1>Landing</h1></body></html>',
+  ].join('\n');
+  writeFileSync(join(dir, 'index.html'), landing);
+  writeFileSync(join(dir, 'app', 'index.html'), '<!doctype html><title>Hashmark app</title>');
+  writeFileSync(join(dir, 'guide', 'index.html'), '<!doctype html><title>Markdown cheat sheet</title>');
+  writeFileSync(join(dir, 'privacy', 'index.html'), '<!doctype html><title>Privacy</title>');
+  writeFileSync(join(dir, '404.html'), '<!doctype html><title>Page not found</title>');
+  after(() => rmSync(dir, { recursive: true, force: true }));
+
+  test('without PUBLIC_URL: absolute-URL tags are dropped, no sitemap', async () => {
+    const { app } = setup({ staticDir: dir });
+    const res = await request(app).get('/').expect(200);
+    assert.match(res.text, /Hashmark landing/);
+    assert.doesNotMatch(res.text, /PUBLIC_URL|canonical|og:image/);
+    assert.match(res.text, /"url":"\/"/);
+    await request(app).get('/sitemap.xml').expect(404);
+    const robots = await request(app).get('/robots.txt').expect(200);
+    assert.match(robots.text, /Disallow: \/app/);
+    assert.doesNotMatch(robots.text, /Sitemap/);
+  });
+
+  test('with PUBLIC_URL: canonical, sitemap, robots and llms.txt use it', async () => {
+    const { app } = setup({ staticDir: dir, publicUrl: 'https://notes.example.com/' });
+    const res = await request(app).get('/').set('Accept-Encoding', 'identity').expect(200);
+    assert.match(res.text, /<link rel="canonical" href="https:\/\/notes.example.com\/">/);
+    assert.match(res.text, /"url":"https:\/\/notes.example.com\/"/);
+    const gz = await request(app).get('/').set('Accept-Encoding', 'gzip').expect(200);
+    assert.equal(gz.headers['content-encoding'], 'gzip');
+    const sitemap = await request(app).get('/sitemap.xml').expect(200).expect('Content-Type', /xml/);
+    for (const loc of ['https://notes.example.com/', 'https://notes.example.com/guide', 'https://notes.example.com/privacy']) {
+      assert.match(sitemap.text, new RegExp(`<loc>${loc}</loc>`));
+    }
+    assert.doesNotMatch(sitemap.text, /\/app/);
+    assert.match((await request(app).get('/robots.txt')).text, /Sitemap: https:\/\/notes.example.com\/sitemap.xml/);
+    const llms = await request(app).get('/llms.txt').expect(200);
+    assert.match(llms.text, /^# Hashmark/);
+    assert.match(llms.text, /\(https:\/\/notes.example.com\/guide\)/);
+  });
+
+  test('pages, clean URLs, noindex on the app, and a real 404 page', async () => {
+    const { app } = setup({ staticDir: dir });
+    assert.match((await request(app).get('/guide').expect(200)).text, /cheat sheet/);
+    await request(app).get('/guide/').expect(301).expect('Location', '/guide');
+    await request(app).get('/privacy/index.html').expect(301).expect('Location', '/privacy');
+    const appPage = await request(app).get('/app').expect(200);
+    assert.equal(appPage.headers['x-robots-tag'], 'noindex');
+    assert.equal((await request(app).get('/api/health')).headers['x-robots-tag'], 'noindex');
+    const missing = await request(app).get('/no-such-page').expect(404);
+    assert.match(missing.text, /Page not found/);
+    assert.equal(missing.headers['x-robots-tag'], 'noindex');
+  });
+
+  test('signed-in visitors go from / straight to /app', async () => {
+    const { app, signUp } = setup({ staticDir: dir });
+    const agent = await signUp('landing@example.com');
+    await agent.get('/').expect(302).expect('Location', '/app');
+    await request(app).get('/').expect(200);
+  });
+});
+
+describe('images', () => {
+  const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(100, 7)]);
+
+  test('upload, public read, type sniffing, size and quota limits, account deletion', async () => {
+    const { app, db, signUp } = setup({ maxUserBytes: 1000 });
+    await request(app).post('/api/images').send(PNG).expect(401);
+    const agent = await signUp('images@example.com');
+    const up = await agent.post('/api/images').set('Content-Type', 'image/png').send(PNG).expect(201);
+    assert.match(up.body.url, /^\/i\/[\w-]{22}$/);
+
+    const img = await request(app).get(up.body.url).buffer(true).parse(binary).expect(200);
+    assert.equal(img.headers['content-type'], 'image/png');
+    assert.match(img.headers['cache-control'], /immutable/);
+    assert.equal(img.headers['x-robots-tag'], 'noindex');
+    assert.ok(Buffer.compare(img.body, PNG) === 0);
+    await request(app).get('/i/aaaaaaaaaaaaaaaaaaaaaa').expect(404);
+
+    // The browser's type is ignored: SVG (or anything else) is refused.
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+    await agent.post('/api/images').set('Content-Type', 'image/png').send(svg).expect(415);
+    await agent.post('/api/images').set('Content-Type', 'image/png').send(Buffer.alloc(0)).expect(415);
+
+    // Images count toward the storage limit.
+    const usage = () => db.prepare("SELECT content_bytes FROM users WHERE email = 'images@example.com'").get().content_bytes;
+    assert.equal(usage(), PNG.length);
+    const big = Buffer.concat([PNG, Buffer.alloc(1000)]);
+    await agent.post('/api/images').set('Content-Type', 'image/png').send(big).expect(413);
+
+    await agent.delete('/api/auth/account').send({ password: PASSWORD }).expect(200);
+    await request(app).get(up.body.url).expect(404);
+  });
+});
+
+describe('share links', () => {
+  test('create, public read-only page, escaping, noindex, revoke', async () => {
+    const { app, signUp } = setup();
+    const agent = await signUp('share@example.com');
+    const content = '# Shared doc\n\n<script>alert(1)</script>\n\n- [x] done\n\n> [!NOTE]\n> Heads up\n\n$x^2$ and ==marked== :tada:';
+    const { body } = await agent.post('/api/docs').send({ title: 'Shared doc', content }).expect(201);
+    const id = body.document.id;
+
+    const other = await signUp('share2@example.com');
+    await other.post(`/api/docs/${id}/share`).expect(404);
+
+    const shared = await agent.post(`/api/docs/${id}/share`).expect(200);
+    assert.match(shared.body.url, /^\/s\/[\w-]{22}$/);
+    const again = await agent.post(`/api/docs/${id}/share`).expect(200);
+    assert.equal(again.body.url, shared.body.url, 'sharing twice keeps the same link');
+    const listed = (await agent.get('/api/docs').expect(200)).body.documents.find((d) => d.id === id);
+    assert.equal(listed.share_token, shared.body.token);
+
+    const page = await request(app).get(shared.body.url).expect(200).expect('Content-Type', /html/);
+    assert.equal(page.headers['x-robots-tag'], 'noindex');
+    assert.match(page.text, /<meta name="robots" content="noindex">/);
+    assert.match(page.text, /<h1[^>]*>Shared doc<\/h1>/);
+    assert.doesNotMatch(page.text, /<script>alert/);
+    assert.match(page.text, /&lt;script&gt;/);
+    assert.match(page.text, /markdown-alert-note/);
+    assert.match(page.text, /<math/);
+    assert.match(page.text, /<mark>marked<\/mark>/);
+    assert.match(page.text, /🎉/);
+    assert.match(page.text, /<input class="task-list-item-checkbox"[^>]*disabled/);
+
+    await agent.delete(`/api/docs/${id}/share`).expect(200);
+    await request(app).get(shared.body.url).expect(404);
+
+    // A trashed document is no longer shared.
+    const re = await agent.post(`/api/docs/${id}/share`).expect(200);
+    await agent.delete(`/api/docs/${id}`).expect(200);
+    await request(app).get(re.body.url).expect(404);
   });
 });

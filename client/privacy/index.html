@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy – Hashmark Markdown Editor</title>
+    <meta name="description" content="What Hashmark stores and why: your email, a password hash and your documents. One session cookie, no tracking, no analytics, no ads. Export or delete anytime." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/privacy" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hashmark" />
+    <meta property="og:title" content="Privacy – Hashmark" />
+    <meta property="og:description" content="What Hashmark stores and why. One session cookie, no tracking, no analytics, no ads. Export or delete your account at any time." />
+    <meta property="og:url" content="%PUBLIC_URL%/privacy" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashmark home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashmark</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/guide">Cheat sheet</a></li>
+            <li><a class="nav-cta" href="/app">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="container narrow prose">
+        <div class="page-head">
+          <h1>Privacy</h1>
+          <p>The short version: Hashmark stores what it needs to keep your documents safe, and nothing else. No tracking, no analytics, no ads.</p>
+        </div>
+
+        <h2 id="what-we-store">What is stored</h2>
+        <ul>
+          <li><strong>Your email address</strong>, to identify your account when you sign in.</li>
+          <li><strong>A hash of your password.</strong> The password itself is never stored.</li>
+          <li><strong>Your documents and folders</strong>, including titles, content and when they were changed.</li>
+          <li><strong>Images</strong> you paste, drop or upload into a document.</li>
+          <li><strong>Earlier versions</strong> of your documents (version history), so you can restore them. Old automatic versions are thinned out over time.</li>
+          <li><strong>Sessions</strong>: a hashed session token and its expiry date, so you stay signed in.</li>
+        </ul>
+        <p>Your documents are private to your account. A document is only visible to others if you create a read-only share link for it, and you can turn that link off again.</p>
+
+        <h2 id="cookies">Cookies</h2>
+        <p>
+          Hashmark sets <strong>one cookie</strong>: a session cookie that keeps you signed in. It is needed for the
+          service to work. There are no tracking cookies, no analytics, no advertising and no third-party scripts, so no
+          cookie banner is needed.
+        </p>
+
+        <h2 id="browser-storage">Storage in your browser</h2>
+        <p>
+          The editor uses your browser's local storage for two things: an unsaved <strong>draft</strong> of the document
+          you are editing, so nothing is lost if your connection drops, and your <strong>preferences</strong>, such as the
+          theme and the layout. This data stays on your device and is removed when you clear your browser's site data.
+        </p>
+
+        <h2 id="your-control">Export and delete your data</h2>
+        <p>Open the <strong>Account</strong> dialog in the editor to:</p>
+        <ul>
+          <li><strong>Download all documents</strong> as a .zip of Markdown files, with your folders kept.</li>
+          <li><strong>Delete your account.</strong> This permanently removes your account, documents, folders, images, versions and sessions.</li>
+        </ul>
+        <p>You can also export a single document as Markdown, HTML or PDF from the document's menu.</p>
+
+        <h2 id="self-hosting">Self-hosted instances</h2>
+        <p>
+          Hashmark is open source and anyone can run their own copy. If you use an instance run by someone else, that
+          person or organisation is the data controller for it and decides where it is hosted and how it is backed up.
+          If you self-host Hashmark, you are the data controller for your own instance.
+        </p>
+
+        <h2 id="changes">Changes</h2>
+        <p>If this page changes, the new version will be published here. Questions? Contact the operator of this Hashmark instance.</p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashmark · Free, open-source Markdown editor</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/app">Editor</a></li>
+            <li><a href="/guide">Markdown cheat sheet</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -10,9 +10,13 @@ RUN npm run build
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 DATA_DIR=/data
+# Set PUBLIC_URL (e.g. https://hashmark.example) for canonical links and the sitemap.
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY server ./server
+# Shared with the server: the Markdown styles and callout plugin used by share pages.
+COPY client/src/markdown.css ./client/src/markdown.css
+COPY client/src/render/alerts.js ./client/src/render/alerts.js
 COPY --from=build /app/dist ./dist
 # The data folder must exist and belong to "node" before VOLUME, so a new
 # volume gets that owner and SQLite can create the database in it.

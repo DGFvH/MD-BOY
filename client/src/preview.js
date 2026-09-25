@@ -7,10 +7,13 @@ import katexPluginModule from '@vscode/markdown-it-katex';
 import katex from 'katex';
 import hljs from 'highlight.js/lib/common';
 import DOMPurify from 'dompurify';
+import mark from 'markdown-it-mark';
+import { full as emoji } from 'markdown-it-emoji';
 import { escapeHtml } from './ui.js';
 import { frontMatter, stripFrontMatter } from './render/front-matter.js';
 import { splitBlocks, blockKey, patchBlocks } from './render/blocks.js';
 import { renderDiagrams, carryOverDiagrams } from './render/mermaid.js';
+import alertsPlugin from './render/alerts.js';
 
 const katexPlugin = katexPluginModule.default ?? katexPluginModule;
 
@@ -75,6 +78,9 @@ function createMarkdown({ standalone = false } = {}) {
     .use(frontMatter)
     .use(taskLists, { enabled: true, label: true }) // its options are global: keep them identical everywhere
     .use(footnote)
+    .use(alertsPlugin)
+    .use(mark)
+    .use(emoji, { shortcuts: {} }) // only :name: codes, so ":)" and "8)" stay as typed
     .use(anchor, { slugify, tabIndex: false })
     .use(katexPlugin, { katex: katexFor(standalone ? 'mathml' : 'htmlAndMathml'), throwOnError: false, enableFencedBlocks: true });
 
@@ -191,7 +197,7 @@ export function extractHeadings(src) {
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
     if (t.type !== 'heading_open') continue;
-    const text = tokens[i + 1].children.filter((c) => c.type === 'text' || c.type === 'code_inline').map((c) => c.content).join('');
+    const text = tokens[i + 1].children.filter((c) => c.type === 'text' || c.type === 'code_inline' || c.type === 'emoji').map((c) => c.content).join('');
     out.push({ level: Number(t.tag.slice(1)), text: text || '(untitled)', line: t.map[0] + 1, id: t.attrGet('id') });
   }
   return out;
@@ -199,6 +205,7 @@ export function extractHeadings(src) {
 
 export function documentStats(src) {
   const text = stripFrontMatter(src)
+    .replace(/^[ \t]*>[ \t]*\[!\w+\]/gm, ' ') // alert markers
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/[#>*_`~[\]()!-]/g, ' ');
   const words = (text.match(/[\p{L}\p{N}'’]+/gu) ?? []).length;

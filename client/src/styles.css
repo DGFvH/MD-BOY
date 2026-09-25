@@ -308,6 +308,9 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
 }
 .outline-item:hover { background: var(--surface-2); color: var(--text); }
 .outline-item[data-level='1'] { color: var(--text); font-weight: 600; }
+.outline-item.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); box-shadow: inset 2px 0 0 var(--accent); }
+.tree-badge { display: inline-grid; place-items: center; flex: none; color: var(--text-faint); margin-left: 2px; }
+.tree-badge svg { width: 13px; height: 13px; }
 .revision {
   display: flex;
   flex-direction: column;
@@ -419,6 +422,9 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
 .modal-body { padding: 8px 20px 20px; }
 .modal-body p { margin: 0; line-height: 1.5; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+/* Three or more choices (e.g. the conflict dialog): one full-width button per row, main choice last. */
+.modal-actions:has(> .btn:nth-child(3)) { flex-direction: column; align-items: stretch; }
+.modal-actions:has(> .btn:nth-child(3)) > .btn { width: 100%; }
 .revision-preview { max-height: 60vh; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
 .kbd-table { width: 100%; border-collapse: collapse; }
 .kbd-table td { padding: 5px 0; border-bottom: 1px solid var(--border); }
@@ -503,7 +509,7 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
   .side-panel { position: absolute; right: 0; top: 0; bottom: 0; z-index: 20; box-shadow: var(--shadow); }
 }
 
-@media (max-width: 820px) {
+@media (max-width: 700px) {
   .app, .app.no-sidebar { grid-template-columns: 1fr; }
   .sidebar {
     position: fixed;
