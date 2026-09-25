@@ -254,3 +254,20 @@ test.describe('on a phone', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test('the landing page is static, crawlable HTML that leads to the editor', async ({ page, request }) => {
+  const scripts = [];
+  page.on('request', (r) => { if (r.resourceType() === 'script') scripts.push(r.url()); });
+  await page.goto('/');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await expect(page.locator('h1')).toContainText('free online Markdown editor');
+  expect(scripts).toEqual([]); // no editor JavaScript on the landing page
+  const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
+  for (const block of ld) JSON.parse(block);
+  await page.getByRole('link', { name: /Start writing/ }).first().click();
+  await expect(page).toHaveURL(/\/app$/);
+  await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+
+  for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt']) expect((await request.get(path)).status()).toBe(200);
+  expect((await request.get('/nope')).status()).toBe(404);
+});
