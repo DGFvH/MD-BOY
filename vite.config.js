@@ -1,42 +1,6 @@
-import { defineConfig } from 'vite';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { defineConfig, loadEnv } from 'vite';
+import { applyPublicUrl, normalizePublicUrl, robotsTxt, sitemapXml, llmsTxt } from './build/site.mjs';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
-import { brotliCompress, gzip, constants } from 'node:zlib';
-
-const brotli = promisify(brotliCompress);
-const gz = promisify(gzip);
-
-// Writes "<file>.br" and "<file>.gz" next to every text asset over 1 KB, so the server
-// can send them precompressed.
-function precompress() {
-  let outDir;
-  return {
-    name: 'hashlite:precompress',
-    apply: 'build',
-    configResolved(config) {
-      outDir = resolve(config.root, config.build.outDir);
-    },
-    async closeBundle() {
-      const all = await readdir(outDir, { recursive: true }).catch(() => []); // e.g. a failed build
-      const files = all.filter((f) => /\.(js|css|svg|html)$/.test(f));
-      await Promise.all(
-        files.map(async (file) => {
-          const path = join(outDir, file);
-          const data = await readFile(path);
-          if (data.length <= 1024) return;
-          const [br, gzipped] = await Promise.all([
-            brotli(data, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: data.length } }),
-            gz(data, { level: 9 }),
-          ]);
-          if (br.length < data.length) await writeFile(`${path}.br`, br);
-          if (gzipped.length < data.length) await writeFile(`${path}.gz`, gzipped);
-        }),
-      );
-    },
-  };
-}
 
 // @vscode/markdown-it-katex depends on an older KaTeX. The app passes it the top-level
 // KaTeX (whose CSS it loads), so point the plugin's own import there too: one copy, one version.
@@ -53,9 +17,27 @@ function singleKatex() {
   };
 }
 
-export default defineConfig({
+// Fills %PUBLIC_URL% in every page and writes robots.txt, sitemap.xml and llms.txt.
+// Without a public URL, tags that need an absolute address are left out.
+function publicSite(publicUrl) {
+  const base = normalizePublicUrl(publicUrl);
+  return {
+    name: 'hashlite:public-site',
+    transformIndexHtml: { order: 'post', handler: (html) => applyPublicUrl(html, base) },
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt(base) });
+      this.emitFile({ type: 'asset', fileName: 'llms.txt', source: llmsTxt(base) });
+      if (base) this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapXml(base) });
+    },
+  };
+}
+
+const ROOT_DIR = fileURLToPath(new URL('.', import.meta.url));
+
+export default defineConfig(({ mode }) => ({
   root: 'client',
-  plugins: [singleKatex(), precompress()],
+  envDir: ROOT_DIR,
+  plugins: [singleKatex(), publicSite(loadEnv(mode, ROOT_DIR, 'VITE_').VITE_PUBLIC_URL)],
   build: {
     outDir: '../dist',
     emptyOutDir: true,
@@ -69,6 +51,7 @@ export default defineConfig({
         guide: fileURLToPath(new URL('./client/guide/index.html', import.meta.url)),
         privacy: fileURLToPath(new URL('./client/privacy/index.html', import.meta.url)),
         notFound: fileURLToPath(new URL('./client/404.html', import.meta.url)),
+        share: fileURLToPath(new URL('./client/s/index.html', import.meta.url)),
         learn: fileURLToPath(new URL('./client/learn/index.html', import.meta.url)),
         'markdown-to-pdf': fileURLToPath(new URL('./client/learn/markdown-to-pdf/index.html', import.meta.url)),
         'markdown-tables': fileURLToPath(new URL('./client/learn/markdown-tables/index.html', import.meta.url)),
@@ -77,8 +60,6 @@ export default defineConfig({
       },
     },
   },
-  server: {
-    port: 5173,
-    proxy: { '/api': 'http://localhost:3000' },
-  },
-});
+  server: { port: 5173 },
+  preview: { port: 4173 },
+}));

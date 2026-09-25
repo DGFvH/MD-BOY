@@ -1,14 +1,38 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, viaNode, PROXIED, SUPABASE_URL_RE } from './fixtures.mjs';
+import { resetTestAccount, TEST_EMAIL, TEST_PASSWORD } from './account.mjs';
 
-// A first visit opens the sign-up form.
+// Signs in to a freshly emptied Supabase test account (the welcome document is
+// created on the first sign-in, as for a new user).
 async function register(page) {
+  await resetTestAccount();
+  await page.goto('/app');
+  const signIn = page.getByRole('heading', { name: 'Welcome back' });
+  const signUp = page.getByRole('heading', { name: 'Create your account' });
+  await expect(signIn.or(signUp)).toBeVisible();
+  if (await signUp.isVisible()) await page.locator('.auth-switch .link-btn', { hasText: 'Sign in' }).click();
+  await expect(signIn).toBeVisible();
+  await page.fill('#auth-email', TEST_EMAIL);
+  await page.fill('#auth-password', TEST_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.locator('.cm-content')).toBeVisible({ timeout: 15_000 });
+}
+
+test('signing up asks to confirm the email address', async ({ page }) => {
+  // No real email is sent: the sign-up request is answered as Supabase does when
+  // confirmation is required (a user, but no session).
+  await page.route('**/auth/v1/signup**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ id: '00000000-0000-4000-8000-000000000001', aud: 'authenticated', role: '', email: 'new@example.com', identities: [{ id: 'x' }], user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() }),
+  }));
   await page.goto('/app');
   await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
-  await page.fill('#auth-email', `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`);
+  await page.fill('#auth-email', 'new@example.com');
   await page.fill('#auth-password', 'a-very-good-password');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.locator('.cm-content')).toBeVisible();
-}
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+  await expect(page.getByText('new@example.com')).toBeVisible();
+});
 
 test('register, write Markdown, see preview, and persist', async ({ page }) => {
   const errors = [];
@@ -184,7 +208,7 @@ test('a pasted image is uploaded and shown in the preview', async ({ page }) => 
     dt.items.add(new File([bytes], 'dot.png', { type: 'image/png' }));
     document.querySelector('.cm-content').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
   });
-  await expect(page.locator('.cm-content')).toContainText(/!\[dot\]\(\/i\/[\w-]{22}\)/);
+  await expect(page.locator('.cm-content')).toContainText(/!\[dot\]\(https:\/\/\S+\/storage\/v1\/object\/public\/images\/[\w-]+\/[\w-]{22}\.png\)/);
   const img = page.locator('.pane-preview .markdown-body img[alt="dot"]');
   await expect(img).toBeVisible();
   await expect.poll(() => img.evaluate((el) => el.naturalWidth)).toBe(1);
@@ -204,6 +228,7 @@ test('a read-only share link opens for someone who is signed out', async ({ page
   await expect(page.locator('.tree-row.active .tree-badge')).toBeVisible();
 
   const stranger = await browser.newContext();
+  if (PROXIED) await stranger.route(SUPABASE_URL_RE, viaNode);
   const view = await stranger.newPage();
   await view.goto(url);
   await expect(view.locator('h1')).toHaveText('Shared notes');
@@ -283,7 +308,7 @@ test('the landing page is static, crawlable HTML that leads to the editor', asyn
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
 
-  for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt']) expect((await request.get(path)).status()).toBe(200);
+  for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt', '/sitemap.xml']) expect((await request.get(path)).status()).toBe(200);
   expect((await request.get('/nope')).status()).toBe(404);
 });
 

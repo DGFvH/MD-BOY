@@ -2,21 +2,21 @@
   "name": "hashlite",
   "version": "0.1.0",
   "private": true,
-  "description": "A simple, capable online Markdown editor with accounts and cloud storage.",
+  "description": "Hashlite: a simple online Markdown editor with live preview. Static site + Supabase.",
   "type": "module",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=20"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web \"node --disable-warning=ExperimentalWarning --watch server/index.js\" \"vite\"",
+    "dev": "vite",
     "build": "vite build",
-    "start": "node --disable-warning=ExperimentalWarning server/index.js",
-    "test": "node --disable-warning=ExperimentalWarning --test tests/api.test.js",
+    "preview": "vite preview",
+    "test": "playwright test",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
     "@vscode/markdown-it-katex": "^1.1.2",
-    "express": "^5.2.1",
     "highlight.js": "^11.12.0",
     "katex": "^0.18.9",
     "markdown-it": "^15.0.2",
@@ -38,10 +38,8 @@
     "@lezer/highlight": "^1.2.4",
     "@playwright/test": "^1.63.0",
     "codemirror": "^6.0.2",
-    "concurrently": "^10.0.5",
     "dompurify": "^3.4.16",
     "mermaid": "^12.0.0",
-    "supertest": "^7.3.0",
     "vite": "^8.3.1"
   }
 }

@@ -49,24 +49,17 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
       contrast, light/dark via `prefers-color-scheme`, no horizontal scroll at 360 px.
 - [x] `404.html` has `<meta name="robots" content="noindex">`.
 
-## Technical SEO (server)
+## Technical SEO (build and hosting)
 
-- **`PUBLIC_URL`**: the pages contain the placeholder `%PUBLIC_URL%` in the canonical, `og:url`,
-  `og:image`, `twitter:image` tags and in JSON-LD `url`/`image`/`screenshot` values. The server
-  replaces it at request time (e.g. `https://hashlite.io`). Without `PUBLIC_URL` it deletes the
-  `<link>`/`<meta>` lines containing it and replaces it with `""` inside JSON-LD, so no relative or
-  wrong absolute URLs are published. **Set `PUBLIC_URL` in production** — canonical and social
-  previews depend on it. Vite leaves the placeholder untouched in the build.
-- **Canonical URLs**: `/`, `/guide`, `/privacy`, `/learn`, `/learn/<slug>` (no trailing slash, no `index.html`).
-- **`robots.txt`**: allows the public pages, disallows `/api/`, `/app`, `/s/`, `/i/`, and points to the sitemap.
-- **`sitemap.xml`**: `/`, `/guide`, `/privacy` and the `/learn` pages with absolute URLs from `PUBLIC_URL`
-  (the `/learn` pages must be listed in `server/site.js` and added as Vite inputs).
-- **`llms.txt`**: a plain-text summary of what Hashlite is, its features and key URLs, for LLM crawlers.
-- **noindex** (`X-Robots-Tag: noindex` or meta): `/app`, shared documents `/s/…` (user content,
-  may be private-ish), `/api/…`, uploaded images `/i/…`.
-- **Real 404s**: unknown paths return status 404 with `404.html`, not the landing page (avoids soft 404s).
-- **Compression and caching**: HTML/CSS/JS are pre-compressed (brotli + gzip); hashed assets are
-  cached for a year, HTML is revalidated.
+- **`VITE_PUBLIC_URL`** (`.env`, default `https://hashlite.io`):
+  - **Where it goes:** the pages contain the placeholder `%PUBLIC_URL%` in the canonical, `og:url`, `og:image` and `twitter:image` tags, and in the JSON-LD `url`, `image` and `screenshot` values. The build fills it in (`build/site.mjs`, `vite.config.js`).
+  - **Without it:** the `<link>` and `<meta>` lines that use it are dropped, and inside JSON-LD it becomes empty.
+- **Canonical URLs:** `/`, `/guide`, `/privacy`, `/learn` and `/learn/<slug>`, with no trailing slash and no `index.html`.
+- **`robots.txt`**, **`sitemap.xml`** and **`llms.txt`:** generated at build time from `PUBLIC_PAGES` in `build/site.mjs`. When you add a public page, add it there and as a Vite input.
+  - `robots.txt` disallows `/app` and `/s/`.
+- **noindex:** `/app` and shared documents at `/s/…`, by meta tag and by `X-Robots-Tag` in the host config (`_headers`, `vercel.json`).
+- **Real 404s:** static hosts serve `404.html` with status 404 for unknown paths.
+- **Compression and caching:** the host compresses files itself. Hashed files in `/assets/` are cached for a year.
 
 ## GEO tactics
 

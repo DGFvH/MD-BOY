@@ -1,0 +1,4 @@
+# Netlify: build settings. Redirects and headers are in client/public/_redirects and _headers.
+[build]
+  command = "npm run build"
+  publish = "dist"

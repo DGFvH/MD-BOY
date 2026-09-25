@@ -17,7 +17,7 @@ The app is called **Hashlite** (domain: **hashlite.io**), with the tagline *"Wri
 - **History:** the first rebrand from MD-BOY was "Hashmark", but hashmark.com and hashmark.io were taken. Two naming rounds checked about 150 names against the domain registries (RDAP) and searched for existing products. The owner then chose Hashlite and registered hashlite.io. hashlite.com is taken (registered since 2011).
 - **Why it fits:** `#` is the first character every Markdown user types, and "lite" says simple and lightweight. The `#` logo still fits.
 - **Logo:** a white, slightly slanted `#` on the indigo accent colour.
-- **In the code:** the name and tagline live in `client/src/brand.js`. Set `PUBLIC_URL=https://hashlite.io` in production.
+- **In the code:** the name and tagline live in `client/src/brand.js`. `VITE_PUBLIC_URL=https://hashlite.io` is set in `.env`.
 - This was a web and registry check only, not a trademark check.
 
 ## Walkthrough: what a user experiences now
@@ -106,8 +106,17 @@ The "not done yet" list from the review, and what happened to each item.
 | Item | Why it waits |
 | --- | --- |
 | **Talking to AI models** (milestone M1 in [LLM-INTEGRATION.md](LLM-INTEGRATION.md)) | Deferred on request. The research and plan are ready: about 1.5–2 weeks for key storage and a chat panel. |
-| **Password reset by email** | Needs an email (SMTP) provider and its settings. Until then the admin runs `node server/admin.js reset-password <email>`. |
 | **Live sync between devices** | Tabs in one browser sync now. Other devices pick up changes when their tab regains focus and are protected by the conflict check. True live sync needs a server push channel. |
 | **A lighter first load for the editor** | Loading KaTeX and highlight.js only when a document needs them requires re-render plumbing. The editor is about 250 KB compressed, and the new public pages load almost no JavaScript. |
 | **Old versions in the storage limit** | The limit counts document text and images. Old versions are capped by the history thinning instead. |
 | **Managing uploaded images** | Images are kept until the account is deleted, even if no document uses them any more. A later "unused images" cleanup could free the space. |
+
+## Move to Supabase (2026-09-25)
+
+Accounts and documents moved from the built-in SQLite server to the Supabase project **HASHLITE** (EU):
+
+- **Auth:** Supabase Auth, with email confirmation and **password reset by email**, which is no longer deferred.
+- **Database:** the rules that used to live in the Node server are now database functions behind Row Level Security. They cover saving with version and conflict checks, history thinning, search, the storage limit, share links and account deletion.
+- **Images:** stored in Supabase Storage.
+- **Hosting:** the site is static files (Netlify, Cloudflare Pages or Vercel). The Node server, Docker image and SQLite code were removed; they are in git history.
+- **Deviation from the plan:** creating a Supabase development branch kept timing out, so the migrations were applied to the new, empty HASHLITE project directly and tested there with temporary SQL test users, which were removed afterwards.

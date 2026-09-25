@@ -15,7 +15,7 @@ import {
 } from './ui.js';
 import { WELCOME_TITLE, WELCOME_CONTENT } from './welcome.js';
 import { pageTitle } from './brand.js';
-import { showAuth } from './app/auth.js';
+import { showAuth, showNewPassword } from './app/auth.js';
 import { showAccount } from './app/account.js';
 
 const root = document.getElementById('app');
@@ -84,9 +84,23 @@ window.addEventListener('vite:preloadError', (e) => {
   toast('A new version is available.', { timeout: 60000, action: { label: 'Reload', onClick: () => location.reload() } });
 });
 
+// The first time an account signs in (on any device), it gets the welcome document.
+async function welcomeOnce(u) {
+  if (u.welcomed) return;
+  try {
+    await api.createDoc({ title: WELCOME_TITLE, content: WELCOME_CONTENT });
+    await api.markWelcomed();
+  } catch {
+    // Not important enough to stop the app.
+  }
+}
+
+api.onPasswordRecovery(() => showNewPassword());
+
 async function boot() {
   try {
     ({ user } = await api.me());
+    await welcomeOnce(user);
     mountApp();
   } catch (err) {
     if (err.status === 401) openAuth();
@@ -104,9 +118,9 @@ async function boot() {
 function openAuth(opts = {}) {
   showAuth(root, {
     ...opts,
-    onSignedIn: async (signedIn, { isNew }) => {
+    onSignedIn: async (signedIn) => {
       user = signedIn;
-      if (isNew) await api.createDoc({ title: WELCOME_TITLE, content: WELCOME_CONTENT }).catch(() => {});
+      await welcomeOnce(signedIn);
       mountApp();
     },
   });
@@ -964,7 +978,7 @@ function createApp() {
           class: 'stack',
           onSubmit: (e) => {
             e.preventDefault();
-            close({ id: select.value === 'null' ? null : Number(select.value) });
+            close({ id: select.value === 'null' ? null : select.value });
           },
         }, select, h('div', { class: 'modal-actions' },
           h('button', { type: 'button', class: 'btn', onClick: () => close(undefined) }, 'Cancel'),

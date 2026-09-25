@@ -1,6 +1,6 @@
 // Account dialog: change password, download every document, delete the account.
 import { api } from '../api.js';
-import { h, icons, modal, toast } from '../ui.js';
+import { h, icons, modal, toast, downloadFile } from '../ui.js';
 
 function section(title, ...children) {
   return h('section', { class: 'modal-section' }, h('h3', {}, title), ...children);
@@ -66,12 +66,13 @@ export function showAccount({ user, beforeExport, onDeleted }) {
           } catch {
             // Export what the server has.
           }
-          exportBtn.disabled = false;
-          // A link with `download` does not unload the page or trigger the leave prompt.
-          const a = h('a', { href: api.exportUrl, download: 'hashlite-export.zip', hidden: true });
-          document.body.append(a);
-          a.click();
-          a.remove();
+          try {
+            downloadFile('hashlite-export.zip', await api.exportZip(), 'application/zip');
+          } catch (err) {
+            toast(err.message, { type: 'error' });
+          } finally {
+            exportBtn.disabled = false;
+          }
         },
       });
 
