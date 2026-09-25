@@ -1,6 +1,6 @@
 # SEO and GEO plan
 
-How Hashmark gets found by search engines (SEO) and cited by AI answer engines such as
+How Hashlite gets found by search engines (SEO) and cited by AI answer engines such as
 ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 
 ## Goals
@@ -22,7 +22,7 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 | `/learn/markdown-tables` | markdown table | markdown table alignment, escape pipe in markdown table, markdown table line break, merge cells | Informational |
 | `/learn/markdown-math-and-diagrams` | markdown math, mermaid markdown | latex in markdown, katex markdown, mermaid flowchart / sequence / gantt, github math | Informational |
 | `/learn/markdown-vs-rich-text` | markdown vs rich text | markdown vs word, markdown vs google docs, why use markdown | Informational / comparison |
-| `/privacy` | hashmark privacy | — | Navigational / trust |
+| `/privacy` | hashlite privacy | — | Navigational / trust |
 | `/app` | — (noindex) | — | The app itself |
 | `/404.html` | — (noindex) | — | — |
 
@@ -39,10 +39,10 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 - [x] JSON-LD: landing has `WebSite` + `SoftwareApplication` (free `Offer`, `featureList`,
       `screenshot`) + `FAQPage` that mirrors the visible FAQ word for word; guide has `TechArticle`;
       `/learn` has `CollectionPage` + `BreadcrumbList`; each article has `TechArticle` (PDF article:
-      `HowTo` with the Hashmark steps) + `BreadcrumbList` (Home › Learn › Article).
+      `HowTo` with the Hashlite steps) + `BreadcrumbList` (Home › Learn › Article).
 - [x] Short copy: hero is H1 + one line + one button; FAQ answers are at most two sentences.
 - [x] Learn articles open with a direct answer, use real copyable examples (`.pair` Markdown/result
-      blocks), end with one "Try it in Hashmark" link and a Related list (other articles + `/guide`).
+      blocks), end with one "Try it in Hashlite" link and a Related list (other articles + `/guide`).
 - [x] Internal links: header (Learn, Open editor) and footer (Learn, Cheat sheet, Privacy, Open
       editor) on every page; the guide links to the tables and math articles.
 - [x] Semantic landmarks (`header`, `nav`, `main`, `footer`), skip link, visible focus, WCAG AA
@@ -53,7 +53,7 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 
 - **`PUBLIC_URL`**: the pages contain the placeholder `%PUBLIC_URL%` in the canonical, `og:url`,
   `og:image`, `twitter:image` tags and in JSON-LD `url`/`image`/`screenshot` values. The server
-  replaces it at request time (e.g. `https://hashmark.example`). Without `PUBLIC_URL` it deletes the
+  replaces it at request time (e.g. `https://hashlite.io`). Without `PUBLIC_URL` it deletes the
   `<link>`/`<meta>` lines containing it and replaces it with `""` inside JSON-LD, so no relative or
   wrong absolute URLs are published. **Set `PUBLIC_URL` in production** — canonical and social
   previews depend on it. Vite leaves the placeholder untouched in the build.
@@ -61,7 +61,7 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 - **`robots.txt`**: allows the public pages, disallows `/api/`, `/app`, `/s/`, `/i/`, and points to the sitemap.
 - **`sitemap.xml`**: `/`, `/guide`, `/privacy` and the `/learn` pages with absolute URLs from `PUBLIC_URL`
   (the `/learn` pages must be listed in `server/site.js` and added as Vite inputs).
-- **`llms.txt`**: a plain-text summary of what Hashmark is, its features and key URLs, for LLM crawlers.
+- **`llms.txt`**: a plain-text summary of what Hashlite is, its features and key URLs, for LLM crawlers.
 - **noindex** (`X-Robots-Tag: noindex` or meta): `/app`, shared documents `/s/…` (user content,
   may be private-ish), `/api/…`, uploaded images `/i/…`.
 - **Real 404s**: unknown paths return status 404 with `404.html`, not the landing page (avoids soft 404s).
@@ -71,13 +71,13 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 ## GEO tactics
 
 - **Answer-first copy**: the first sentence of the landing intro is a self-contained definition
-  ("Hashmark is a free online Markdown editor with live preview…"). The guide and every `/learn`
+  ("Hashlite is a free online Markdown editor with live preview…"). The guide and every `/learn`
   article open with a one- or two-sentence answer.
 - **FAQ + `FAQPage` schema** with direct, factual answers to the questions people ask assistants.
 - **Factual feature list**: only real features, stated plainly (same list in HTML and JSON-LD).
 - **Crawlable static HTML**: all content is in the HTML; no JavaScript is needed to read it.
 - **`llms.txt`** for LLM crawlers.
-- **Consistent naming**: always "Hashmark", always described as "free online Markdown editor".
+- **Consistent naming**: always "Hashlite", always described as "free online Markdown editor".
 - No invented numbers: no user counts, ratings or reviews.
 
 ## Performance / Core Web Vitals
@@ -120,7 +120,7 @@ examples, `TechArticle` (or `HowTo`) + `BreadcrumbList`, Related list.
   Enhancements (FAQ, structured data) reports.
 - **Bing Webmaster Tools**: same, plus AI/Copilot referral data where available.
 - **AI visibility**: every month, ask ChatGPT, Perplexity, Gemini and Claude "free online Markdown
-  editor with live preview / math / diagrams" and note whether and how Hashmark is described.
+  editor with live preview / math / diagrams" and note whether and how Hashlite is described.
 - **Sign-ups**: new accounts per week, from server data.
 - **Optional analytics**: only a privacy-friendly, cookieless tool (e.g. Plausible, Umami or
   GoatCounter, self-hosted). Adding one requires updating `/privacy`, which currently says there

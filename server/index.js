@@ -158,7 +158,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   });
   const server = app.listen(port, host, (err) => {
     if (err) throw err;
-    console.log(`Hashmark running at http://${host ?? 'localhost'}:${port}`);
+    console.log(`Hashlite running at http://${host ?? 'localhost'}:${port}`);
   });
 
   // On SIGTERM (docker stop, redeploys) or Ctrl+C: finish open requests, such as

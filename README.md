@@ -1,8 +1,8 @@
-# Hashmark
+# Hashlite
 
 **Write Markdown. See it live. Keep it safe.**
 
-Hashmark is a simple, capable **online Markdown editor**. Write in the browser, see a live preview, and have everything saved to your account on the server.
+Hashlite is a simple, capable **online Markdown editor**. Write in the browser, see a live preview, and have everything saved to your account on the server.
 
 ## Features
 
@@ -55,8 +55,8 @@ npm run dev         # open http://localhost:5173
 ### Docker
 
 ```bash
-docker build -t hashmark .
-docker run -p 3000:3000 -v hashmark-data:/data hashmark
+docker build -t hashlite .
+docker run -p 3000:3000 -v hashlite-data:/data hashlite
 ```
 
 ## Configuration
@@ -65,12 +65,12 @@ docker run -p 3000:3000 -v hashmark-data:/data hashmark
 | -------------------- | ----------- | ----------- |
 | `PORT`               | `3000`      | HTTP port |
 | `HOST`               | all interfaces | Address to listen on, e.g. `127.0.0.1` so only a reverse proxy on the same machine can reach the app |
-| `DATA_DIR`           | `./data`    | Folder for the SQLite database (`hashmark.db`) |
+| `DATA_DIR`           | `./data`    | Folder for the SQLite database (`hashlite.db`) |
 | `COOKIE_SECURE`      | unset       | Set to `1` when served over HTTPS, so session cookies are marked `Secure` (automatic behind an HTTPS proxy when `TRUST_PROXY` is set) |
 | `TRUST_PROXY`        | unset       | Set behind a reverse proxy (nginx, Caddy, Fly.io, Render…) so rate limiting sees real client IPs: a hop count (`1`), or the proxies' addresses or subnets (`loopback`, `172.17.0.0/16`, comma-separated). `true` trusts every hop and is only safe when the app can be reached solely through the proxy |
 | `ALLOW_REGISTRATION` | `1`         | Set to `0` to close sign-ups; existing accounts keep working |
 | `MAX_USER_BYTES`     | `104857600` | Storage limit per account for document text and images, trash included (100 MB); `0` means no limit |
-| `PUBLIC_URL`         | unset       | The site's public address, e.g. `https://hashmark.example`. Used for canonical links, social previews, `sitemap.xml` and `llms.txt`. Without it those absolute tags are left out |
+| `PUBLIC_URL`         | unset       | The site's public address, e.g. `https://hashlite.io`. Used for canonical links, social previews, `sitemap.xml` and `llms.txt`. Without it those absolute tags are left out |
 
 Behind nginx, pass the original host and scheme so the same-origin check and secure cookies work:
 
@@ -83,9 +83,9 @@ location / {
 }
 ```
 
-Then start Hashmark with `HOST=127.0.0.1 TRUST_PROXY=loopback`.
+Then start Hashlite with `HOST=127.0.0.1 TRUST_PROXY=loopback`.
 
-Back up your data by copying `DATA_DIR`. It is safest to do this while the server is stopped, or with `sqlite3 hashmark.db ".backup backup.db"`.
+Back up your data by copying `DATA_DIR`. It is safest to do this while the server is stopped, or with `sqlite3 hashlite.db ".backup backup.db"`.
 
 To reset a forgotten password, run this with the same `DATA_DIR` as the server (it is safe while the server runs). It prints a new random password and signs the account out everywhere:
 
@@ -145,7 +145,7 @@ client/                 Vite frontend (vanilla JS, no framework)
   src/export.js         import and export
   src/storage.js        local drafts and preferences
 tests/                  API and end-to-end tests
-docs/LLM-INTEGRATION.md research: connecting Hashmark to LLMs
+docs/LLM-INTEGRATION.md research: connecting Hashlite to LLMs
 ```
 
 ## API
@@ -188,4 +188,4 @@ All endpoints use JSON and need a session cookie, except `/api/config`, register
 
 ### Talking to LLMs
 
-It is possible to connect Hashmark to Claude, GPT, Gemini, Mistral, OpenRouter or local models (Ollama, LM Studio). You could chat about a document, rewrite a selection, or accept and reject suggested edits. See **[docs/LLM-INTEGRATION.md](docs/LLM-INTEGRATION.md)** for the research, the recommended architecture (users bring their own API keys, the server stores them encrypted and relays calls), and a phased plan.
+It is possible to connect Hashlite to Claude, GPT, Gemini, Mistral, OpenRouter or local models (Ollama, LM Studio). You could chat about a document, rewrite a selection, or accept and reject suggested edits. See **[docs/LLM-INTEGRATION.md](docs/LLM-INTEGRATION.md)** for the research, the recommended architecture (users bring their own API keys, the server stores them encrypted and relays calls), and a phased plan.

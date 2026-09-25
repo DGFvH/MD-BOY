@@ -42,15 +42,15 @@ export function normalizePublicUrl(value) {
 
 export function llmsTxt(base) {
   const link = (path) => `${base}${path}`;
-  return `# Hashmark
+  return `# Hashlite
 
-> Hashmark is a free online Markdown editor with a live preview. Documents are saved automatically to your account, with folders, full-text search, version history and export to Markdown, HTML, PDF or a zip of everything.
+> Hashlite is a free online Markdown editor with a live preview. Documents are saved automatically to your account, with folders, full-text search, version history and export to Markdown, HTML, PDF or a zip of everything.
 
-Hashmark runs in the browser on desktop and phone. It is open source and can be self-hosted (Node.js and SQLite, or Docker). There are no ads and no tracking.
+Hashlite runs in the browser on desktop and phone. It is open source and can be self-hosted (Node.js and SQLite, or Docker). There are no ads and no tracking.
 
 ## Pages
 
-- [Home](${link('/')}): what Hashmark is, features and FAQ
+- [Home](${link('/')}): what Hashlite is, features and FAQ
 - [Markdown cheat sheet](${link('/guide')}): a reference for Markdown syntax, from headings to tables, math and diagrams
 - [Learn](${link('/learn')}): short guides
   - [How to convert Markdown to PDF](${link('/learn/markdown-to-pdf')})

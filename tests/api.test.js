@@ -115,7 +115,7 @@ describe('auth', () => {
     const soon = Date.now() + DAY;
     db.prepare('UPDATE sessions SET expires_at = ? WHERE user_id = ?').run(soon, id);
     const res = await agent.get('/api/auth/me').expect(200);
-    assert.match(res.headers['set-cookie']?.[0] ?? '', /^hashmark_session=/);
+    assert.match(res.headers['set-cookie']?.[0] ?? '', /^hashlite_session=/);
     const { expires_at } = db.prepare('SELECT expires_at FROM sessions WHERE user_id = ?').get(id);
     assert.ok(expires_at > Date.now() + 29 * DAY);
     // A fresh session is not rewritten on every request.
@@ -282,7 +282,7 @@ describe('account', () => {
 
     const res = await agent.delete('/api/auth/account').send({ password: PASSWORD }).expect(200);
     assert.deepEqual(res.body, { ok: true });
-    assert.match(res.headers['set-cookie'].join(), /hashmark_session=;/);
+    assert.match(res.headers['set-cookie'].join(), /hashlite_session=;/);
     await agent.get('/api/auth/me').expect(401);
     await request(app).post('/api/auth/login').send({ email: 'gone@example.com', password: PASSWORD }).expect(401);
 
@@ -320,7 +320,7 @@ describe('account', () => {
 
     const res = await agent.get('/api/export').buffer(true).parse(binary).expect(200);
     assert.equal(res.headers['content-type'], 'application/zip');
-    assert.match(res.headers['content-disposition'], /attachment; filename="hashmark-export\.zip"/);
+    assert.match(res.headers['content-disposition'], /attachment; filename="hashlite-export\.zip"/);
     const files = readZip(res.body);
     assert.deepEqual(Object.keys(files).sort(), [
       '_CON.md',
@@ -595,9 +595,9 @@ describe('database', () => {
   });
 
   test('an existing database is upgraded and its storage use counted', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'hashmark-db-'));
+    const dir = mkdtempSync(join(tmpdir(), 'hashlite-db-'));
     try {
-      const file = join(dir, 'hashmark.db');
+      const file = join(dir, 'hashlite.db');
       const old = new DatabaseSync(file);
       const init = fileURLToPath(new URL('../server/migrations/001_init.sql', import.meta.url));
       old.exec(readFileSync(init, 'utf8'));
@@ -618,12 +618,12 @@ describe('database', () => {
 });
 
 describe('static files', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'hashmark-static-'));
+  const dir = mkdtempSync(join(tmpdir(), 'hashlite-static-'));
   const js = 'console.log("hello from a chunk");\n'.repeat(100);
   mkdirSync(join(dir, 'assets'));
-  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>Hashmark</title>');
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>Hashlite</title>');
   mkdirSync(join(dir, 'app'));
-  writeFileSync(join(dir, 'app', 'index.html'), '<!doctype html><title>Hashmark</title>');
+  writeFileSync(join(dir, 'app', 'index.html'), '<!doctype html><title>Hashlite</title>');
   writeFileSync(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
   writeFileSync(join(dir, '.env'), 'SECRET=1');
   writeFileSync(join(dir, 'assets', 'index-abc123.js'), js);
@@ -644,7 +644,7 @@ describe('static files', () => {
       const res = await request(app).get(path).expect(200);
       assert.match(res.headers['content-type'], /text\/html/);
       assert.equal(res.headers['cache-control'], 'no-cache');
-      assert.match(res.text, /<title>Hashmark/);
+      assert.match(res.text, /<title>Hashlite/);
     }
     await request(app).get('/index.html').expect(301).expect('Location', '/');
     await request(app).get('/some/route').expect(404);
@@ -677,18 +677,18 @@ describe('static files', () => {
 });
 
 describe('public site and crawler files', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'hashmark-site-'));
+  const dir = mkdtempSync(join(tmpdir(), 'hashlite-site-'));
   for (const d of ['app', 'guide', 'privacy', 'learn/markdown-tables']) mkdirSync(join(dir, d), { recursive: true });
   writeFileSync(join(dir, 'learn', 'markdown-tables', 'index.html'), '<!doctype html><title>Markdown tables</title>');
   const landing = [
-    '<!doctype html><html><head><title>Hashmark landing</title>',
+    '<!doctype html><html><head><title>Hashlite landing</title>',
     '    <link rel="canonical" href="%PUBLIC_URL%/">',
     '    <meta property="og:image" content="%PUBLIC_URL%/og.png">',
     '<script type="application/ld+json">{"url":"%PUBLIC_URL%/"}</script>',
     '</head><body><h1>Landing</h1></body></html>',
   ].join('\n');
   writeFileSync(join(dir, 'index.html'), landing);
-  writeFileSync(join(dir, 'app', 'index.html'), '<!doctype html><title>Hashmark app</title>');
+  writeFileSync(join(dir, 'app', 'index.html'), '<!doctype html><title>Hashlite app</title>');
   writeFileSync(join(dir, 'guide', 'index.html'), '<!doctype html><title>Markdown cheat sheet</title>');
   writeFileSync(join(dir, 'privacy', 'index.html'), '<!doctype html><title>Privacy</title>');
   writeFileSync(join(dir, '404.html'), '<!doctype html><title>Page not found</title>');
@@ -697,7 +697,7 @@ describe('public site and crawler files', () => {
   test('without PUBLIC_URL: absolute-URL tags are dropped, no sitemap', async () => {
     const { app } = setup({ staticDir: dir });
     const res = await request(app).get('/').expect(200);
-    assert.match(res.text, /Hashmark landing/);
+    assert.match(res.text, /Hashlite landing/);
     assert.doesNotMatch(res.text, /PUBLIC_URL|canonical|og:image/);
     assert.match(res.text, /"url":"\/"/);
     await request(app).get('/sitemap.xml').expect(404);
@@ -722,7 +722,7 @@ describe('public site and crawler files', () => {
     assert.doesNotMatch(sitemap.text, /markdown-to-pdf/, 'pages that were not built are left out');
     assert.match((await request(app).get('/robots.txt')).text, /Sitemap: https:\/\/notes.example.com\/sitemap.xml/);
     const llms = await request(app).get('/llms.txt').expect(200);
-    assert.match(llms.text, /^# Hashmark/);
+    assert.match(llms.text, /^# Hashlite/);
     assert.match(llms.text, /\(https:\/\/notes.example.com\/guide\)/);
   });
 

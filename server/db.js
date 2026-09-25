@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url';
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(SERVER_DIR, 'migrations');
 
-/** The database file: $DATA_DIR/hashmark.db, by default ./data/hashmark.db. */
+/** The database file: $DATA_DIR/hashlite.db, by default ./data/hashlite.db. */
 export function databaseFile(env = process.env) {
-  return join(env.DATA_DIR || join(SERVER_DIR, '..', 'data'), 'hashmark.db');
+  return join(env.DATA_DIR || join(SERVER_DIR, '..', 'data'), 'hashlite.db');
 }
 
 export function openDatabase(file) {

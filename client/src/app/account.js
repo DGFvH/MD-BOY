@@ -68,7 +68,7 @@ export function showAccount({ user, beforeExport, onDeleted }) {
           }
           exportBtn.disabled = false;
           // A link with `download` does not unload the page or trigger the leave prompt.
-          const a = h('a', { href: api.exportUrl, download: 'hashmark-export.zip', hidden: true });
+          const a = h('a', { href: api.exportUrl, download: 'hashlite-export.zip', hidden: true });
           document.body.append(a);
           a.click();
           a.remove();

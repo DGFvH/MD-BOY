@@ -125,14 +125,14 @@ export function createSidebar(root, actions) {
   // ---- Drag & drop documents onto folders ----
   function makeDropTarget(row, folderId) {
     row.addEventListener('dragover', (e) => {
-      if (!e.dataTransfer.types.includes('application/x-hashmark-doc')) return;
+      if (!e.dataTransfer.types.includes('application/x-hashlite-doc')) return;
       e.preventDefault();
       row.classList.add('drop-target');
     });
     row.addEventListener('dragleave', () => row.classList.remove('drop-target'));
     row.addEventListener('drop', (e) => {
       row.classList.remove('drop-target');
-      const id = e.dataTransfer.getData('application/x-hashmark-doc');
+      const id = e.dataTransfer.getData('application/x-hashlite-doc');
       if (id) {
         e.preventDefault();
         actions.onMoveDoc(id, folderId);
@@ -188,7 +188,7 @@ export function createSidebar(root, actions) {
         actions.onOpenDoc(id);
       },
       onDragstart: (e) => {
-        e.dataTransfer.setData('application/x-hashmark-doc', id);
+        e.dataTransfer.setData('application/x-hashlite-doc', id);
         e.dataTransfer.effectAllowed = 'move';
       },
     }, r.link, r.more);

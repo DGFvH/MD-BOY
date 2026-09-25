@@ -67,7 +67,7 @@ export function createExportRouter(db) {
 
     res.set({
       'Content-Type': 'application/zip',
-      'Content-Disposition': 'attachment; filename="hashmark-export.zip"',
+      'Content-Disposition': 'attachment; filename="hashlite-export.zip"',
     });
     res.send(await createZip(entries));
   });

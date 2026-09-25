@@ -1,4 +1,4 @@
-# Hashmark review: walkthrough and improvements
+# Hashlite review: walkthrough and improvements
 
 **Date:** 2026-09-24. This covers the review done right after the first version was built, when the app was still called MD-BOY.
 
@@ -12,11 +12,13 @@ The API tests went from 11 to 38 and the browser tests from 1 to 6. All of them 
 
 ## Name
 
-The app is now called **Hashmark**, with the tagline *"Write Markdown. See it live. Keep it safe."*
+The app is called **Hashlite** (domain: **hashlite.io**), with the tagline *"Write Markdown. See it live. Keep it safe."*
 
-- **Why this name:** it is a normal word, easy to say and spell, and `#` is the first character every Markdown user types. A web search found no Markdown or notes app using it. The other names considered (Folio, Inkwell, Pilcrow, Margin, Plume, Verso, Quire) are all taken by existing Markdown editors. This was only a web search, not a trademark check.
+- **History:** the first rebrand from MD-BOY was "Hashmark", but hashmark.com and hashmark.io were taken. Two naming rounds checked about 150 names against the domain registries (RDAP) and searched for existing products. The owner then chose Hashlite and registered hashlite.io. hashlite.com is taken (registered since 2011).
+- **Why it fits:** `#` is the first character every Markdown user types, and "lite" says simple and lightweight. The `#` logo still fits.
 - **Logo:** a white, slightly slanted `#` on the indigo accent colour.
-- **In the code:** the name and tagline live in `client/src/brand.js`.
+- **In the code:** the name and tagline live in `client/src/brand.js`. Set `PUBLIC_URL=https://hashlite.io` in production.
+- This was a web and registry check only, not a trademark check.
 
 ## Walkthrough: what a user experiences now
 

@@ -10,7 +10,7 @@ RUN npm run build
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 DATA_DIR=/data
-# Set PUBLIC_URL (e.g. https://hashmark.example) for canonical links and the sitemap.
+# Set PUBLIC_URL (e.g. https://hashlite.io) for canonical links and the sitemap.
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY server ./server

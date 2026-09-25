@@ -18,7 +18,7 @@ test('register, write Markdown, see preview, and persist', async ({ page }) => {
 
   // The welcome document opens with a rendered preview.
   const preview = page.locator('.pane-preview .markdown-body');
-  await expect(preview.locator('h1')).toHaveText('Welcome to Hashmark');
+  await expect(preview.locator('h1')).toHaveText('Welcome to Hashlite');
   await expect(preview.locator('table')).toBeVisible();
   await expect(preview.locator('.katex').first()).toBeVisible();
   await expect(preview.locator('.mermaid-block.rendered svg')).toBeVisible({ timeout: 15_000 });
@@ -52,8 +52,8 @@ test('register, write Markdown, see preview, and persist', async ({ page }) => {
   await expect(editor).toContainText('- [x] Apples');
 
   // Back returns to the previously opened document.
-  await page.locator('.tree-row', { hasText: 'Welcome to Hashmark' }).click();
-  await expect(page.locator('.title-input')).toHaveValue('Welcome to Hashmark');
+  await page.locator('.tree-row', { hasText: 'Welcome to Hashlite' }).click();
+  await expect(page.locator('.title-input')).toHaveValue('Welcome to Hashlite');
   await page.goBack();
   await expect(page.locator('.title-input')).toHaveValue('Shopping list');
 

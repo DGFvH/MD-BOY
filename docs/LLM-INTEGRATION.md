@@ -1,4 +1,4 @@
-# LLM integration for Hashmark: research report
+# LLM integration for Hashlite: research report
 
 > **Status:** research only. Nothing in this document is implemented yet.
 > **Checked:** 2026-09-24, against the official provider docs listed under [Sources](#sources).
@@ -48,7 +48,7 @@
 - **Auth:** `Authorization: Bearer <key>` against `https://api.openai.com/v1`.
 - **Chat Completions** (`POST /v1/chat/completions`): `messages[]` with `system`/`user`/`assistant` roles. With `stream: true`, each SSE `data:` line is a `chat.completion.chunk` with text in `choices[0].delta.content`, and the stream ends with `data: [DONE]`. Send `stream_options: {"include_usage": true}` to get token usage in the final chunk.
 - **Responses** (`POST /v1/responses`): top-level `instructions` plus `input`, with named SSE events such as `response.output_text.delta`. OpenAI: "While Chat Completions remains supported, Responses is recommended for all new projects."
-- **For Hashmark:** Chat Completions is the format everyone else copies, so the generic adapter should speak it. A Responses code path for OpenAI can be added later if a feature needs it.
+- **For Hashlite:** Chat Completions is the format everyone else copies, so the generic adapter should speak it. A Responses code path for OpenAI can be added later if a feature needs it.
 - **Browser:** CORS preflight allowed. The official JS SDK requires `dangerouslyAllowBrowser` for browser use.
 - **Free tier:** the rate-limit guide lists a "Free" usage tier for supported countries. I could not confirm which models it can call without a payment method **(unverified)**, so treat OpenAI as paid. See the [pricing page](https://developers.openai.com/api/docs/pricing).
 
@@ -77,7 +77,7 @@
 
 ### 1.7 Local: Ollama and LM Studio
 
-- **Ollama:** OpenAI-compatible at `http://localhost:11434/v1/` (`/chat/completions`, `/models`, and `/responses` since v0.13.3). The API key is "required but ignored" locally. There is also an Anthropic-compatible `/v1/messages`, and a hosted option at `https://ollama.com/v1` that uses an API key. **CORS:** by default only `127.0.0.1` and `0.0.0.0` origins are allowed, so the Hashmark origin has to be added to `OLLAMA_ORIGINS`. Ollama binds to `127.0.0.1:11434`, and `OLLAMA_HOST` exposes it on a network.
+- **Ollama:** OpenAI-compatible at `http://localhost:11434/v1/` (`/chat/completions`, `/models`, and `/responses` since v0.13.3). The API key is "required but ignored" locally. There is also an Anthropic-compatible `/v1/messages`, and a hosted option at `https://ollama.com/v1` that uses an API key. **CORS:** by default only `127.0.0.1` and `0.0.0.0` origins are allowed, so the Hashlite origin has to be added to `OLLAMA_ORIGINS`. Ollama binds to `127.0.0.1:11434`, and `OLLAMA_HOST` exposes it on a network.
 - **LM Studio:** OpenAI-compatible at `http://localhost:1234/v1` (`/models`, `/chat/completions`, `/responses`, `/completions`, `/embeddings`). **CORS is off by default**. Turn on "Enable CORS" in the server settings or run `lms server start --cors`. I did not check whether it has an Anthropic-compatible endpoint **(unverified)**.
 - **Browser caveat:** since Chrome 142, a public website that fetches `localhost` or a LAN IP triggers a **Local Network Access permission prompt**. Chrome 145 splits this into "local-network" and "loopback-network" permissions. I have not checked Safari and Firefox behaviour for HTTPS pages calling `http://localhost` **(unverified)**.
 
@@ -88,26 +88,26 @@
 ### (a) BYOK + server proxy, keys encrypted at rest (**recommended**)
 The user pastes a key (or connects OpenRouter through OAuth). The server encrypts it and stores it in `llm_credentials`. The browser calls `/api/llm/chat` with its session cookie, and the server decrypts the key, calls the provider and streams the answer back.
 - **Pros:** the key never reaches the browser again after it is saved, so XSS or a malicious browser extension cannot read it later. **No cost to the owner**, which suits a project without monetization. One place for rate limits, size caps and logging rules. Provider differences are hidden behind one SSE format. Keys follow the user across devices.
-- **Cons:** the server holds sensitive secrets (encryption, a secret-management plan and a breach plan are needed). Document text passes through the Hashmark server. The server holds long-lived streaming connections. A custom `base_url` brings **SSRF** risk (§4).
+- **Cons:** the server holds sensitive secrets (encryption, a secret-management plan and a breach plan are needed). Document text passes through the Hashlite server. The server holds long-lived streaming connections. A custom `base_url` brings **SSRF** risk (§4).
 
 ### (b) Server-owned keys shared by all users
 - **Pros:** zero setup for users, and the simplest UX.
 - **Cons:** **the owner pays for every token** with no revenue to cover it. Abuse (free-LLM farming) is likely on any public signup. Heavy per-user quotas are needed. Provider terms may require accountability for end-user content. It is only sensible for a private or self-hosted instance with trusted users, or as an admin-only option for a single free-tier Gemini/OpenRouter key with strict quotas.
 
 ### (c) Browser-direct calls (key kept in the browser)
-- **Pros:** no server work or streaming load. Document text never touches Hashmark's server. It works with every provider in §1 thanks to CORS.
+- **Pros:** no server work or streaming load. Document text never touches Hashlite's server. It works with every provider in §1 thanks to CORS.
 - **Cons:** the key sits in `localStorage` or memory, where any XSS (a real risk in a Markdown app that renders HTML previews) or extension can steal it. The providers themselves label this "dangerous". Every provider format has to be handled in the frontend bundle. There are no server-side limits. Keys do not follow the user across devices.
 
 ### (d) Local models (Ollama / LM Studio)
 - **Pros:** complete privacy, no API costs, works offline.
-- **Cons:** needs a capable machine. Quality varies by model. **A hosted Hashmark server cannot reach a user's `localhost`**, so this only works (1) **browser-direct** (safe here because there is no secret key, but it needs `OLLAMA_ORIGINS` or LM Studio CORS plus the Chrome LNA prompt), or (2) when Hashmark is **self-hosted** on the same machine or LAN, so the proxy can reach it.
+- **Cons:** needs a capable machine. Quality varies by model. **A hosted Hashlite server cannot reach a user's `localhost`**, so this only works (1) **browser-direct** (safe here because there is no secret key, but it needs `OLLAMA_ORIGINS` or LM Studio CORS plus the Chrome LNA prompt), or (2) when Hashlite is **self-hosted** on the same machine or LAN, so the proxy can reach it.
 
 ### Comparison
 
-| | Owner cost | Key exposure | Setup for user | Works for hosted Hashmark | Privacy |
+| | Owner cost | Key exposure | Setup for user | Works for hosted Hashlite | Privacy |
 |---|---|---|---|---|---|
-| (a) BYOK + proxy | none | server only (encrypted) | paste key / OAuth | yes | provider + Hashmark server |
-| (b) shared keys | **high** | server only | none | yes | provider + Hashmark server |
+| (a) BYOK + proxy | none | server only (encrypted) | paste key / OAuth | yes | provider + Hashlite server |
+| (b) shared keys | **high** | server only | none | yes | provider + Hashlite server |
 | (c) browser-direct | none | **browser** | paste key | yes | provider only |
 | (d) local | none | none | install + CORS | only via browser-direct | **fully local** |
 
@@ -182,7 +182,7 @@ UX principles:
 
 **API keys**
 - Encrypt with **AES-256-GCM** (`crypto.createCipheriv('aes-256-gcm', key, iv)`) using a random 12-byte IV per record. Store `v1:<iv>:<authTag>:<ciphertext>` (base64) so the key can be rotated later.
-- The 32-byte key comes from an env secret (e.g. `LLM_ENCRYPTION_KEY`, base64) or is derived from the existing server secret with `crypto.hkdfSync('sha256', …, 'hashmark-llm-v1', 32)`. The secret must **never** be stored in the SQLite file or the repo, so a leaked DB backup does not leak keys.
+- The 32-byte key comes from an env secret (e.g. `LLM_ENCRYPTION_KEY`, base64) or is derived from the existing server secret with `crypto.hkdfSync('sha256', …, 'hashlite-llm-v1', 32)`. The secret must **never** be stored in the SQLite file or the repo, so a leaked DB backup does not leak keys.
 - Pass `user_id + provider` as **AAD** (`cipher.setAAD`), so ciphertext copied to another user's row fails to decrypt.
 - **Never send keys back to the client.** The API returns only `{id, provider, label, base_url, created_at, hint:"…a1b2"}`. To replace a key, the user deletes it and adds a new one. Check a new key with a cheap `GET /models` before saving it.
 - Delete a user's credentials when their account is deleted (`ON DELETE CASCADE`).
@@ -201,7 +201,7 @@ UX principles:
 - Show a one-time consent dialog per provider: "The selected text or document will be sent to *Provider* under their terms." Link each provider's privacy and data-use page.
 - Call out specifically that **Gemini free-tier content is used to improve Google's products**, and that Mistral may use data for training unless the user opts out.
 - Local models get a "stays on your machine" badge.
-- Update Hashmark's privacy text: document content passes through the Hashmark server and is not stored or logged there.
+- Update Hashlite's privacy text: document content passes through the Hashlite server and is not stored or logged there.
 
 **Prompt injection** (OWASP LLM01:2025)
 - Document text is untrusted input. A shared or pasted document can contain "ignore previous instructions…".
@@ -311,7 +311,7 @@ New frontend dependency: `@codemirror/merge`, plus `@codemirror/autocomplete` if
 
 ## 6. Conclusion
 
-**Yes, linking Hashmark to many LLMs is feasible and fits the current stack well.** Node 22's built-in `fetch` and streams, Express 5 SSE and CodeMirror 6's merge and autocomplete packages cover all the technical needs without SDKs. Because there is no monetization, **bring-your-own-key through an encrypted server proxy** is the right model. The owner pays nothing, keys stay off the client, and one normalized stream hides the differences between providers. Three adapters (OpenAI-compatible, Anthropic, Gemini) reach every provider researched here, including local models.
+**Yes, linking Hashlite to many LLMs is feasible and fits the current stack well.** Node 22's built-in `fetch` and streams, Express 5 SSE and CodeMirror 6's merge and autocomplete packages cover all the technical needs without SDKs. Because there is no monetization, **bring-your-own-key through an encrypted server proxy** is the right model. The owner pays nothing, keys stay off the client, and one normalized stream hides the differences between providers. Three adapters (OpenAI-compatible, Anthropic, Gemini) reach every provider researched here, including local models.
 
 **Recommended first step:** implement milestone **M1**, meaning `server/llm/crypto.js`, the `llm_credentials` table and endpoints, the `openai-compatible` and `anthropic` adapters behind `POST /api/llm/chat`, and a minimal chat panel. Ship it with the consent dialog and logging rules from §4 from day one.
 

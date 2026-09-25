@@ -13,7 +13,7 @@ const gz = promisify(gzip);
 function precompress() {
   let outDir;
   return {
-    name: 'hashmark:precompress',
+    name: 'hashlite:precompress',
     apply: 'build',
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);
@@ -43,7 +43,7 @@ function precompress() {
 function singleKatex() {
   const importer = fileURLToPath(new URL('./client/src/preview.js', import.meta.url));
   return {
-    name: 'hashmark:single-katex',
+    name: 'hashlite:single-katex',
     enforce: 'pre',
     resolveId(source, from) {
       if (source === 'katex' && from?.includes('@vscode/markdown-it-katex')) {

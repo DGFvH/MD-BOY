@@ -1370,7 +1370,7 @@ function createApp() {
   // ---- Other tabs in this browser ----
   // A tab that changed something tells the others, which refresh their list and
   // pick up the new text of the open document if they have nothing unsaved.
-  const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('hashmark') : null;
+  const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('hashlite') : null;
   let channelTimer;
   function notifyOtherTabs() {
     try {

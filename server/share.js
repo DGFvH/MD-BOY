@@ -40,7 +40,7 @@ function sharePage(doc, bodyHtml) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
-<title>${title} · Hashmark</title>
+<title>${title} · Hashlite</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
 body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); }
@@ -54,7 +54,7 @@ ${MARKDOWN_CSS}
 <main class="markdown-body" style="max-width: 860px; margin: 0 auto; padding: 48px 24px 32px;">
 ${bodyHtml}
 </main>
-<footer class="share-foot">Last updated ${escapeHtml(doc.updated_at.slice(0, 10))} · Written with <a href="/">Hashmark</a>, a free online Markdown editor.</footer>
+<footer class="share-foot">Last updated ${escapeHtml(doc.updated_at.slice(0, 10))} · Written with <a href="/">Hashlite</a>, a free online Markdown editor.</footer>
 </body>
 </html>
 `;

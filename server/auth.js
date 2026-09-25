@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 import { HttpError } from './errors.js';
 
 const scryptAsync = promisify(scrypt);
-const SESSION_COOKIE = 'hashmark_session';
+const SESSION_COOKIE = 'hashlite_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, renewed while the session is in use
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LIMIT_WINDOW_MS = 15 * 60 * 1000;
