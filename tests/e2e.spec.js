@@ -226,6 +226,21 @@ test('another tab showing the same document picks up saved changes', async ({ pa
   await expect(other.locator('.cm-content')).toContainText('first and second', { timeout: 5000 });
 });
 
+test('every colour theme can be picked and is remembered', async ({ page }) => {
+  await register(page);
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const seen = new Set();
+  for (const [label, id] of [['Light', 'light'], ['Dark', 'dark'], ['Sepia', 'sepia'], ['High contrast', 'contrast']]) {
+    await page.getByRole('button', { name: 'Theme' }).click();
+    await page.getByRole('menuitemcheckbox', { name: label, exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', id);
+    seen.add(await bg());
+  }
+  expect(seen.size).toBe(4);
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'contrast');
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 

@@ -2,7 +2,7 @@
 import { api } from '../api.js';
 import { h } from '../ui.js';
 import { getPrefs, setPref } from '../storage.js';
-import { APP_NAME, APP_TAGLINE } from '../brand.js';
+import { APP_NAME } from '../brand.js';
 
 let configPromise = null;
 let screenSeq = 0;
@@ -72,7 +72,6 @@ export async function showAuth(root, { mode, notice = '', email: emailValue = ''
       h('div', { class: 'auth-card' },
         h('div', { class: 'brand' }, h('img', { src: '/favicon.svg', alt: '' }), APP_NAME),
         h('h1', {}, isLogin ? 'Welcome back' : 'Create your account'),
-        h('p', { class: 'muted' }, isLogin ? 'Sign in to open your documents.' : `${APP_TAGLINE} Free, and your documents are saved in the cloud.`),
         form,
         registration && h('div', { class: 'auth-switch' },
           isLogin ? 'New here? ' : 'Already have an account? ',

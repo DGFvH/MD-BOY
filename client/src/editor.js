@@ -15,10 +15,10 @@ import { tags as t } from '@lezer/highlight';
 const externalLoad = Annotation.define();
 
 const markdownHighlight = HighlightStyle.define([
-  { tag: t.heading1, fontWeight: '700', fontSize: '1.3em', color: 'var(--md-heading)' },
-  { tag: t.heading2, fontWeight: '700', fontSize: '1.15em', color: 'var(--md-heading)' },
-  { tag: [t.heading3, t.heading4, t.heading5, t.heading6], fontWeight: '700', color: 'var(--md-heading)' },
-  { tag: t.strong, fontWeight: '700' },
+  { tag: t.heading1, fontWeight: '600', color: 'var(--md-heading)' },
+  { tag: t.heading2, fontWeight: '600', color: 'var(--md-heading)' },
+  { tag: [t.heading3, t.heading4, t.heading5, t.heading6], fontWeight: '600', color: 'var(--md-heading)' },
+  { tag: t.strong, fontWeight: '600' },
   { tag: t.emphasis, fontStyle: 'italic' },
   { tag: t.strikethrough, textDecoration: 'line-through' },
   { tag: [t.link, t.url], color: 'var(--md-link)' },
@@ -49,7 +49,7 @@ const baseTheme = EditorView.theme({
   '.cm-selectionMatch': { backgroundColor: 'var(--match)' },
   '.cm-searchMatch': { backgroundColor: 'var(--match)', outline: '1px solid var(--accent-soft)' },
   '.cm-panels': { backgroundColor: 'var(--surface)', color: 'var(--text)', borderColor: 'var(--border)' },
-  '.cm-panel input, .cm-panel button': { font: 'inherit', fontSize: '13px' },
+  '.cm-panel input, .cm-panel button': { font: 'inherit', fontSize: 'var(--fs-sm)' },
   '.cm-placeholder': { color: 'var(--text-faint)' },
 });
 

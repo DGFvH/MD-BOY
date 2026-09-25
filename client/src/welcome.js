@@ -4,70 +4,33 @@ export const WELCOME_TITLE = `Welcome to ${APP_NAME}`;
 
 export const WELCOME_CONTENT = `# ${WELCOME_TITLE}
 
-${APP_NAME} is a simple Markdown editor that lives in your browser. Everything you write is **saved automatically** to your account.
+Write on the left, see it on the right. Everything saves automatically.
 
-## The basics
+- **Ctrl/⌘ + B**, *Ctrl/⌘ + I*, \`Ctrl/⌘ + K\` for bold, italic and links
+- Paste or drop images to upload them
+- Pick a colour theme with the theme button
 
-- Write Markdown in the editor and see it formatted in the preview, side by side on a wide screen.
-- Use the toolbar, or keyboard shortcuts like **Ctrl/⌘ + B**, *Ctrl/⌘ + I* and \`Ctrl/⌘ + K\`.
-- Save a point in the *version history* with **Save version now** in the ⋯ menu, or press **Ctrl/⌘ + S** on a keyboard.
-- Organise documents in folders: drag a document onto a folder, or use its ⋯ menu to move it.
-- Paste or drop images into the editor to upload them.
-
-## Things you can write
-
-### Callouts, highlights and emoji
-
-> [!TIP]
-> Start a quote with \`[!NOTE]\`, \`[!TIP]\`, \`[!IMPORTANT]\`, \`[!WARNING]\` or \`[!CAUTION]\`.
-
-Make words ==stand out==, and add emoji with shortcodes like \`:sparkles:\` :sparkles:
-
-### Task lists
+## Examples
 
 - [x] Create an account
-- [ ] Write your first document
-- [ ] Tick off a task by tapping or clicking its checkbox in the preview
+- [ ] Tick this box in the preview
 
-### Tables
+| Feature | Supported |
+| ------- | :-------: |
+| Math    | ✅        |
+| Diagrams | ✅       |
 
-| Feature        | Supported |
-| -------------- | :-------: |
-| Tables         | ✅        |
-| Footnotes      | ✅        |
-| Math           | ✅        |
-| Diagrams       | ✅        |
-
-### Code with syntax highlighting
+> [!TIP]
+> Callouts start with \`[!NOTE]\`, \`[!TIP]\` or \`[!WARNING]\`.
 
 \`\`\`js
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
+const greet = (name) => \`Hello, \${name}!\`;
 \`\`\`
 
-### Math
-
-Inline math like $e^{i\\pi} + 1 = 0$, or a block:
-
-$$
-\\int_0^\\infty e^{-x^2}\\,dx = \\frac{\\sqrt{\\pi}}{2}
-$$
-
-### Diagrams
+Math: $e^{i\\pi} + 1 = 0$, ==highlights== and emoji :sparkles:
 
 \`\`\`mermaid
 flowchart LR
   Write --> Preview --> Share
 \`\`\`
-
-### Quotes and footnotes
-
-> Simplicity is the ultimate sophistication.[^1]
-
-[^1]: Often attributed to Leonardo da Vinci.
-
----
-
-Feel free to edit or delete this document. Happy writing! ✍️
 `;

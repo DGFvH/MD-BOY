@@ -678,7 +678,8 @@ describe('static files', () => {
 
 describe('public site and crawler files', () => {
   const dir = mkdtempSync(join(tmpdir(), 'hashmark-site-'));
-  for (const d of ['app', 'guide', 'privacy']) mkdirSync(join(dir, d));
+  for (const d of ['app', 'guide', 'privacy', 'learn/markdown-tables']) mkdirSync(join(dir, d), { recursive: true });
+  writeFileSync(join(dir, 'learn', 'markdown-tables', 'index.html'), '<!doctype html><title>Markdown tables</title>');
   const landing = [
     '<!doctype html><html><head><title>Hashmark landing</title>',
     '    <link rel="canonical" href="%PUBLIC_URL%/">',
@@ -717,6 +718,8 @@ describe('public site and crawler files', () => {
       assert.match(sitemap.text, new RegExp(`<loc>${loc}</loc>`));
     }
     assert.doesNotMatch(sitemap.text, /\/app/);
+    assert.match(sitemap.text, /<loc>https:\/\/notes.example.com\/learn\/markdown-tables<\/loc>/);
+    assert.doesNotMatch(sitemap.text, /markdown-to-pdf/, 'pages that were not built are left out');
     assert.match((await request(app).get('/robots.txt')).text, /Sitemap: https:\/\/notes.example.com\/sitemap.xml/);
     const llms = await request(app).get('/llms.txt').expect(200);
     assert.match(llms.text, /^# Hashmark/);

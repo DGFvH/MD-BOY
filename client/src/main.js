@@ -36,13 +36,27 @@ const cleanTitle = (title) => String(title ?? '').trim().slice(0, 200) || 'Untit
 
 // ---- Theme ------------------------------------------------------------------
 
-function isDark() {
+// The colour themes. Each is a set of tokens in markdown.css (data-theme="…").
+export const THEMES = [
+  { id: 'auto', label: 'System', icon: 'auto' },
+  { id: 'light', label: 'Light', icon: 'sun' },
+  { id: 'dark', label: 'Dark', icon: 'moon' },
+  { id: 'sepia', label: 'Sepia', icon: 'paper' },
+  { id: 'contrast', label: 'High contrast', icon: 'contrast' },
+];
+
+function currentTheme() {
   const theme = getPrefs().theme;
-  return theme === 'dark' || (theme === 'auto' && darkQuery.matches);
+  return THEMES.some((t) => t.id === theme) ? theme : 'auto';
+}
+
+function isDark() {
+  const theme = currentTheme();
+  return theme === 'dark' || theme === 'contrast' || (theme === 'auto' && darkQuery.matches);
 }
 
 function applyTheme() {
-  const theme = getPrefs().theme;
+  const theme = currentTheme();
   if (theme === 'auto') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme;
   // Keep data-theme accurate for CSS that only needs light/dark.
@@ -187,12 +201,8 @@ function createApp() {
   const outlineBtn = iconButton('list', 'Outline', () => togglePanel('outline'), { class: 'icon-btn desktop-only' });
   const historyBtn = iconButton('history', 'Version history', () => togglePanel('history'));
   const themeItems = (suffix = '') => {
-    const cur = getPrefs().theme;
-    return [
-      { label: `System${suffix}`, icon: 'auto', checked: cur === 'auto', onClick: () => setTheme('auto') },
-      { label: `Light${suffix}`, icon: 'sun', checked: cur === 'light', onClick: () => setTheme('light') },
-      { label: `Dark${suffix}`, icon: 'moon', checked: cur === 'dark', onClick: () => setTheme('dark') },
-    ];
+    const cur = currentTheme();
+    return THEMES.map((t) => ({ label: `${t.label}${suffix}`, icon: t.icon, checked: cur === t.id, onClick: () => setTheme(t.id) }));
   };
   // On phones the theme choices are in the ⋯ menu instead, to leave room for the title.
   const themeBtn = iconButton('auto', 'Theme', (e) => showMenu(e.currentTarget, themeItems()), { class: 'icon-btn desktop-only' });
@@ -1570,8 +1580,8 @@ function createApp() {
     }
     panelBody.replaceChildren(
       saveBtn,
-      h('p', { class: 'muted', style: 'padding:0 8px 8px;margin:0;font-size:12px' },
-        `Versions are saved automatically every few minutes while you write${touchQuery.matches ? '.' : `, and whenever you press ${MOD}+S.`}`),
+      h('p', { class: 'muted', style: 'padding:0 8px 8px;margin:0;font-size:var(--fs-xs)' },
+        touchQuery.matches ? 'Saved automatically.' : `Saved automatically, and on ${MOD}+S.`),
       ...(revisionsCache.length
         ? revisionsCache.map((r) => h('button', { type: 'button', class: 'revision', onClick: () => showRevision(r) },
             h('span', {}, new Date(r.created_at).toLocaleString()),
@@ -1640,7 +1650,7 @@ function createApp() {
   }
 
   function onThemeChange() {
-    themeBtn.innerHTML = icons[{ auto: 'auto', light: 'sun', dark: 'moon' }[getPrefs().theme]];
+    themeBtn.innerHTML = icons[THEMES.find((t) => t.id === currentTheme()).icon];
     if (!printing) preview.rerender();
   }
 

@@ -9,6 +9,10 @@ import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 export const PUBLIC_PAGES = [
   { path: '/', file: 'index.html', priority: '1.0' },
   { path: '/guide', file: 'guide/index.html', priority: '0.8' },
+  { path: '/learn', file: 'learn/index.html', priority: '0.7' },
+  ...['markdown-to-pdf', 'markdown-tables', 'markdown-math-and-diagrams', 'markdown-vs-rich-text'].map((slug) => ({
+    path: `/learn/${slug}`, file: `learn/${slug}/index.html`, priority: '0.7',
+  })),
   { path: '/privacy', file: 'privacy/index.html', priority: '0.3' },
 ];
 
@@ -48,6 +52,11 @@ Hashmark runs in the browser on desktop and phone. It is open source and can be 
 
 - [Home](${link('/')}): what Hashmark is, features and FAQ
 - [Markdown cheat sheet](${link('/guide')}): a reference for Markdown syntax, from headings to tables, math and diagrams
+- [Learn](${link('/learn')}): short guides
+  - [How to convert Markdown to PDF](${link('/learn/markdown-to-pdf')})
+  - [Markdown tables](${link('/learn/markdown-tables')})
+  - [Math and diagrams in Markdown](${link('/learn/markdown-math-and-diagrams')})
+  - [Markdown vs rich text](${link('/learn/markdown-vs-rich-text')})
 - [Privacy](${link('/privacy')}): what is stored and how to export or delete it
 - [Open the editor](${link('/app')}): sign up or sign in
 
@@ -60,7 +69,7 @@ Hashmark runs in the browser on desktop and phone. It is open source and can be 
 - Folders, full-text search, trash, version history with preview and restore
 - Images by paste, drop or upload; read-only share links
 - Import .md files; export .md, standalone .html, print to PDF, or download everything as .zip
-- Light and dark theme, keyboard accessible
+- Colour themes (light, dark, sepia, high contrast), keyboard accessible
 
 ## Planned
 
@@ -132,9 +141,11 @@ export function createSite({ staticDir, publicUrl = '', sessionMiddleware }) {
 
   router.get('/sitemap.xml', (_req, res) => {
     if (!base) return res.status(404).type('text/plain').send('Set PUBLIC_URL to publish a sitemap.');
-    const urls = PUBLIC_PAGES.map((p) => {
-      const mtime = statSync(join(staticDir, p.file), { throwIfNoEntry: false })?.mtime;
-      const lastmod = mtime ? `<lastmod>${mtime.toISOString().slice(0, 10)}</lastmod>` : '';
+    // Only pages that were built.
+    const built = PUBLIC_PAGES.map((p) => ({ ...p, mtime: statSync(join(staticDir, p.file), { throwIfNoEntry: false })?.mtime }))
+      .filter((p) => p.mtime);
+    const urls = built.map((p) => {
+      const lastmod = `<lastmod>${p.mtime.toISOString().slice(0, 10)}</lastmod>`;
       return `  <url><loc>${base}${p.path === '/' ? '/' : p.path}</loc>${lastmod}<priority>${p.priority}</priority></url>`;
     });
     res.type('application/xml').set('Cache-Control', 'public, max-age=3600')
