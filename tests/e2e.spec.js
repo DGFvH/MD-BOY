@@ -191,6 +191,7 @@ test('a saved version opens read-only, and its in-page links keep the route', as
 
 async function newDocWith(page, text) {
   await page.getByRole('button', { name: 'New doc' }).click();
+  await expect(page.locator('.title-input')).toBeFocused(); // the new document is open
   await page.keyboard.press('Enter');
   await page.locator('.cm-content').click();
   await page.keyboard.insertText(text);
