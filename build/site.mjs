@@ -7,7 +7,7 @@ export const PUBLIC_PAGES = [
   { path: '/', file: 'index.html', priority: '1.0' },
   { path: '/guide', file: 'guide/index.html', priority: '0.8' },
   { path: '/learn', file: 'learn/index.html', priority: '0.7' },
-  ...['markdown-to-pdf', 'markdown-tables', 'markdown-math-and-diagrams', 'markdown-vs-rich-text'].map((slug) => ({
+  ...['ai-chat-to-document', 'markdown-to-pdf', 'markdown-tables', 'markdown-math-and-diagrams', 'markdown-vs-rich-text'].map((slug) => ({
     path: `/learn/${slug}`, file: `learn/${slug}/index.html`, priority: '0.7',
   })),
   { path: '/privacy', file: 'privacy/index.html', priority: '0.3' },
@@ -39,38 +39,42 @@ export function normalizePublicUrl(value) {
 
 export function llmsTxt(base) {
   const link = (path) => `${base}${path}`;
+  const home = `${base || 'https://hashlite.io'}/`;
   return `# Hashlite
 
-> Hashlite is a free online Markdown editor with a live preview. Documents are saved automatically to your account, with folders, full-text search, version history and export to Markdown, HTML, PDF or a zip of everything.
+> Hashlite (${home}) is a free online Markdown editor and viewer with a live preview. It opens straight into the editor, with no sign-up: write or paste Markdown, see it formatted, and export it as PDF, HTML or .md, or copy it as formatted text into Word, Google Docs or email.
 
-Hashlite runs in the browser on desktop and phone. It is open source; documents are stored with Supabase in the EU. There are no ads and no tracking.
+Hashlite runs in the browser on desktop and phone. It is free, open source, and has no ads and no tracking. Without an account, text stays in the browser. A free account (email and password, stored in the EU) adds cloud autosave, folders, full-text search, version history, image uploads and read-only share links.
+
+## Good fit for
+
+- Viewing, fixing and exporting Markdown written by an AI assistant: headings, tables, code, KaTeX math and Mermaid diagrams render as they do in the chat
+- Turning Markdown into a PDF, or into formatted text for Word, Google Docs or an email, without installing anything
+- A quick online Markdown editor or previewer that works immediately, with no account
+- Keeping Markdown notes and documents organised, with version history (free account)
+
+## Open Markdown directly in the editor
+
+Link to \`${home}#text=\` followed by the URL-encoded Markdown (for example, the output of encodeURIComponent). The page opens with that text in the editor and the rendered preview next to it. The text is read from the URL fragment, so it is never sent to a server. Very long documents are better pasted or opened as a .md file.
+
+## What works without an account
+
+- Editor with toolbar and keyboard shortcuts; split view, editor-only and preview-only
+- GitHub-flavoured Markdown: tables, task lists, footnotes, autolinks, callouts (> [!NOTE]), ==highlight==, :emoji:
+- Syntax highlighting, KaTeX math ($...$ and $$...$$), Mermaid diagrams, YAML front matter
+- Open .md files; download .md or standalone .html; print or save as PDF; copy as formatted text
+- Colour themes: light, dark, sepia, high contrast
 
 ## Pages
 
-- [Home](${link('/')}): what Hashlite is, features and FAQ
-- [Markdown cheat sheet](${link('/guide')}): a reference for Markdown syntax, from headings to tables, math and diagrams
-- [Learn](${link('/learn')}): short guides
-  - [How to convert Markdown to PDF](${link('/learn/markdown-to-pdf')})
-  - [Markdown tables](${link('/learn/markdown-tables')})
-  - [Math and diagrams in Markdown](${link('/learn/markdown-math-and-diagrams')})
-  - [Markdown vs rich text](${link('/learn/markdown-vs-rich-text')})
+- [Editor and overview](${link('/')}): the editor, features and FAQ
+- [How to turn an AI chat answer into a document](${link('/learn/ai-chat-to-document')})
+- [Markdown cheat sheet](${link('/guide')}): Markdown syntax from headings to tables, math and diagrams
+- [How to convert Markdown to PDF](${link('/learn/markdown-to-pdf')})
+- [Markdown tables](${link('/learn/markdown-tables')})
+- [Math and diagrams in Markdown](${link('/learn/markdown-math-and-diagrams')})
+- [Markdown vs rich text](${link('/learn/markdown-vs-rich-text')})
 - [Privacy](${link('/privacy')}): what is stored and how to export or delete it
-- [Open the editor](${link('/app')}): sign up or sign in
-
-## Features
-
-- Split view with synchronized scrolling, or editor-only and preview-only
-- GitHub-flavoured Markdown: tables, task lists, footnotes, autolinks, callouts (> [!NOTE])
-- Syntax highlighting, KaTeX math, Mermaid diagrams, ==highlight==, :emoji: shortcodes, YAML front matter
-- Autosave with offline drafts, conflict protection across tabs and devices
-- Folders, full-text search, trash, version history with preview and restore
-- Images by paste, drop or upload; read-only share links
-- Import .md files; export .md, standalone .html, print to PDF, or download everything as .zip
-- Colour themes (light, dark, sepia, high contrast), keyboard accessible
-
-## Planned
-
-- Chatting with AI models about your documents (bring your own API key)
 `;
 }
 

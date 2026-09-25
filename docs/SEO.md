@@ -5,19 +5,23 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 
 ## Goals
 
-1. Rank for "online Markdown editor" style queries and send those visitors to `/app`.
+1. Rank for "online Markdown editor" style queries. The home page *is* the editor, so a
+   visitor can start typing or pasting at once, with no sign-up.
 2. Rank for Markdown syntax queries ("Markdown cheat sheet", "Markdown table") with `/guide`,
    and turn some of that traffic into users.
 3. Be the tool AI assistants name, with correct facts, when someone asks for a free Markdown
-   editor with live preview, math or diagrams.
+   editor with live preview, math or diagrams, and above all when someone asks what to do with
+   the Markdown an AI assistant just wrote (view it, fix it, turn it into a PDF or a Word/Docs
+   document).
 
 ## Pages, keywords and search intent
 
 | Page | Primary keywords | Secondary | Intent |
 | --- | --- | --- | --- |
-| `/` | free online markdown editor, markdown editor with live preview | markdown editor online, markdown preview, markdown to pdf/html, mermaid / math markdown editor, self-hosted markdown editor | Transactional: find a tool and start writing |
+| `/` | free online markdown editor, markdown editor with live preview, online markdown viewer | markdown editor online, markdown preview, markdown to pdf/html, mermaid / math markdown editor, self-hosted markdown editor | Transactional: find a tool and start writing |
 | `/guide` | markdown cheat sheet | markdown syntax, markdown table, markdown task list, markdown footnote, markdown callout, markdown math | Informational: learn or look up syntax |
 | `/learn` | learn markdown | markdown tutorial, markdown guide | Informational hub |
+| `/learn/ai-chat-to-document` | ai answer to pdf, copy ai answer to word / google docs | paste markdown into google docs, markdown to word, ai chat formatting lost | Informational / task (HowTo) |
 | `/learn/markdown-to-pdf` | markdown to pdf | convert markdown to pdf, pandoc markdown to pdf, vs code markdown pdf | Informational / task (HowTo) |
 | `/learn/markdown-tables` | markdown table | markdown table alignment, escape pipe in markdown table, markdown table line break, merge cells | Informational |
 | `/learn/markdown-math-and-diagrams` | markdown math, mermaid markdown | latex in markdown, katex markdown, mermaid flowchart / sequence / gantt, github math | Informational |
@@ -72,6 +76,24 @@ ChatGPT, Perplexity, Claude and Google AI Overviews (GEO).
 - **`llms.txt`** for LLM crawlers.
 - **Consistent naming**: always "Hashlite", always described as "free online Markdown editor".
 - No invented numbers: no user counts, ratings or reviews.
+
+### The home page is the editor (2026-09-25)
+
+- The editor fills the screen right under a slim header, and works without an account: preview,
+  themes, opening files, PDF/HTML/.md export and "Copy as formatted text". Saving to an account
+  is one click away.
+- It is still static HTML: the `<h1>`, the example document (as a textarea and a pre-rendered
+  preview), the "From AI chat to a clean document" steps, features and FAQ are all in the page.
+  The editor takes over the same box, so nothing shifts.
+- **The AI-output use case** is covered where assistants look for it: the `llms.txt` "Good fit
+  for" list, the `WebApplication` description and `featureList`, a FAQ answer, the home page
+  steps and `/learn/ai-chat-to-document`. No assistant or company is named: the copy describes the
+  task, which is what people ask about.
+- **`/#text=<URL-encoded Markdown>`** opens Markdown straight in the editor. Documented in
+  `llms.txt`, the FAQ and the article, so an assistant (or any tool) can hand a user a link that
+  opens its answer ready to export. The text stays in the URL fragment, which is never sent to a
+  server.
+- `<link rel="alternate" type="text/plain" href="/llms.txt">` on the home page points crawlers to it.
 
 ## Performance / Core Web Vitals
 

@@ -1,53 +1,12 @@
-// The "try it" editor on the landing page: a plain textarea with a live preview.
-// The renderer (markdown-it, KaTeX, highlight.js) loads after the page, so it never slows
-// down the first paint. Nothing leaves the browser until the visitor chooses "Save".
-import { loadGuestDraft, saveGuestDraft } from './guest.js';
+// The home page: its editor, and the account link in the header.
+import { mountHomeEditor } from './home-editor.js';
 
-const input = document.getElementById('try-input');
-const preview = document.getElementById('try-preview');
-const save = document.getElementById('try-save');
+const root = document.getElementById('try');
+if (root) mountHomeEditor(root);
 
-if (input && preview && save) {
-  const draft = loadGuestDraft();
-  if (draft?.content) input.value = draft.content;
-
-  let render = null;
-  let timer = 0;
-  let frame = 0;
-  const dark = matchMedia('(prefers-color-scheme: dark)');
-
-  const update = () => {
-    if (!render) return;
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(() => render(input.value));
-  };
-
-  const store = () => {
-    clearTimeout(timer);
-    timer = 0;
-    saveGuestDraft(input.value);
-  };
-  input.addEventListener('input', () => {
-    update();
-    clearTimeout(timer);
-    timer = setTimeout(store, 400);
-  });
-  // Leaving within the pause after typing still keeps the text.
-  addEventListener('pagehide', () => timer && store());
-
-  save.addEventListener('click', () => {
-    clearTimeout(timer);
-    timer = 0; // or pagehide would store it again without the "pending" mark
-    saveGuestDraft(input.value, { pending: true });
-    location.href = '/app';
-  });
-
-  import('./landing-preview.js')
-    .then(({ renderInto }) => {
-      render = (text) => renderInto(preview, text, dark.matches);
-      update();
-    })
-    .catch(() => {
-      // Offline or a new deploy: the static preview in the page stays.
-    });
+// Signed in on this browser (the session supabase-js keeps): the header links to the documents.
+try {
+  if (localStorage.getItem('hashlite:auth')) document.getElementById('nav-account').textContent = 'My documents';
+} catch {
+  // Storage blocked: keep "Sign in".
 }

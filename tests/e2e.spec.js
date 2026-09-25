@@ -297,31 +297,102 @@ test.describe('on a phone', () => {
   });
 });
 
-test('the landing page is crawlable HTML with a working editor', async ({ page, request }) => {
+// Replaces the text in the home page editor.
+async function typeInHomeEditor(page, text) {
+  const editor = page.locator('.home-editor .cm-content');
+  await editor.click();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.insertText(text);
+}
+
+test('the home page is crawlable HTML that opens into a working editor', async ({ page, request }) => {
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(err.message));
   await page.goto('/');
   await expect(page.locator('h1')).toHaveCount(1);
-  await expect(page.locator('h1')).toContainText('Free online Markdown editor');
-  const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
-  for (const block of ld) JSON.parse(block);
+  await expect(page.locator('h1')).toHaveText('Free online Markdown editor');
+  for (const block of await page.locator('script[type="application/ld+json"]').allTextContents()) JSON.parse(block);
 
-  // The preview is in the HTML before any script runs, then follows the text.
-  const preview = page.locator('#try-preview');
-  await expect(preview.locator('h2')).toHaveText('Hello, Markdown');
-  await expect(preview.locator('.katex').first()).toBeVisible(); // the renderer has loaded
-  await page.fill('#try-input', '## My notes\n\n- [ ] one');
+  // The editor fills the screen below the header.
+  const box = await page.locator('.home-editor').boundingBox();
+  const viewport = page.viewportSize();
+  expect(box.y + box.height).toBeGreaterThan(viewport.height - 4);
+  expect(box.y).toBeLessThan(80);
+
+  // The real editor replaces the static one; the preview renders math.
+  const preview = page.locator('.he-preview .markdown-body');
+  await expect(page.locator('.home-editor .cm-content')).toBeVisible();
+  await expect(preview.locator('h2')).toHaveText('Welcome to Hashlite');
+  await expect(preview.locator('.katex').first()).toBeVisible();
+
+  await typeInHomeEditor(page, '## My notes\n\n- [ ] one\n\n$$x^2$$');
   await expect(preview.locator('h2')).toHaveText('My notes');
-  await expect(preview.locator('input[type="checkbox"]')).toHaveCount(1);
+  await preview.locator('input[type="checkbox"]').click(); // ticks the box in the text
+  await expect(page.locator('.home-editor .cm-content')).toContainText('- [x] one');
   await page.reload(); // kept in this browser
-  await expect(page.locator('#try-input')).toHaveValue('## My notes\n\n- [ ] one');
+  await expect(page.locator('.home-editor .cm-content')).toContainText('My notes');
 
-  for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt', '/sitemap.xml']) expect((await request.get(path)).status()).toBe(200);
+  // Views
+  await page.getByRole('button', { name: 'Preview only' }).click();
+  await expect(page.locator('.he-editor')).toBeHidden();
+  await page.getByRole('button', { name: /^Editor only/ }).click();
+  await expect(page.locator('.he-preview')).toBeHidden();
+  await page.getByRole('button', { name: 'Side by side' }).click();
+
+  for (const path of ['/guide', '/privacy', '/robots.txt', '/llms.txt', '/sitemap.xml', '/learn/ai-chat-to-document']) expect((await request.get(path)).status()).toBe(200);
   expect((await request.get('/nope')).status()).toBe(404);
+  expect(await (await request.get('/llms.txt')).text()).toContain('#text=');
+  expect(errors).toEqual([]);
 });
 
-test('saving from the landing editor asks for an account, then keeps the document', async ({ page }) => {
+test('the home editor exports without an account', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  await typeInHomeEditor(page, '# Report\n\n| a | b |\n| - | - |\n| 1 | 2 |');
+  await expect(page.locator('.he-preview table')).toBeVisible();
+
+  await page.getByRole('button', { name: 'More actions' }).click();
+  const [md] = await Promise.all([page.waitForEvent('download'), page.getByRole('menuitem', { name: 'Download Markdown (.md)' }).click()]);
+  expect(md.suggestedFilename()).toBe('Report.md');
+
+  await page.getByRole('button', { name: 'More actions' }).click();
+  const [html] = await Promise.all([page.waitForEvent('download'), page.getByRole('menuitem', { name: 'Download HTML (.html)' }).click()]);
+  expect(html.suggestedFilename()).toBe('Report.html');
+
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: 'Copy as formatted text' }).click();
+  await expect(page.getByText('Copied. Paste it into Word, Google Docs or an email.')).toBeVisible();
+  const copied = await page.evaluate(async () => {
+    const [item] = await navigator.clipboard.read();
+    return (await item.getType('text/html')).text();
+  });
+  expect(copied).toContain('<table>');
+  expect(copied).toContain('<h1');
+
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: 'Theme…' }).click();
+  await page.getByRole('menuitemcheckbox', { name: 'Sepia', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'sepia');
+});
+
+test('a #text= link opens that Markdown in the home editor', async ({ page }) => {
+  await page.goto(`/#text=${encodeURIComponent('# Linked doc\n\nFrom a link.')}`);
+  await expect(page.locator('.he-preview h1')).toHaveText('Linked doc');
+  await expect(page).toHaveURL(/\/$/); // the text is not left in the address bar
+  await page.reload();
+  await expect(page.locator('.he-preview h1')).toHaveText('Linked doc'); // kept like typed text
+
+  // Opening another link over edited text can be undone.
+  await page.goto(`/#text=${encodeURIComponent('# Second')}`);
+  await expect(page.locator('.he-preview h1')).toHaveText('Second');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.locator('.he-preview h1')).toHaveText('Linked doc');
+});
+
+test('saving from the home editor asks for an account, then keeps the document', async ({ page }) => {
   await resetTestAccount();
   await page.goto('/');
-  await page.fill('#try-input', '# From the home page\n\nHello there.');
+  await typeInHomeEditor(page, '# From the home page\n\nHello there.');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
@@ -335,6 +406,10 @@ test('saving from the landing editor asks for an account, then keeps the documen
   await expect(page.locator('.title-input')).toHaveValue('From the home page', { timeout: 15_000 });
   await expect(page.locator('.cm-content')).toContainText('Hello there.');
   expect(await page.evaluate(() => localStorage.getItem('hashlite:guest'))).toBeNull();
+
+  // Back on the home page, the header links to the documents.
+  await page.goto('/');
+  await expect(page.locator('#nav-account')).toHaveText('My documents');
 });
 
 test.describe('storage notice', () => {
@@ -354,7 +429,7 @@ test.describe('storage notice', () => {
 });
 
 test('the /learn articles are crawlable pages with valid structured data', async ({ page }) => {
-  for (const path of ['/learn', '/learn/markdown-to-pdf', '/learn/markdown-tables', '/learn/markdown-math-and-diagrams', '/learn/markdown-vs-rich-text']) {
+  for (const path of ['/learn', '/learn/ai-chat-to-document', '/learn/markdown-to-pdf', '/learn/markdown-tables', '/learn/markdown-math-and-diagrams', '/learn/markdown-vs-rich-text']) {
     const res = await page.goto(path);
     expect(res.status(), path).toBe(200);
     await expect(page.locator('h1')).toHaveCount(1);

@@ -6,6 +6,13 @@ Hashlite is a simple, capable **online Markdown editor**. Write in the browser, 
 
 ## Features
 
+**Without an account** (the editor on the home page)
+- Opens straight into the editor, full screen: write or paste Markdown and see it formatted
+- Toolbar, shortcuts, split view, math, diagrams and colour themes, the same as the app
+- Open `.md` files; download `.md` or `.html`; print or save as PDF; **copy as formatted text** for Word, Google Docs or email
+- The text is kept in the browser; **Save** moves it into an account
+- `https://hashlite.io/#text=<URL-encoded Markdown>` opens that text in the editor
+
 **Editor**
 - CodeMirror 6 editor with Markdown syntax highlighting, search and replace, multiple cursors, and automatic list continuation
 - Live preview in split view with **synchronized scrolling**, or editor-only and preview-only modes
@@ -95,7 +102,7 @@ They route `/app/*` and `/s/*` to their pages and set security headers. The Cont
 
 | Path | What |
 | --- | --- |
-| `/` | Landing page (static HTML, no JavaScript) |
+| `/` | The editor, no account needed, with the product page below it (static HTML the editor takes over) |
 | `/guide` | Markdown cheat sheet |
 | `/learn`, `/learn/…` | Short articles |
 | `/privacy` | Privacy page |
@@ -130,7 +137,7 @@ client/                 Vite frontend (vanilla JS, no framework)
   src/preview.js        markdown-it pipeline, sanitizing, scroll mapping
   src/render/           block re-rendering, Mermaid, front matter, callouts
   src/zip.js            "download all" as a zip, built in the browser
-  src/landing.js        the try-it editor on the home page (src/guest.js keeps its text)
+  src/home-editor.js    the editor on the home page (src/guest.js keeps its text)
   src/consent.js        the one-time storage notice
 build/site.mjs          public page list, PUBLIC_URL, robots/sitemap/llms.txt
 supabase/migrations/    database schema, RLS policies, functions, storage bucket

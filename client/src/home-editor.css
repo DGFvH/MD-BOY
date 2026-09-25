@@ -1,0 +1,132 @@
+/* The home page: a slim header, then the editor filling the rest of the screen, then the
+   page content. Used before and after home-editor.js takes over the box. */
+
+.home { --home-header-h: 52px; }
+.home-header .container.wide { max-width: none; min-height: var(--home-header-h); gap: 16px; }
+.home-header .brand { font-size: var(--fs-md); }
+.home-header .brand img { width: 28px; height: 28px; }
+.home-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-normal);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.home-header .site-nav a { min-height: 36px; }
+@media (max-width: 699px) {
+  .home-header .container.wide { gap: 10px; }
+  .home-header .brand-name { display: none; }
+  .site-nav .hide-sm { display: none; }
+}
+
+.home-editor {
+  --font-editor: var(--font-mono);
+  --editor-font-size: var(--fs-md);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--home-header-h) - 1px);
+  height: calc(100svh - var(--home-header-h) - 1px);
+  min-height: 420px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  font-size: var(--fs-sm);
+  line-height: normal;
+}
+.home-editor:focus { outline: none; }
+
+.he-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 45px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.he-loading { padding: 0 6px; color: var(--text-muted); }
+.he-tools { display: flex; flex: 1; align-items: center; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.he-tools::-webkit-scrollbar { display: none; }
+.he-tools .icon-btn { width: 30px; height: 30px; }
+.he-tools .sep { flex: none; width: 1px; height: 18px; margin: 0 5px; background: var(--border); }
+.he-save {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: inherit;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.he-save:hover { filter: brightness(1.08); }
+
+.he-panes { display: flex; flex: 1; min-height: 0; }
+.he-pane { flex: 1 1 0; min-width: 0; min-height: 0; }
+.he-editor { display: flex; flex-direction: column; }
+.he-editor .cm-editor { flex: 1; min-height: 0; }
+.he-fallback {
+  flex: 1;
+  width: 100%;
+  margin: 0;
+  padding: 16px 20px;
+  border: 0;
+  resize: none;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--editor-font-size)/1.65 var(--font-editor);
+}
+.he-fallback:focus { outline: none; }
+.he-preview { overflow-y: auto; border-left: 1px solid var(--border); background: var(--bg); }
+.he-preview .markdown-body { max-width: 860px; margin: 0 auto; padding: 24px 32px 30vh; }
+.he-preview .preview-empty { color: var(--text-muted); }
+.he-panes[data-view='edit'] .he-preview { display: none; }
+.he-panes[data-view='preview'] .he-editor { display: none; }
+.he-panes[data-view='preview'] .he-preview { border-left: 0; }
+
+.he-status {
+  display: flex;
+  gap: 12px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+.he-spacer { flex: 1; }
+
+@media (max-width: 700px) {
+  .he-wide-only { display: none; }
+  .he-bar { padding: 4px 6px; gap: 4px; }
+  /* Before the editor loads, a phone shows the text only. */
+  .home-editor:not(.ready) .he-preview { display: none; }
+  .he-preview .markdown-body { padding: 16px 16px 30vh; }
+}
+
+/* ---- Content below the editor ---- */
+.section-lead { color: var(--text-muted); font-size: var(--fs-lg); margin-top: -0.3em; }
+.steps { display: grid; gap: 16px; margin: 24px 0; padding: 0; list-style: none; counter-reset: step; }
+@media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+.steps li { position: relative; padding: 20px 20px 20px 64px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); counter-increment: step; }
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: var(--fw-bold);
+}
+.steps h3 { font-size: var(--fs-md); margin: 3px 0 4px; }
+.steps p { margin: 0; color: var(--text-muted); }

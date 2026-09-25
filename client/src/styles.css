@@ -1,4 +1,5 @@
 /* App layout and chrome. Colour tokens live in markdown.css. */
+@import './widgets.css';
 
 :root {
   --font-editor: var(--font-mono);
@@ -49,21 +50,6 @@ button { cursor: pointer; }
 .btn-danger:hover { background: color-mix(in srgb, var(--danger) 88%, black); }
 .btn-block { width: 100%; }
 .btn svg { width: 16px; height: 16px; }
-
-.icon-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-muted);
-}
-.icon-btn:hover { background: var(--surface-2); color: var(--text); }
-.icon-btn.active { background: var(--accent-soft); color: var(--text); }
-:root:is([data-theme='dark'], [data-theme='contrast']) .icon-btn.active { color: var(--text); }
 
 input[type='text'], input[type='email'], input[type='password'], input[type='search'], select {
   width: 100%;
@@ -239,8 +225,6 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
 .save-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
 .save-status[data-state='saving']::before, .save-status[data-state='dirty']::before { background: var(--warning); }
 .save-status[data-state='offline']::before, .save-status[data-state='conflict']::before, .save-status[data-state='error']::before { background: var(--danger); }
-.segmented { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 2px; }
-.segmented .icon-btn { width: 30px; height: 28px; }
 .divider { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
 
 .toolbar {
@@ -369,38 +353,6 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
 }
 
 /* ---- Menus, modals, toasts ---- */
-.menu {
-  position: fixed;
-  z-index: 100;
-  min-width: 200px;
-  padding: 5px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  max-height: calc(100vh - 16px);
-  max-height: calc(100dvh - 16px);
-  overflow-y: auto;
-}
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 7px 10px;
-  border: 0;
-  background: none;
-  border-radius: 6px;
-  text-align: left;
-}
-.menu-item:hover, .menu-item:focus { background: var(--surface-2); outline: none; }
-.menu-item.danger { color: var(--danger); }
-.menu-icon { display: grid; place-items: center; width: 16px; color: var(--text-muted); }
-.menu-item.danger .menu-icon { color: var(--danger); }
-.menu-icon svg { width: 16px; height: 16px; }
-.menu-check { margin-left: auto; color: var(--accent); }
-.menu-sep { height: 1px; background: var(--border); margin: 4px 2px; }
-
 .modal {
   width: min(440px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
@@ -441,35 +393,6 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
   background: color-mix(in srgb, var(--danger) 5%, transparent);
 }
 .danger-zone h3 { color: var(--danger); }
-
-.toasts { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); left: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 200; align-items: center; pointer-events: none; }
-.toast {
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: var(--text);
-  color: var(--bg);
-  box-shadow: var(--shadow);
-  font-size: var(--fs-sm);
-  max-width: min(560px, 100%);
-  animation: toast-in 0.2s ease-out;
-  transition: opacity 0.25s, transform 0.25s;
-}
-.toast-error { background: var(--danger); color: #fff; }
-.toast.has-action { display: flex; align-items: center; gap: 14px; pointer-events: auto; }
-.toast-action {
-  flex: none;
-  margin: -6px -8px -6px 0;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  color: var(--accent-soft);
-  font-weight: var(--fw-bold);
-}
-.toast-action:hover { background: color-mix(in srgb, var(--bg) 14%, transparent); }
-.toast-error .toast-action { color: inherit; text-decoration: underline; }
-.toast.leaving { opacity: 0; transform: translateY(6px); }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 
 /* "Skip to editor": hidden until focused (use a <button>: a #link would change the route). */
 .skip-link {

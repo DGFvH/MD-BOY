@@ -9,7 +9,7 @@ import { stripFrontMatter } from './render/front-matter.js';
 import { renderDiagrams } from './render/mermaid.js';
 import { createSidebar } from './sidebar.js';
 import { saveDraft, loadDraft, clearDraft, clearAllDrafts, draftIds, getPrefs, setPref } from './storage.js';
-import { exportMarkdown, exportHtml, pickMarkdownFiles, readMarkdownFiles } from './export.js';
+import { exportMarkdown, exportHtml, pickMarkdownFiles, readMarkdownFiles, titleFromMarkdown, copyRichText } from './export.js';
 import {
   h, icons, iconButton, toast, modal, promptDialog, confirmDialog, choiceDialog, showMenu, debounce, timeAgo,
 } from './ui.js';
@@ -18,11 +18,10 @@ import { pageTitle } from './brand.js';
 import { showAuth, showNewPassword } from './app/auth.js';
 import { showAccount } from './app/account.js';
 import { pendingGuestDraft, clearGuestDraft } from './guest.js';
-import { frontMatterTitle } from './render/front-matter.js';
 import { showStorageNotice } from './consent.js';
+import { THEMES, currentTheme, isDark, applyTheme, setTheme as storeTheme, onSystemThemeChange, themeMenuItems } from './theme.js';
 
 const root = document.getElementById('app');
-const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const mobileQuery = window.matchMedia('(max-width: 700px)');
 const touchQuery = window.matchMedia('(pointer: coarse)'); // no keyboard shortcuts to mention
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
@@ -39,33 +38,7 @@ const cleanTitle = (title) => String(title ?? '').trim().slice(0, 200) || 'Untit
 
 // ---- Theme ------------------------------------------------------------------
 
-// The colour themes. Each is a set of tokens in markdown.css (data-theme="…").
-export const THEMES = [
-  { id: 'auto', label: 'System', icon: 'auto' },
-  { id: 'light', label: 'Light', icon: 'sun' },
-  { id: 'dark', label: 'Dark', icon: 'moon' },
-  { id: 'sepia', label: 'Sepia', icon: 'paper' },
-  { id: 'contrast', label: 'High contrast', icon: 'contrast' },
-];
-
-function currentTheme() {
-  const theme = getPrefs().theme;
-  return THEMES.some((t) => t.id === theme) ? theme : 'auto';
-}
-
-function isDark() {
-  const theme = currentTheme();
-  return theme === 'dark' || theme === 'contrast' || (theme === 'auto' && darkQuery.matches);
-}
-
-function applyTheme() {
-  const theme = currentTheme();
-  if (theme === 'auto') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = theme;
-  // Keep data-theme accurate for CSS that only needs light/dark.
-  if (theme === 'auto' && darkQuery.matches) document.documentElement.dataset.theme = 'dark';
-}
-darkQuery.addEventListener('change', () => {
+onSystemThemeChange(() => {
   applyTheme();
   shell?.onThemeChange();
 });
@@ -104,8 +77,7 @@ async function claimGuestDraft() {
   const draft = pendingGuestDraft();
   if (!draft) return;
   try {
-    const title = frontMatterTitle(draft.content) || /^#{1,6}\s+(.+)$/m.exec(draft.content)?.[1].trim() || 'Untitled';
-    const { document: doc } = await api.createDoc({ title: title.slice(0, 200), content: draft.content });
+    const { document: doc } = await api.createDoc({ title: titleFromMarkdown(draft.content), content: draft.content });
     clearGuestDraft();
     history.replaceState(null, '', `#/doc/${doc.id}`);
   } catch {
@@ -238,10 +210,7 @@ function createApp() {
   };
   const outlineBtn = iconButton('list', 'Outline', () => togglePanel('outline'), { class: 'icon-btn desktop-only' });
   const historyBtn = iconButton('history', 'Version history', () => togglePanel('history'));
-  const themeItems = () => {
-    const cur = currentTheme();
-    return THEMES.map((t) => ({ label: t.label, icon: t.icon, checked: cur === t.id, onClick: () => setTheme(t.id) }));
-  };
+  const themeItems = () => themeMenuItems(setTheme);
   const moreBtn = iconButton('more', 'More actions', (e) => showMenu(e.currentTarget, moreMenuItems()));
   const menuBtn = iconButton('menu', 'Show sidebar', () => {
     if (mobileQuery.matches) setMobileSidebar(true);
@@ -1303,6 +1272,17 @@ function createApp() {
     }
   }
 
+  // For pasting into Word, Google Docs or an email.
+  async function copyFormatted() {
+    const { content } = doc;
+    try {
+      await copyRichText(await preview.renderStandalone(content), content);
+      toast('Copied. Paste it into Word, Google Docs or an email.');
+    } catch (err) {
+      toast(err.message, { type: 'error' });
+    }
+  }
+
   // Print in the light theme, with diagrams re-rendered for it first.
   async function printDoc() {
     if (!doc || printing) return;
@@ -1458,6 +1438,7 @@ function createApp() {
         { label: 'Download Markdown (.md)', icon: 'download', onClick: () => exportMarkdown(cleanTitle(doc.title), doc.content) },
         { label: 'Download HTML (.html)', icon: 'download', onClick: downloadHtml },
         { label: 'Print / Save as PDF', icon: 'printer', onClick: printDoc },
+        { label: 'Copy as formatted text', icon: 'copy', onClick: copyFormatted },
         'separator',
         { label: doc.share_token ? 'Shared link…' : 'Share read-only link…', icon: 'link', onClick: () => openShare(doc) },
       );
@@ -1684,8 +1665,7 @@ function createApp() {
   }
 
   function setTheme(theme) {
-    setPref('theme', theme);
-    applyTheme();
+    storeTheme(theme);
     onThemeChange();
   }
 

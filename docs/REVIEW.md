@@ -134,3 +134,15 @@ Accounts and documents moved from the built-in SQLite server to the Supabase pro
   - The renderer loads after the page, so the first paint stays plain HTML.
 - **Storage notice:** a small one-time notice on every page. Hashlite has no tracking cookies and only stores what it needs (sign-in session, drafts, preferences), so it informs rather than asks for consent. The privacy page says the same.
 - **Styled emails:** Hashlite-styled templates for Supabase Auth are in `supabase/templates/`. They are pasted into the Supabase dashboard, because the Supabase tools can't set Auth templates.
+
+## The home page is the editor (2026-09-25)
+
+- `/` opens straight into a full-screen editor. It is the app's editor and preview, and works without an account:
+  - toolbar and shortcuts, split/editor/preview views, synced scrolling, ticking tasks, math, diagrams, themes, line numbers;
+  - open a `.md` file, start a new document;
+  - download `.md` or `.html`, print or save as PDF (Ctrl/⌘+P prints the document, not the page), and copy as formatted text.
+- The text stays in the browser. **Save** moves it into an account (sign-up first, sign-in possible). When signed in, the header says "My documents".
+- `/#text=<URL-encoded Markdown>` opens that text. When there is already edited text, it can be undone.
+- The page is still static HTML with its h1, example document, AI-chat steps, features and FAQ, for search engines and AI crawlers. See `docs/SEO.md`.
+- Also new: **Copy as formatted text** in the app's ⋯ menu; a `/learn/ai-chat-to-document` guide; a rewritten `llms.txt`.
+- Theme code moved to `src/theme.js`; menus, toasts and icon buttons to `src/widgets.css`, so both pages share them.

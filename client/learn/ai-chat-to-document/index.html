@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to Turn an AI Chat Answer into a Document (PDF, Word, Docs) | Hashlite</title>
+    <meta name="description" content="AI assistants answer in Markdown. Paste the answer into a Markdown editor to keep headings, tables, code and math, then save it as PDF or copy it into Word or Google Docs." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/learn/ai-chat-to-document" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashlite" />
+    <meta property="og:title" content="How to turn an AI chat answer into a document" />
+    <meta property="og:description" content="AI assistants answer in Markdown. Paste the answer into a Markdown editor to keep headings, tables, code and math, then save it as PDF or copy it into Word or Google Docs." />
+    <meta property="og:url" content="%PUBLIC_URL%/learn/ai-chat-to-document" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How to turn an AI chat answer into a document" />
+    <meta name="twitter:description" content="AI assistants answer in Markdown. Paste the answer into a Markdown editor to keep headings, tables, code and math, then save it as PDF or copy it into Word or Google Docs." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "HowTo",
+            "name": "How to turn an AI chat answer into a document",
+            "description": "Paste the Markdown an AI assistant writes into a Markdown editor with a live preview, then export it as PDF or copy it as formatted text into Word or Google Docs.",
+            "url": "%PUBLIC_URL%/learn/ai-chat-to-document",
+            "image": "%PUBLIC_URL%/og.png",
+            "inLanguage": "en",
+            "datePublished": "2026-09-25",
+            "dateModified": "2026-09-25",
+            "totalTime": "PT1M",
+            "tool": [{ "@type": "HowToTool", "name": "A web browser" }],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Copy the answer as Markdown",
+                "text": "Use the copy button under the AI assistant's answer. It copies the Markdown source, with the # headings, ** bold and | tables intact.",
+                "url": "%PUBLIC_URL%/learn/ai-chat-to-document#steps"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Paste it into Hashlite",
+                "text": "Open hashlite.io and paste into the editor. No account is needed. The preview shows the formatted document straight away.",
+                "url": "%PUBLIC_URL%/learn/ai-chat-to-document#steps"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Check and edit",
+                "text": "Fix anything in the text on the left; the preview on the right updates as you type.",
+                "url": "%PUBLIC_URL%/learn/ai-chat-to-document#steps"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Export or copy",
+                "text": "Open the ⋯ menu and choose Print / Save as PDF, Download HTML, or Copy as formatted text to paste into Word, Google Docs or an email.",
+                "url": "%PUBLIC_URL%/learn/ai-chat-to-document#steps"
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "%PUBLIC_URL%/" },
+              { "@type": "ListItem", "position": 2, "name": "Learn", "item": "%PUBLIC_URL%/learn" },
+              { "@type": "ListItem", "position": 3, "name": "How to turn an AI chat answer into a document", "item": "%PUBLIC_URL%/learn/ai-chat-to-document" }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashlite home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashlite</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/learn" aria-current="page">Learn</a></li>
+            <li><a class="nav-cta" href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="container narrow prose">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/learn">Learn</a></li><li aria-current="page">AI chat answer to document</li></ol></nav>
+        <div class="page-head">
+          <h1>How to turn an AI chat answer into a document</h1>
+          <p>AI assistants write their answers in Markdown. Paste that Markdown into an editor with a live preview, and you can keep every heading, table and code block, then save it as a PDF or put it in Word or Google Docs.</p>
+        </div>
+
+        <h2 id="why">Why the formatting gets lost</h2>
+        <p>
+          In the chat, an answer looks formatted: headings, bold text, lists, tables. Underneath, it is plain text with
+          Markdown symbols: <code>#</code> for headings, <code>**</code> for bold, <code>-</code> for list items and
+          <code>|</code> for table columns. The copy button under an answer copies that Markdown source. Paste it into a
+          word processor or an email, and you get the symbols instead of the formatting, and tables arrive as rows of pipes.
+        </p>
+        <p>A Markdown editor reads the symbols and shows the document the way the chat did, and it can export it in formats other programs understand.</p>
+
+        <h2 id="steps">Step by step</h2>
+        <ol>
+          <li><strong>Copy the answer.</strong> Use the copy button under the answer. It copies the Markdown, which is what you want.</li>
+          <li><strong>Paste it into <a href="/">Hashlite</a>.</strong> The editor opens right away on the home page, with no account needed. The formatted document appears in the preview next to it.</li>
+          <li><strong>Check and edit.</strong> Change anything on the left; the preview updates as you type. Math between <code>$</code> signs and <code>mermaid</code> code blocks are rendered too.</li>
+          <li><strong>Export or copy.</strong> Open the <strong>⋯</strong> menu and pick what you need:
+            <ul>
+              <li><strong>Print / Save as PDF</strong> for a PDF.</li>
+              <li><strong>Copy as formatted text</strong>, then paste into Word, Google Docs or an email.</li>
+              <li><strong>Download HTML</strong> for a self-contained web page, or <strong>Download Markdown</strong> to keep the source.</li>
+            </ul>
+          </li>
+        </ol>
+        <p>Your text is kept in your browser, so it is still there after a reload. Choose <strong>Save</strong> to keep it in a free account with folders, search and version history.</p>
+
+        <h2 id="word-docs">Into Word, Google Docs or an email</h2>
+        <p>
+          <strong>Copy as formatted text</strong> puts the rendered document on the clipboard. Headings, bold and italic,
+          lists, links, tables and code blocks keep their formatting when you paste. Math may arrive as plain text,
+          so for documents with a lot of math, save a PDF instead.
+        </p>
+        <p>
+          Google Docs can also read Markdown itself: turn on <strong>Tools › Preferences › Enable Markdown</strong>, then use
+          <strong>Edit › Paste from Markdown</strong>. Tables and code come through best with the formatted-text copy.
+        </p>
+
+        <h2 id="tips">Tips for better results</h2>
+        <ul>
+          <li><strong>Ask for Markdown.</strong> If an answer comes out as plain text, ask the assistant to "format this as Markdown" or "give me the Markdown in a code block".</li>
+          <li><strong>Ask for a table.</strong> Comparisons are easier to read as a table, and Markdown tables export cleanly to PDF, Word and Docs. See <a href="/learn/markdown-tables">Markdown tables</a>.</li>
+          <li><strong>Ask for a diagram.</strong> Assistants can write flowcharts and sequence diagrams as <code>mermaid</code> code blocks. Paste them and they are drawn. See <a href="/learn/markdown-math-and-diagrams">math and diagrams in Markdown</a>.</li>
+          <li><strong>Several answers?</strong> Paste them one after another, with a <code>## heading</code> above each, to build one document.</li>
+        </ul>
+
+        <h2 id="link">Opening Markdown with a link</h2>
+        <p>
+          Tools and scripts can open text directly in the editor: link to <code>%PUBLIC_URL%/#text=</code> followed by the
+          URL-encoded Markdown. The text is read from the part after <code>#</code>, which browsers never send to a server.
+        </p>
+        <pre><code>const url = 'https://hashlite.io/#text=' + encodeURIComponent(markdown);</code></pre>
+
+        <div class="try"><p><strong>Try it now:</strong> <a href="/">paste an answer into the editor</a>. No sign-up needed.</p></div>
+
+        <nav class="related" aria-labelledby="related-h">
+          <h2 id="related-h">Related</h2>
+          <ul>
+            <li><a href="/learn/markdown-to-pdf">How to convert Markdown to PDF</a></li>
+            <li><a href="/learn/markdown-vs-rich-text">Markdown vs rich text</a></li>
+            <li><a href="/guide">Markdown cheat sheet</a></li>
+          </ul>
+        </nav>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashlite</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/site.js"></script>
+  </body>
+</html>

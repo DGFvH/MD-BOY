@@ -84,53 +84,6 @@ code, kbd, pre { font-family: var(--font-mono); }
 @media (min-width: 900px) { .hero { padding: 72px 0 48px; } }
 .hero h1 { max-width: 22ch; margin: 0 auto 0.3em; }
 .hero .tagline { font-size: var(--fs-lg); color: var(--text-muted); margin: 0 auto 1.4em; }
-/* The "try it" editor on the landing page. */
-.demo {
-  margin: 32px auto 0;
-  max-width: 1080px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--bg);
-  text-align: left;
-  box-shadow: 0 12px 40px rgb(0 0 0 / 0.08);
-}
-.demo-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 8px 8px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-}
-.demo-bar .btn { flex-shrink: 0; min-height: 36px; padding: 0 16px; font-size: var(--fs-sm); cursor: pointer; }
-.demo-panes { display: grid; grid-template-columns: 1fr 1fr; height: 420px; }
-.demo-panes > * { min-width: 0; overflow: auto; }
-.demo-input {
-  display: block;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 20px;
-  border: 0;
-  border-right: 1px solid var(--border);
-  resize: none;
-  background: var(--bg);
-  color: var(--text);
-  font: var(--fs-sm)/1.6 var(--font-mono);
-  tab-size: 2;
-}
-.demo-input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent-soft); border-radius: 0; }
-.demo-preview { padding: 20px 24px; font-size: var(--fs-md); }
-.demo-preview .preview-empty { color: var(--text-muted); }
-@media (max-width: 699px) {
-  .demo-panes { grid-template-columns: 1fr; grid-template-rows: 220px 1fr; height: 520px; }
-  .demo-input { border-right: 0; border-bottom: 1px solid var(--border); }
-}
-
 /* ---- Sections ----------------------------------------------------------- */
 .section { padding: 48px 0; }
 @media (min-width: 900px) { .section { padding: 64px 0; } }
