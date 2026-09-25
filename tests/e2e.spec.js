@@ -321,3 +321,16 @@ test('the /learn articles are crawlable pages with valid structured data', async
     for (const block of await page.locator('script[type="application/ld+json"]').allTextContents()) JSON.parse(block);
   }
 });
+
+test('opening the editor without a connection says so, then recovers', async ({ page, context }) => {
+  await register(page);
+  let offline = true;
+  await context.route(SUPABASE_URL_RE, (route) => (offline ? route.abort('internetdisconnected') : route.fallback()));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Can’t reach Hashlite' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Your documents couldn’t be loaded.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New document' })).toBeHidden();
+  offline = false;
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.locator('.tree-row', { hasText: 'Welcome to Hashlite' })).toBeVisible({ timeout: 15_000 });
+});

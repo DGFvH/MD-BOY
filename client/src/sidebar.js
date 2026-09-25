@@ -306,6 +306,7 @@ export function createSidebar(root, actions) {
       collapsed,
       state.folders.map((f) => [f.id, f.parent_id, f.name]),
       state.docs.map((d) => [d.id, d.folder_id, d.title, !!d.share_token]),
+      !!state.loadFailed,
     ]);
     // Nothing shown changed (e.g. only the open document did): keep the tree as it is.
     if (key === treeKey && !force) return;
@@ -325,7 +326,13 @@ export function createSidebar(root, actions) {
       for (const d of (docsIn.get(folderId) ?? []).sort(byTitle)) list.push(docRow(d, depth));
     };
     walk(null, 0);
-    if (!state.docs.length && !state.folders.length) list.push(emptyTree);
+    if (!state.docs.length && !state.folders.length) {
+      // Not "no documents yet" when they just couldn't be loaded.
+      emptyTree.textContent = state.loadFailed
+        ? 'Your documents couldn’t be loaded. They appear as soon as you’re back online.'
+        : 'No documents yet. Create one to get started.';
+      list.push(emptyTree);
+    }
 
     const live = new Set([...state.folders.map((f) => `f:${f.id}`), ...state.docs.map((d) => `d:${d.id}`)]);
     for (const k of rows.keys()) if (!live.has(k)) rows.delete(k);

@@ -70,6 +70,11 @@ export function pickMarkdownFiles() {
       resolve(await readMarkdownFiles([...input.files]));
       input.remove();
     });
+    // Closing the file chooser without picking anything.
+    input.addEventListener('cancel', () => {
+      resolve([]);
+      input.remove();
+    });
     document.body.append(input);
     input.click();
   });

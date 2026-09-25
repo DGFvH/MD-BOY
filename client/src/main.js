@@ -281,11 +281,26 @@ function createApp() {
   const statUpdated = h('span', { class: 'hide-sm' });
   const statusbar = h('footer', { class: 'statusbar' }, statWords, h('span', { class: 'spacer' }), statUpdated, statCursor);
 
+  const emptyTitle = h('h2', {}, 'No document open');
+  const emptyText = h('p', {}, 'Pick a document from the sidebar, or start a new one.');
+  const emptyAction = h('button', { class: 'btn btn-primary', onClick: () => newDoc(null), html: `${icons.plus}<span>New document</span>` });
+  const retryButton = h('button', { class: 'btn', hidden: true, onClick: () => start() }, 'Try again');
   const emptyState = h('div', { class: 'empty-state' },
-    h('div', {},
-      h('h2', {}, 'No document open'),
-      h('p', {}, 'Pick a document from the sidebar, or start a new one.'),
-      h('button', { class: 'btn btn-primary', onClick: () => newDoc(null), html: `${icons.plus}<span>New document</span>` })));
+    h('div', {}, emptyTitle, emptyText, emptyAction, retryButton));
+  let loadFailed = false;
+
+  // The document list could not be loaded (offline, server trouble): say so instead of
+  // showing an empty account, and try again when the connection returns.
+  function showLoadFailed(failed, message = '') {
+    loadFailed = failed;
+    emptyTitle.textContent = failed ? 'Can’t reach Hashlite' : 'No document open';
+    emptyText.textContent = failed
+      ? `${message || 'You appear to be offline.'} Your documents appear as soon as the connection is back.`
+      : 'Pick a document from the sidebar, or start a new one.';
+    emptyAction.hidden = failed;
+    retryButton.hidden = !failed;
+    renderSidebar();
+  }
   const trashView = h('section', { class: 'trash-view', hidden: true });
 
   const main = h('main', { class: 'main' }, topbar, toolbar, workspace, statusbar, emptyState, trashView);
@@ -685,7 +700,7 @@ function createApp() {
   }
 
   function renderSidebar() {
-    sidebar.update({ docs, folders, currentId: trashOpen ? null : doc?.id ?? null, trashOpen, user });
+    sidebar.update({ docs, folders, currentId: trashOpen ? null : doc?.id ?? null, trashOpen, user, loadFailed });
   }
 
   function navigate(hash, push = false) {
@@ -1777,6 +1792,7 @@ function createApp() {
   });
   listen(window, 'focus', () => refreshOnReturn());
   listen(window, 'online', () => {
+    if (loadFailed) start();
     if (!dirty || issue) return;
     retryCount = 0;
     save();
@@ -1857,20 +1873,22 @@ function createApp() {
   showDocUI(false);
   renderSidebar();
 
-  (async () => {
+  async function start() {
     try {
       await refreshLists();
     } catch (err) {
-      if (!destroyed) toast(err.message, { type: 'error' });
+      if (!destroyed && err.status !== 401) showLoadFailed(true, err.status === 0 ? '' : err.message);
       return;
     }
     if (destroyed) return;
+    if (loadFailed) showLoadFailed(false);
     pruneDrafts();
     if (route()) return;
     const last = getPrefs().lastDoc;
     const pick = docs.find((d) => d.id === last) ?? docs[0];
     if (pick) openDoc(pick.id);
-  })();
+  }
+  start();
 
   return { destroy, onThemeChange };
 }
