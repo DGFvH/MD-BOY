@@ -8,6 +8,7 @@ import { TOOLS } from './tools.mjs';
 export const PUBLIC_PAGES = [
   { path: '/', file: 'index.html', priority: '1.0' },
   { path: '/tools', file: 'tools/index.html', priority: '0.8' },
+  { path: '/connect', file: 'connect/index.html', priority: '0.6' },
   ...TOOLS.map((t) => ({ path: `/${t.slug}`, file: `${t.slug}/index.html`, priority: '0.8' })),
   { path: '/guide', file: 'guide/index.html', priority: '0.8' },
   { path: '/learn', file: 'learn/index.html', priority: '0.7' },
@@ -60,6 +61,10 @@ Hashlite runs in the browser on desktop and phone. It is free, with no ads; anal
 ## Open Markdown directly in the editor
 
 Link to \`${home}#text=\` followed by the URL-encoded Markdown (for example, the output of encodeURIComponent). The page opens with that text in the editor and the rendered preview next to it. The text is read from the URL fragment, so it is never sent to a server. Very long documents are better pasted or opened as a .md file.
+
+## Connector (MCP server)
+
+Hashlite runs a public remote MCP server at \`${base || 'https://hashlite.io'}/api/mcp\` (Streamable HTTP, no authentication). Its tools: \`open_in_hashlite\` (returns a link that opens a Markdown document in the editor), \`csv_to_markdown_table\` and \`list_hashlite_tools\`. Setup: ${link('/connect')}
 
 ## What works without an account
 

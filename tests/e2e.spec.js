@@ -1,5 +1,6 @@
 import { test, expect, viaNode, PROXIED, SUPABASE_URL_RE } from './fixtures.mjs';
 import { resetTestAccount, TEST_EMAIL, TEST_PASSWORD } from './account.mjs';
+import { editorLink } from '../mcp/server.js';
 
 // Signs in to a freshly emptied Supabase test account (the welcome document is
 // created on the first sign-in, as for a new user).
@@ -529,6 +530,18 @@ test.describe('installable app', () => {
     await expect(page.locator('.home-title')).toHaveText('Free online Markdown editor');
     await context.setOffline(false);
   });
+});
+
+test('a link from the connector (open_in_hashlite) opens that document in the editor', async ({ page }) => {
+  const markdown = '# From the assistant\n\n| Step | Owner |\n| --- | --- |\n| Plan | Ada |\n\nMath: $x^2$ & more';
+  const link = new URL(editorLink(markdown));
+  await page.goto(`/${link.hash}`);
+  await expect(page.locator('.he-preview h1')).toHaveText('From the assistant');
+  await expect(page.locator('.he-preview td').first()).toHaveText('Plan');
+  await expect(page.locator('.he-preview .katex').first()).toBeVisible();
+  await page.goto('/connect');
+  await expect(page.locator('h1')).toHaveText('Connect Hashlite to your AI assistant');
+  await expect(page.locator('pre code').first()).toContainText('/api/mcp');
 });
 
 test.describe('cookie banner', () => {

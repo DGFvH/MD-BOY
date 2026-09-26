@@ -165,3 +165,16 @@ Accounts and documents moved from the built-in SQLite server to the Supabase pro
 - New menu items: Copy HTML source; main buttons on the tool pages (Copy for Word / Docs, Save as PDF, Copy HTML, Open .md file, Copy Markdown).
 - **IndexNow:** a key file and `.github/workflows/indexnow.yml`, which submits the sitemap after each production deploy (or on demand).
 - **Launch kit:** `docs/LAUNCH.md`, for the owner to post.
+
+## Connector for Claude and other MCP clients (2026-09-26)
+
+- **Endpoint:** a public, read-only remote MCP server at `/api/mcp`.
+  - Code: `api/mcp.js`, a Vercel function using the SDK's web-standard Streamable HTTP transport, stateless, with JSON responses and CORS.
+  - Tools, in `mcp/server.js`:
+    - `open_in_hashlite` returns a `#text=` link to the editor. Documents too long for a link get an explanation instead.
+    - `csv_to_markdown_table` is the same converter as the web tool, moved to the DOM-free `client/src/table-md.js`.
+    - `list_hashlite_tools`.
+  - Every tool is annotated read-only. There is no account and nothing is stored.
+- **Setup page:** `/connect` (Claude: Settings › Connectors › Add custom connector; Claude Code: `claude mcp add --transport http …`). It is linked from `/tools` and in `llms.txt`; the privacy page describes the connector.
+- **Tests:** `npm run test:mcp` drives the official MCP client over HTTP (initialize, list tools, call each tool, CORS preflight). An e2e test opens a link the connector built.
+- **Later (not built):** connecting a Hashlite account over OAuth, so Claude can list, search, read and save documents. The plan is in the session notes.

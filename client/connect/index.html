@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connect Hashlite to Claude and Other AI Assistants (MCP) | Hashlite</title>
+    <meta name="description" content="Add Hashlite as a connector (MCP server) so your AI assistant can open the documents it writes in the Hashlite editor, ready to export to PDF, Word or Google Docs. Free, no account." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/connect" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Hashlite" />
+    <meta property="og:title" content="Connect Hashlite to your AI assistant" />
+    <meta property="og:description" content="Let your AI assistant open the documents it writes in the Hashlite editor, ready to export to PDF, Word or Google Docs." />
+    <meta property="og:url" content="%PUBLIC_URL%/connect" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "HowTo",
+            "name": "Connect Hashlite to Claude",
+            "description": "Add Hashlite as a custom connector (remote MCP server) in Claude.",
+            "url": "%PUBLIC_URL%/connect",
+            "step": [
+              { "@type": "HowToStep", "position": 1, "name": "Open the connector settings", "text": "In Claude, open Settings and then Connectors." },
+              { "@type": "HowToStep", "position": 2, "name": "Add a custom connector", "text": "Choose Add custom connector, name it Hashlite and enter the URL %PUBLIC_URL%/api/mcp." },
+              { "@type": "HowToStep", "position": 3, "name": "Use it", "text": "Ask Claude to open a document in Hashlite. It replies with a link that opens the document in the editor." }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "%PUBLIC_URL%/" },
+              { "@type": "ListItem", "position": 2, "name": "Tools", "item": "%PUBLIC_URL%/tools" },
+              { "@type": "ListItem", "position": 3, "name": "Connect", "item": "%PUBLIC_URL%/connect" }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Hashlite home"><img src="/favicon.svg" alt="" width="32" height="32" />Hashlite</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-xs"><a href="/tools">Tools</a></li>
+            <li><a class="nav-cta" href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="container narrow prose">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Connect</li></ol></nav>
+        <div class="page-head">
+          <h1>Connect Hashlite to your AI assistant</h1>
+          <p>Add Hashlite as a connector, and your assistant can open the documents it writes straight in the Hashlite editor, ready to save as PDF or to copy into Word or Google Docs.</p>
+        </div>
+
+        <h2 id="what">What it does</h2>
+        <ul>
+          <li><strong>Open in Hashlite:</strong> the assistant gives you a link that opens its document in the editor, with the live preview next to it. From there: save as PDF, download HTML or .md, or copy it as formatted text.</li>
+          <li><strong>CSV to Markdown table:</strong> it can turn spreadsheet data into a clean Markdown table.</li>
+          <li><strong>Find the right tool:</strong> it can point you to Hashlite's free tools, such as Markdown to Word.</li>
+        </ul>
+        <p>No account is needed and nothing is stored: the document travels inside the link, after the <code>#</code>, which your browser never sends to a server.</p>
+
+        <h2 id="claude">Add it to Claude</h2>
+        <ol>
+          <li>In Claude (web or desktop), open <strong>Settings › Connectors</strong>.</li>
+          <li>Choose <strong>Add custom connector</strong>.</li>
+          <li>Name it <strong>Hashlite</strong> and enter this URL:
+            <pre><code>%PUBLIC_URL%/api/mcp</code></pre>
+          </li>
+          <li>Save. There is nothing to sign in to.</li>
+        </ol>
+        <p>Then ask, for example: <em>“Write a one-page project plan and open it in Hashlite.”</em> Custom connectors depend on your Claude plan and your organisation's settings; Claude's help centre has the current details.</p>
+
+        <h2 id="other">Other MCP clients</h2>
+        <p>Hashlite's connector is a standard remote MCP server (Streamable HTTP, no authentication) at <code>%PUBLIC_URL%/api/mcp</code>. In Claude Code, for example:</p>
+        <pre><code>claude mcp add --transport http hashlite %PUBLIC_URL%/api/mcp</code></pre>
+
+        <h2 id="privacy">Privacy</h2>
+        <p>The connector doesn't store anything and needs no account. The text of a document is sent to it only to build the link, and it is not kept or logged. When you open the link, the text stays in your browser. See the <a href="/privacy">privacy page</a>.</p>
+
+        <div class="try"><p><strong>No connector?</strong> Paste any Markdown into <a href="/">the editor</a>: it works the same way.</p></div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashlite</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/tools">Tools</a></li>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><button type="button" class="footer-link" data-cookie-settings>Cookie settings</button></li>
+            <li><a href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/site.js"></script>
+  </body>
+</html>

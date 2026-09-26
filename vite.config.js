@@ -60,6 +60,7 @@ export default defineConfig(({ mode }) => ({
         'markdown-vs-rich-text': fileURLToPath(new URL('./client/learn/markdown-vs-rich-text/index.html', import.meta.url)),
         'ai-chat-to-document': fileURLToPath(new URL('./client/learn/ai-chat-to-document/index.html', import.meta.url)),
         tools: fileURLToPath(new URL('./client/tools/index.html', import.meta.url)),
+        connect: fileURLToPath(new URL('./client/connect/index.html', import.meta.url)),
         ...Object.fromEntries(TOOLS.map((t) => [t.slug, fileURLToPath(new URL(`./client/${t.slug}/index.html`, import.meta.url))])),
       },
     },
