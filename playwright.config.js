@@ -9,6 +9,7 @@ export default defineConfig({
   timeout: 45_000,
   workers: 1, // the tests share one Supabase test account
   use: {
+    serviceWorkers: 'block', // the PWA test allows them
     baseURL: `http://localhost:${PORT}`,
     ignoreHTTPSErrors: !!proxy,
     launchOptions: {

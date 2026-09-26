@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Markdown to PDF Converter – Free, Online, No Sign-up | Hashlite</title>
+    <meta name="description" content="Convert Markdown to PDF in your browser. Tables, code, math and Mermaid diagrams are rendered. Free, no sign-up, nothing to install." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/markdown-to-pdf-converter" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hashlite" />
+    <meta property="og:title" content="Markdown to PDF Converter – Free, Online, No Sign-up" />
+    <meta property="og:description" content="Convert Markdown to PDF in your browser. Tables, code, math and Mermaid diagrams are rendered. Free, no sign-up, nothing to install." />
+    <meta property="og:url" content="%PUBLIC_URL%/markdown-to-pdf-converter" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "Markdown to PDF – Hashlite",
+            "url": "%PUBLIC_URL%/markdown-to-pdf-converter",
+            "description": "Convert Markdown to PDF in your browser. Tables, code, math and Mermaid diagrams are rendered. Free, no sign-up, nothing to install.",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any (web browser)",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashlite",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Are code blocks and tables split across pages?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Hashlite asks the browser to keep code blocks, table rows and diagrams together where it can."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I convert many files at once?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "This page converts one document at a time. For batch jobs, see the pandoc section in the Markdown to PDF guide."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is it really free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, with no sign-up, watermark or page limit."
+                }
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Tools",
+                "item": "%PUBLIC_URL%/tools"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown to PDF",
+                "item": "%PUBLIC_URL%/markdown-to-pdf-converter"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body class="home">
+    <a class="skip-link" href="#try">Skip to the editor</a>
+    <header class="site-header home-header">
+      <div class="container wide">
+        <a class="brand" href="/" aria-label="Hashlite home"><img src="/favicon.svg" alt="" width="32" height="32" /><span class="brand-name">Hashlite</span></a>
+        <h1 class="home-title">Markdown to PDF converter</h1>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-sm"><a href="/tools">Tools</a></li>
+            <li class="hide-sm"><a href="/learn">Learn</a></li>
+            <li><a class="nav-cta" id="nav-account" href="/app">Sign in</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="home-editor" id="try" aria-label="Markdown editor" tabindex="-1" data-page="markdown-to-pdf-converter" data-view="split" data-action="pdf">
+        <div class="he-bar">
+          <span class="he-loading">Loading the editor…</span>
+        </div>
+        <div class="he-panes" data-view="split">
+          <div class="he-pane he-editor">
+            <textarea class="he-fallback" id="try-input" spellcheck="false" aria-label="Markdown">
+# Quarterly report
+
+## Summary
+
+Revenue grew **12%** this quarter, driven by the new *self-serve* plan.
+
+- Three new enterprise customers
+- Support response time down to 4 hours
+- [x] Launched the mobile app
+- [ ] Localise the help centre
+
+| Region | Revenue | Change |
+| ------ | ------: | -----: |
+| Europe | €1.2M   | +15%   |
+| US     | $2.4M   | +9%    |
+
+&gt; [!NOTE]
+&gt; Figures are unaudited.
+
+```python
+growth = (this_quarter - last_quarter) / last_quarter
+```
+
+$$
+\text{growth} = \frac{q_2 - q_1}{q_1}
+$$
+</textarea>
+          </div>
+          <div class="he-pane he-preview" id="try-preview">
+            <article class="markdown-body">
+<h2>Quarterly report</h2>
+<h3>Summary</h3>
+<p>Revenue grew <strong>12%</strong> this quarter, driven by the new <em>self-serve</em> plan.</p>
+<ul class="contains-task-list">
+<li>Three new enterprise customers</li>
+<li>Support response time down to 4 hours</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Launched the mobile app</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Localise the help centre</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Region</th>
+<th style="text-align:right">Revenue</th>
+<th style="text-align:right">Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Europe</td>
+<td style="text-align:right">€1.2M</td>
+<td style="text-align:right">+15%</td>
+</tr>
+<tr>
+<td>US</td>
+<td style="text-align:right">$2.4M</td>
+<td style="text-align:right">+9%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="markdown-alert markdown-alert-note">
+<p class="markdown-alert-title">Note</p>
+<p>Figures are unaudited.</p>
+</div>
+<pre><code class="language-python">growth = (this_quarter - last_quarter) / last_quarter
+</code></pre>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>growth</mtext><mo>=</mo><mfrac><mrow><msub><mi>q</mi><mn>2</mn></msub><mo>−</mo><msub><mi>q</mi><mn>1</mn></msub></mrow><msub><mi>q</mi><mn>1</mn></msub></mfrac></mrow><annotation encoding="application/x-tex">\text{growth} = \frac{q_2 - q_1}{q_1}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">growth</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:2.1408em;vertical-align:-0.8804em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.2603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="about">
+        <div class="container intro">
+          <h2 id="about">Markdown to PDF converter, free and in your browser</h2>
+          <p class="lead">Paste Markdown and click <strong>Save as PDF</strong>. The PDF is printed from the preview in a clean, light layout, with tables, highlighted code, math and diagrams as you see them.</p>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="how">
+        <div class="container">
+          <h2 id="how">How it works</h2>
+          <ol class="steps">
+            <li><h3>Paste or open your Markdown</h3><p>Paste it into the editor, or open a .md file from the ⋯ menu.</p></li>
+            <li><h3>Click Save as PDF</h3><p>Your browser’s print dialog opens with just the document.</p></li>
+            <li><h3>Choose Save as PDF</h3><p>Pick “Save as PDF” as the destination. Turn off “Headers and footers” to remove the date and address.</p></li>
+          </ol>
+          <p><a href="/learn/markdown-to-pdf">Read the full guide →</a></p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq">
+        <div class="container faq">
+          <h2 id="faq">Questions</h2>
+          <details>
+            <summary><h3>Are code blocks and tables split across pages?</h3></summary>
+            <div class="answer"><p>Hashlite asks the browser to keep code blocks, table rows and diagrams together where it can.</p></div>
+          </details>
+          <details>
+            <summary><h3>Can I convert many files at once?</h3></summary>
+            <div class="answer"><p>This page converts one document at a time. For batch jobs, see the pandoc section in the Markdown to PDF guide.</p></div>
+          </details>
+          <details>
+            <summary><h3>Is it really free?</h3></summary>
+            <div class="answer"><p>Yes, with no sign-up, watermark or page limit.</p></div>
+          </details>
+          <nav class="related" aria-labelledby="related-h">
+            <h2 id="related-h">More free tools</h2>
+            <ul><li><a href="/markdown-to-word">Markdown to Word converter</a></li><li><a href="/markdown-to-html">Markdown to HTML converter</a></li><li><a href="/latex-math-editor">Online LaTeX math editor</a></li><li><a href="/tools">All tools</a></li></ul>
+          </nav>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashlite</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/tools">Tools</a></li>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><button type="button" class="footer-link" data-cookie-settings>Cookie settings</button></li>
+            <li><a href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/site.js"></script>
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>

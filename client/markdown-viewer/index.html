@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Online Markdown Viewer – Open .md Files in Your Browser | Hashlite</title>
+    <meta name="description" content="View Markdown files online. Drop a .md file or paste Markdown to see it rendered, with tables, code, math and diagrams. Free, private, no sign-up." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/markdown-viewer" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hashlite" />
+    <meta property="og:title" content="Online Markdown Viewer – Open .md Files in Your Browser" />
+    <meta property="og:description" content="View Markdown files online. Drop a .md file or paste Markdown to see it rendered, with tables, code, math and diagrams. Free, private, no sign-up." />
+    <meta property="og:url" content="%PUBLIC_URL%/markdown-viewer" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "Markdown viewer – Hashlite",
+            "url": "%PUBLIC_URL%/markdown-viewer",
+            "description": "View Markdown files online. Drop a .md file or paste Markdown to see it rendered, with tables, code, math and diagrams. Free, private, no sign-up.",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any (web browser)",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashlite",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is the file uploaded?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The file is opened by your browser, and nothing is sent to a server."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which files can I open?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": ".md, .markdown, .mdown, .mkd and plain .txt files up to 5 MB."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are images in the file shown?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Images with a full web address (https://…) are shown. Images stored next to the file on your computer can’t be reached from a web page."
+                }
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Tools",
+                "item": "%PUBLIC_URL%/tools"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown viewer",
+                "item": "%PUBLIC_URL%/markdown-viewer"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body class="home">
+    <a class="skip-link" href="#try">Skip to the editor</a>
+    <header class="site-header home-header">
+      <div class="container wide">
+        <a class="brand" href="/" aria-label="Hashlite home"><img src="/favicon.svg" alt="" width="32" height="32" /><span class="brand-name">Hashlite</span></a>
+        <h1 class="home-title">Online Markdown viewer</h1>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-sm"><a href="/tools">Tools</a></li>
+            <li class="hide-sm"><a href="/learn">Learn</a></li>
+            <li><a class="nav-cta" id="nav-account" href="/app">Sign in</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="home-editor" id="try" aria-label="Markdown editor" tabindex="-1" data-page="markdown-viewer" data-view="preview" data-action="open">
+        <div class="he-bar">
+          <span class="he-loading">Loading the editor…</span>
+        </div>
+        <div class="he-panes" data-view="preview">
+          <div class="he-pane he-editor">
+            <textarea class="he-fallback" id="try-input" spellcheck="false" aria-label="Markdown">
+# Drop a Markdown file here
+
+Or click **Open .md file** above, or paste Markdown into the editor.
+
+This viewer shows:
+
+- Headings, lists, **bold** and *italic*
+- Tables and task lists
+- Code with syntax highlighting
+- Math like $a^2 + b^2 = c^2$
+- Mermaid diagrams
+
+Switch to the editor with the pencil button to make changes.
+</textarea>
+          </div>
+          <div class="he-pane he-preview" id="try-preview">
+            <article class="markdown-body">
+<h2>Drop a Markdown file here</h2>
+<p>Or click <strong>Open .md file</strong> above, or paste Markdown into the editor.</p>
+<p>This viewer shows:</p>
+<ul>
+<li>Headings, lists, <strong>bold</strong> and <em>italic</em></li>
+<li>Tables and task lists</li>
+<li>Code with syntax highlighting</li>
+<li>Math like <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup><mo>=</mo><msup><mi>c</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">a^2 + b^2 = c^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></li>
+<li>Mermaid diagrams</li>
+</ul>
+<p>Switch to the editor with the pencil button to make changes.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="about">
+        <div class="container intro">
+          <h2 id="about">Online Markdown viewer, free and in your browser</h2>
+          <p class="lead">Open a <code>.md</code> file, drop it on the page, or paste Markdown, and read it rendered. The file is read in your browser and never uploaded.</p>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="how">
+        <div class="container">
+          <h2 id="how">How it works</h2>
+          <ol class="steps">
+            <li><h3>Open a file</h3><p>Click Open .md file, or drag a file onto the page.</p></li>
+            <li><h3>Read it</h3><p>The document is shown rendered. Use the pencil button to see or edit the Markdown.</p></li>
+            <li><h3>Export if you like</h3><p>Save as PDF, download HTML, or copy it into Word or Google Docs from the ⋯ menu.</p></li>
+          </ol>
+          
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq">
+        <div class="container faq">
+          <h2 id="faq">Questions</h2>
+          <details>
+            <summary><h3>Is the file uploaded?</h3></summary>
+            <div class="answer"><p>No. The file is opened by your browser, and nothing is sent to a server.</p></div>
+          </details>
+          <details>
+            <summary><h3>Which files can I open?</h3></summary>
+            <div class="answer"><p>.md, .markdown, .mdown, .mkd and plain .txt files up to 5 MB.</p></div>
+          </details>
+          <details>
+            <summary><h3>Are images in the file shown?</h3></summary>
+            <div class="answer"><p>Images with a full web address (https://…) are shown. Images stored next to the file on your computer can’t be reached from a web page.</p></div>
+          </details>
+          <nav class="related" aria-labelledby="related-h">
+            <h2 id="related-h">More free tools</h2>
+            <ul><li><a href="/readme-editor">README editor with live preview</a></li><li><a href="/markdown-to-pdf-converter">Markdown to PDF converter</a></li><li><a href="/markdown-to-html">Markdown to HTML converter</a></li><li><a href="/tools">All tools</a></li></ul>
+          </nav>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashlite</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/tools">Tools</a></li>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><button type="button" class="footer-link" data-cookie-settings>Cookie settings</button></li>
+            <li><a href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/site.js"></script>
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>

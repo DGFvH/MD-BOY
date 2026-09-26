@@ -12,7 +12,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "playwright test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "gen:pages": "node build/gen-pages.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.1",

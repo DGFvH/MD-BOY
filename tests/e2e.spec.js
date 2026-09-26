@@ -412,6 +412,125 @@ test('saving from the home editor asks for an account, then keeps the document',
   await expect(page.locator('#nav-account')).toHaveText('My documents');
 });
 
+test('every tool page is an indexable page with a working editor', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(err.message));
+  const slugs = ['markdown-to-word', 'markdown-to-google-docs', 'markdown-to-pdf-converter', 'markdown-to-html', 'markdown-viewer',
+    'csv-to-markdown-table', 'markdown-table-generator', 'mermaid-editor', 'latex-math-editor', 'readme-editor'];
+  for (const slug of slugs) {
+    const res = await page.goto(`/${slug}`);
+    expect(res.status(), slug).toBe(200);
+    expect((await res.text()).match(/<h1[\s>]/g), slug).toHaveLength(1); // the served HTML has one h1: the tool's name
+    for (const block of await page.locator('script[type="application/ld+json"]').allTextContents()) JSON.parse(block);
+    await expect(page.locator('.home-editor.ready .cm-content'), slug).toBeAttached(); // hidden on the viewer, which opens in preview
+  }
+  await page.goto('/tools');
+  await expect(page.locator('.hub a')).toHaveCount(slugs.length);
+  await expect(page.getByRole('link', { name: 'Open in Hashlite' })).toHaveAttribute('href', /^javascript:.*hashlite\.io\/#text=/);
+  expect(errors).toEqual([]);
+});
+
+test('CSV and spreadsheet cells become a Markdown table', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/csv-to-markdown-table');
+  await expect(page.locator('.table-tool.ready')).toBeVisible();
+  await page.fill('#tt-input', 'City\tPeople\nAmsterdam\t931,298\nUtrecht\t361,924');
+  await expect(page.locator('.he-preview table tbody tr')).toHaveCount(2);
+  await expect(page.locator('.he-preview th').first()).toHaveText('City');
+  await expect(page.getByText('3 rows × 2 columns converted.')).toBeVisible();
+
+  await page.selectOption('#tt-align', 'right');
+  await expect(page.locator('.home-editor .cm-content')).toContainText('------:');
+  await page.getByRole('button', { name: 'Copy Markdown' }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('| Amsterdam | 931,298 |');
+
+  // Quoted commas and pipes
+  await page.fill('#tt-input', 'a,b\n"x, y",p|q');
+  await expect(page.locator('.home-editor .cm-content')).toContainText('p\\|q');
+  await expect(page.locator('.he-preview td').first()).toHaveText('x, y');
+});
+
+test('the table generator writes Markdown from the grid', async ({ page }) => {
+  await page.goto('/markdown-table-generator');
+  await expect(page.locator('.table-tool.ready')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Row 2, column 1' }).fill('Linus');
+  await expect(page.locator('.he-preview tbody tr').first()).toContainText('Linus');
+  await page.getByRole('button', { name: '+ Row' }).click();
+  await expect(page.locator('.he-preview tbody tr')).toHaveCount(3);
+  await page.getByRole('button', { name: '+ Column' }).click();
+  await expect(page.locator('.he-preview thead th')).toHaveCount(4);
+});
+
+test('tool pages keep their own text, and Save hands it to the app', async ({ page }) => {
+  await page.goto('/');
+  await typeInHomeEditor(page, '# Home text');
+  await page.goto('/mermaid-editor');
+  await expect(page.locator('.he-preview .mermaid-block').first()).toBeVisible();
+  await typeInHomeEditor(page, '# Diagram notes');
+  await page.goto('/');
+  await expect(page.locator('.he-preview h1')).toHaveText('Home text');
+  await page.goto('/mermaid-editor');
+  await expect(page.locator('.he-preview h1')).toHaveText('Diagram notes');
+
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page).toHaveURL(/\/app$/);
+  await expect(page.getByText('Create a free account to save the document you started.')).toBeVisible();
+  const handed = await page.evaluate(() => JSON.parse(localStorage.getItem('hashlite:guest')));
+  expect(handed).toEqual({ content: '# Diagram notes', pending: true });
+});
+
+test('the viewer opens in preview, and HTML downloads carry an optional credit', async ({ page }) => {
+  await page.goto('/markdown-viewer');
+  await expect(page.locator('.he-editor')).toBeHidden();
+  await expect(page.locator('.he-preview h1')).toHaveText('Drop a Markdown file here');
+
+  const download = async () => {
+    await page.getByRole('button', { name: 'More actions' }).click();
+    const [file] = await Promise.all([page.waitForEvent('download'), page.getByRole('menuitem', { name: 'Download HTML (.html)' }).click()]);
+    return (await import('node:fs')).readFileSync(await file.path(), 'utf8');
+  };
+  expect(await download()).toContain('Written with <a href="https://hashlite.io"');
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitemcheckbox', { name: 'Credit Hashlite in HTML downloads' }).click();
+  expect(await download()).not.toContain('Written with');
+});
+
+test.describe('installable app', () => {
+  test.use({ serviceWorkers: 'allow' });
+
+  test('has a manifest, works as a share target and opens offline', async ({ page, context, request }) => {
+    const manifest = await (await request.get('/manifest.webmanifest')).json();
+    expect(manifest.share_target.action).toBe('/share-target');
+    expect(manifest.icons.some((i) => i.sizes === '512x512')).toBe(true);
+
+    await page.goto('/');
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+
+    // Sharing text from another app: the service worker turns the POST into #text=.
+    await page.evaluate(() => {
+      const form = Object.assign(document.createElement('form'), { method: 'POST', action: '/share-target' });
+      form.enctype = 'application/x-www-form-urlencoded';
+      for (const [name, value] of [['title', 'Shared'], ['text', '# Shared note\n\nFrom my phone']]) {
+        form.append(Object.assign(document.createElement('input'), { type: 'hidden', name, value }));
+      }
+      document.body.append(form);
+      form.submit();
+    });
+    await expect(page.locator('.he-preview h1')).toHaveText('Shared note');
+    await expect(page.locator('.home-editor .cm-content')).toContainText('From my phone');
+
+    // Offline, the cached page still opens.
+    await page.reload();
+    await expect(page.locator('.home-editor.ready')).toBeVisible();
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.locator('.home-title')).toHaveText('Free online Markdown editor');
+    await context.setOffline(false);
+  });
+});
+
 test.describe('cookie banner', () => {
   test.use({ storageNotice: true });
 

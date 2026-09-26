@@ -12,6 +12,8 @@ Hashlite is a simple, capable **online Markdown editor**. Write in the browser, 
 - Open `.md` files; download `.md` or `.html`; print or save as PDF; **copy as formatted text** for Word, Google Docs or email
 - The text is kept in the browser; **Save** moves it into an account
 - `https://hashlite.io/#text=<URL-encoded Markdown>` opens that text in the editor
+- Free tool pages built on the same editor (`/tools`): Markdown to Word, Google Docs, PDF and HTML, a Markdown viewer, CSV to Markdown table, a table generator, and Mermaid, LaTeX math and README editors
+- Installable as an app (PWA): opens offline, and "Share → Hashlite" on a phone opens shared text in the editor
 
 **Editor**
 - CodeMirror 6 editor with Markdown syntax highlighting, search and replace, multiple cursors, and automatic list continuation
@@ -103,6 +105,7 @@ They route `/app/*` and `/s/*` to their pages and set security headers. The Cont
 | Path | What |
 | --- | --- |
 | `/` | The editor, no account needed, with the product page below it (static HTML the editor takes over) |
+| `/tools`, `/markdown-to-word`, … | Free tool pages, generated from `build/tools.mjs` by `npm run gen:pages` |
 | `/guide` | Markdown cheat sheet |
 | `/learn`, `/learn/…` | Short articles |
 | `/privacy` | Privacy page |
@@ -110,7 +113,7 @@ They route `/app/*` and `/s/*` to their pages and set security headers. The Cont
 | `/s/<token>` | A shared, read-only document (not indexed) |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | Generated at build time from `build/site.mjs` |
 
-See [docs/SEO.md](docs/SEO.md) for the SEO/GEO plan.
+See [docs/SEO.md](docs/SEO.md) for the SEO/GEO plan and [docs/LAUNCH.md](docs/LAUNCH.md) for the launch kit.
 
 ## Tests
 

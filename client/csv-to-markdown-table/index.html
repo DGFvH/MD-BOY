@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>CSV to Markdown Table Converter – Also Excel and Google Sheets | Hashlite</title>
+    <meta name="description" content="Convert CSV, TSV or cells copied from Excel or Google Sheets into a Markdown table. Choose alignment and header row, then copy. Free, instant, private." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/csv-to-markdown-table" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hashlite" />
+    <meta property="og:title" content="CSV to Markdown Table Converter – Also Excel and Google Sheets" />
+    <meta property="og:description" content="Convert CSV, TSV or cells copied from Excel or Google Sheets into a Markdown table. Choose alignment and header row, then copy. Free, instant, private." />
+    <meta property="og:url" content="%PUBLIC_URL%/csv-to-markdown-table" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "CSV to Markdown table – Hashlite",
+            "url": "%PUBLIC_URL%/csv-to-markdown-table",
+            "description": "Convert CSV, TSV or cells copied from Excel or Google Sheets into a Markdown table. Choose alignment and header row, then copy. Free, instant, private.",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any (web browser)",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashlite",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Can I paste from Excel or Google Sheets?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Copied cells arrive as tab-separated text, which is detected automatically."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What happens to | characters in my data?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "They are escaped as \\| so they don’t break the table."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can Markdown tables merge cells?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Standard Markdown tables have no merged cells. See the Markdown tables guide for workarounds."
+                }
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Tools",
+                "item": "%PUBLIC_URL%/tools"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSV to Markdown table",
+                "item": "%PUBLIC_URL%/csv-to-markdown-table"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body class="home">
+    <a class="skip-link" href="#try">Skip to the editor</a>
+    <header class="site-header home-header">
+      <div class="container wide">
+        <a class="brand" href="/" aria-label="Hashlite home"><img src="/favicon.svg" alt="" width="32" height="32" /><span class="brand-name">Hashlite</span></a>
+        <h1 class="home-title">CSV to Markdown table converter</h1>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-sm"><a href="/tools">Tools</a></li>
+            <li class="hide-sm"><a href="/learn">Learn</a></li>
+            <li><a class="nav-cta" id="nav-account" href="/app">Sign in</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="table-tool" data-mode="csv" aria-label="CSV input">
+        <label class="tt-label" for="tt-input">Paste CSV, TSV or cells from Excel / Google Sheets</label>
+        <textarea id="tt-input" spellcheck="false">Name,Role,Location
+Ada Lovelace,Engineer,London
+Grace Hopper,&quot;Rear Admiral, US Navy&quot;,Arlington
+Alan Turing,Mathematician,Manchester</textarea>
+      </section>
+      <section class="home-editor with-tool" id="try" aria-label="Markdown editor" tabindex="-1" data-page="csv-to-markdown-table" data-view="split" data-action="copymd">
+        <div class="he-bar">
+          <span class="he-loading">Loading the editor…</span>
+        </div>
+        <div class="he-panes" data-view="split">
+          <div class="he-pane he-editor">
+            <textarea class="he-fallback" id="try-input" spellcheck="false" aria-label="Markdown">
+| Name         | Role                  | Location   |
+| ------------ | --------------------- | ---------- |
+| Ada Lovelace | Engineer              | London     |
+| Grace Hopper | Rear Admiral, US Navy | Arlington  |
+| Alan Turing  | Mathematician         | Manchester |
+</textarea>
+          </div>
+          <div class="he-pane he-preview" id="try-preview">
+            <article class="markdown-body">
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Role</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ada Lovelace</td>
+<td>Engineer</td>
+<td>London</td>
+</tr>
+<tr>
+<td>Grace Hopper</td>
+<td>Rear Admiral, US Navy</td>
+<td>Arlington</td>
+</tr>
+<tr>
+<td>Alan Turing</td>
+<td>Mathematician</td>
+<td>Manchester</td>
+</tr>
+</tbody>
+</table>
+</div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="about">
+        <div class="container intro">
+          <h2 id="about">CSV to Markdown table converter, free and in your browser</h2>
+          <p class="lead">Paste CSV, tab-separated text, or cells copied straight from Excel or Google Sheets. The Markdown table appears below with a live preview. Commas inside quotes, and pipes in cells, are handled for you.</p>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="how">
+        <div class="container">
+          <h2 id="how">How it works</h2>
+          <ol class="steps">
+            <li><h3>Paste your data</h3><p>Copy cells from a spreadsheet, or paste a CSV or TSV file’s contents. The separator is detected.</p></li>
+            <li><h3>Pick options</h3><p>Say whether the first row is the header, and choose the column alignment.</p></li>
+            <li><h3>Copy the table</h3><p>Click Copy Markdown, or keep editing the table in the editor.</p></li>
+          </ol>
+          <p><a href="/learn/markdown-tables">Read the full guide →</a></p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq">
+        <div class="container faq">
+          <h2 id="faq">Questions</h2>
+          <details>
+            <summary><h3>Can I paste from Excel or Google Sheets?</h3></summary>
+            <div class="answer"><p>Yes. Copied cells arrive as tab-separated text, which is detected automatically.</p></div>
+          </details>
+          <details>
+            <summary><h3>What happens to | characters in my data?</h3></summary>
+            <div class="answer"><p>They are escaped as \| so they don’t break the table.</p></div>
+          </details>
+          <details>
+            <summary><h3>Can Markdown tables merge cells?</h3></summary>
+            <div class="answer"><p>No. Standard Markdown tables have no merged cells. See the Markdown tables guide for workarounds.</p></div>
+          </details>
+          <nav class="related" aria-labelledby="related-h">
+            <h2 id="related-h">More free tools</h2>
+            <ul><li><a href="/markdown-table-generator">Markdown table generator</a></li><li><a href="/markdown-to-word">Markdown to Word converter</a></li><li><a href="/markdown-to-html">Markdown to HTML converter</a></li><li><a href="/tools">All tools</a></li></ul>
+          </nav>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashlite</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/tools">Tools</a></li>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><button type="button" class="footer-link" data-cookie-settings>Cookie settings</button></li>
+            <li><a href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/site.js"></script>
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>

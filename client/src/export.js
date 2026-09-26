@@ -2,6 +2,7 @@
 import markdownCss from './markdown.css?raw';
 import { APP_NAME } from './brand.js';
 import { downloadFile, escapeHtml, h } from './ui.js';
+import { getPrefs } from './storage.js';
 import { frontMatterTitle } from './render/front-matter.js';
 
 export function safeFileName(title) {
@@ -22,7 +23,12 @@ export function exportMarkdown(title, content) {
  * A self-contained page: no external CSS, fonts or scripts. Expects the body from
  * preview.renderStandalone() (math as MathML, light-theme diagrams), so it is always light.
  */
-export function buildStandaloneHtml(title, bodyHtml) {
+/** Whether downloaded HTML ends with a small "Written with Hashlite" line (on unless switched off). */
+export const exportCredit = () => getPrefs().exportCredit !== false;
+
+const CREDIT = '<p class="hl-credit" style="max-width:860px;margin:0 auto;padding:0 24px 32px;font:12px system-ui,sans-serif;color:#6b6b78">Written with <a href="https://hashlite.io" style="color:inherit">Hashlite</a>, a free online Markdown editor.</p>';
+
+export function buildStandaloneHtml(title, bodyHtml, { credit = false } = {}) {
   return `<!doctype html>
 <html lang="en" data-theme="light">
 <head>
@@ -43,13 +49,14 @@ ${markdownCss}
 <main class="markdown-body" style="max-width: 860px; margin: 0 auto; padding: 48px 24px;">
 ${bodyHtml}
 </main>
+${credit ? CREDIT : ''}
 </body>
 </html>
 `;
 }
 
 export function exportHtml(title, bodyHtml) {
-  downloadFile(`${safeFileName(title)}.html`, buildStandaloneHtml(title, bodyHtml), 'text/html;charset=utf-8');
+  downloadFile(`${safeFileName(title)}.html`, buildStandaloneHtml(title, bodyHtml, { credit: exportCredit() }), 'text/html;charset=utf-8');
 }
 
 const MD_EXT = /\.(md|markdown|mdown|mkd|txt)$/i;

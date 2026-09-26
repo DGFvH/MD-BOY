@@ -153,3 +153,15 @@ Accounts and documents moved from the built-in SQLite server to the Supabase pro
 - What is sent: the page address without `?…` or `#…`, so no document ids and no `#text=` content; share links as `/s` without their token. Google signals and ad personalisation are off. Share pages (`/s/…`) never load analytics.
 - **Cookie settings** in every footer, on the privacy page and in the app's ⋯ menu ask again. **Decline** stops sending and removes the `_ga` cookies.
 - The CSP allows `www.googletagmanager.com` scripts and the Google Analytics endpoints. The privacy page, FAQ and `llms.txt` no longer say "no analytics".
+
+## Growth, first batch (2026-09-26)
+
+- **Ten free tool pages**, generated from `build/tools.mjs` (`npm run gen:pages`). Each is the home editor with its own example, a highlighted main button, a how-to and a FAQ. Each keeps its own text in the browser, and **Save** hands it to the app. Also a `/tools` hub.
+  - New code: **CSV / spreadsheet → Markdown table** (delimiter detection, quoted fields, escaped pipes, alignment) and a **grid table generator**.
+  - The pre-rendered example's headings are shifted one level, so each page has exactly one h1.
+- **Installable app (PWA):** manifest, service worker (offline start; hashed assets cached), and a **share target** that turns shared text into `#text=`.
+- **Bookmarklet** on `/tools`: sends selected text on any page to the editor.
+- **Credit line** in downloaded HTML ("Written with Hashlite"). On by default, with a switch in the ⋯ menu; not included when printing.
+- New menu items: Copy HTML source; main buttons on the tool pages (Copy for Word / Docs, Save as PDF, Copy HTML, Open .md file, Copy Markdown).
+- **IndexNow:** a key file and `.github/workflows/indexnow.yml`, which submits the sitemap after each production deploy (or on demand).
+- **Launch kit:** `docs/LAUNCH.md`, for the owner to post.

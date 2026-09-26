@@ -1,0 +1,25 @@
+# Tells search engines that support IndexNow (Bing, Yandex, Seznam, Naver…) about every page
+# in the sitemap after a production deploy, so new and changed pages are crawled quickly.
+# The key file is client/public/ad436353fe883c0341beda944d922d98.txt; the key is public by design.
+name: IndexNow
+
+on:
+  deployment_status:
+  workflow_dispatch:
+
+jobs:
+  ping:
+    if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit the sitemap's pages
+        env:
+          SITE: https://hashlite.io
+          KEY: ad436353fe883c0341beda944d922d98
+        run: |
+          urls=$(curl -fsSL "$SITE/sitemap.xml" | grep -o '<loc>[^<]*</loc>' | sed -e 's/<loc>//' -e 's#</loc>##' | jq -R . | jq -sc .)
+          echo "Submitting: $urls"
+          curl -fsS -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            -d "{\"host\":\"hashlite.io\",\"key\":\"$KEY\",\"keyLocation\":\"$SITE/$KEY.txt\",\"urlList\":$urls}" \
+            -w 'HTTP %{http_code}\n'

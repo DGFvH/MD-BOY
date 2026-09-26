@@ -20,6 +20,7 @@ import { showAccount } from './app/account.js';
 import { pendingGuestDraft, clearGuestDraft } from './guest.js';
 import { showStorageNotice, openCookieSettings } from './consent.js';
 import { GA_ID } from './analytics.js';
+import { registerServiceWorker } from './pwa.js';
 import { THEMES, currentTheme, isDark, applyTheme, setTheme as storeTheme, onSystemThemeChange, themeMenuItems } from './theme.js';
 
 const root = document.getElementById('app');
@@ -93,6 +94,7 @@ async function afterSignIn(u) {
 
 api.onPasswordRecovery(() => showNewPassword());
 showStorageNotice();
+registerServiceWorker();
 
 async function boot() {
   try {
@@ -1449,6 +1451,7 @@ function createApp() {
       { label: 'Theme…', icon: THEMES.find((t) => t.id === currentTheme()).icon, onClick: () => showMenu(moreBtn, themeItems()) },
       { label: 'Line numbers', checked: p.lineNumbers, onClick: () => editor.setLineNumbers(setPref('lineNumbers', !p.lineNumbers).lineNumbers) },
       { label: 'Sync scrolling', checked: p.syncScroll, onClick: () => setPref('syncScroll', !p.syncScroll) },
+      { label: 'Credit Hashlite in HTML downloads', checked: p.exportCredit !== false, onClick: () => setPref('exportCredit', p.exportCredit === false) },
       { label: 'Keyboard shortcuts', onClick: showShortcuts },
       ...(GA_ID ? [{ label: 'Cookie settings', onClick: openCookieSettings }] : []),
       { label: 'Account…', icon: 'settings', onClick: openAccount },

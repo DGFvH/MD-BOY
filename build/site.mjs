@@ -2,9 +2,13 @@
 // and the files crawlers look for (robots.txt, sitemap.xml, llms.txt).
 // Used by vite.config.js; the site is hosted as static files.
 
+import { TOOLS } from './tools.mjs';
+
 // Public pages: URL -> built HTML file. Only these are listed in the sitemap.
 export const PUBLIC_PAGES = [
   { path: '/', file: 'index.html', priority: '1.0' },
+  { path: '/tools', file: 'tools/index.html', priority: '0.8' },
+  ...TOOLS.map((t) => ({ path: `/${t.slug}`, file: `${t.slug}/index.html`, priority: '0.8' })),
   { path: '/guide', file: 'guide/index.html', priority: '0.8' },
   { path: '/learn', file: 'learn/index.html', priority: '0.7' },
   ...['ai-chat-to-document', 'markdown-to-pdf', 'markdown-tables', 'markdown-math-and-diagrams', 'markdown-vs-rich-text'].map((slug) => ({
@@ -64,6 +68,10 @@ Link to \`${home}#text=\` followed by the URL-encoded Markdown (for example, the
 - Syntax highlighting, KaTeX math ($...$ and $$...$$), Mermaid diagrams, YAML front matter
 - Open .md files; download .md or standalone .html; print or save as PDF; copy as formatted text
 - Colour themes: light, dark, sepia, high contrast
+
+## Free tools (each opens the editor set up for one job, no sign-up)
+
+${TOOLS.map((t) => `- [${t.h1}](${link(`/${t.slug}`)}): ${t.description}`).join('\n')}
 
 ## Pages
 

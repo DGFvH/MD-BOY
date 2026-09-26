@@ -9,6 +9,7 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href="%PUBLIC_URL%/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -121,8 +122,8 @@
         <h1 class="home-title">Free online Markdown editor</h1>
         <nav class="site-nav" aria-label="Main">
           <ul>
+            <li class="hide-sm"><a href="/tools">Tools</a></li>
             <li class="hide-sm"><a href="/learn">Learn</a></li>
-            <li class="hide-sm"><a href="/guide">Cheat sheet</a></li>
             <li><a class="nav-cta" id="nav-account" href="/app">Sign in</a></li>
           </ul>
         </nav>
@@ -235,7 +236,26 @@ Write on the left, see it on the right. Or **paste Markdown** from anywhere: an 
         </div>
       </section>
 
-      <section class="section alt" aria-labelledby="faq">
+      <section class="section alt" aria-labelledby="tools">
+        <div class="container">
+          <h2 id="tools">Free Markdown tools</h2>
+          <p class="section-lead">The same editor, set up for one job. No sign-up, nothing uploaded.</p>
+          <ul class="tool-links">
+            <li><a href="/markdown-to-word">Markdown to Word converter</a></li>
+            <li><a href="/markdown-to-google-docs">Markdown to Google Docs</a></li>
+            <li><a href="/markdown-to-pdf-converter">Markdown to PDF converter</a></li>
+            <li><a href="/markdown-to-html">Markdown to HTML converter</a></li>
+            <li><a href="/markdown-viewer">Online Markdown viewer</a></li>
+            <li><a href="/csv-to-markdown-table">CSV to Markdown table converter</a></li>
+            <li><a href="/markdown-table-generator">Markdown table generator</a></li>
+            <li><a href="/mermaid-editor">Mermaid diagram editor</a></li>
+            <li><a href="/latex-math-editor">Online LaTeX math editor</a></li>
+            <li><a href="/readme-editor">README editor with live preview</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq">
         <div class="container faq">
           <h2 id="faq">Frequently asked questions</h2>
           <details>
@@ -279,6 +299,7 @@ Write on the left, see it on the right. Or **paste Markdown** from anywhere: an 
         <p>© Hashlite</p>
         <nav aria-label="Footer">
           <ul>
+            <li><a href="/tools">Tools</a></li>
             <li><a href="/learn">Learn</a></li>
             <li><a href="/guide">Cheat sheet</a></li>
             <li><a href="/privacy">Privacy</a></li>

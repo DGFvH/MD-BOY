@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Markdown to Word Converter – Free, Online, No Sign-up | Hashlite</title>
+    <meta name="description" content="Convert Markdown to Word for free. Paste Markdown, check the preview, and copy it into Word with headings, lists, tables and code intact. No sign-up." />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="%PUBLIC_URL%/markdown-to-word" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hashlite" />
+    <meta property="og:title" content="Markdown to Word Converter – Free, Online, No Sign-up" />
+    <meta property="og:description" content="Convert Markdown to Word for free. Paste Markdown, check the preview, and copy it into Word with headings, lists, tables and code intact. No sign-up." />
+    <meta property="og:url" content="%PUBLIC_URL%/markdown-to-word" />
+    <meta property="og:image" content="%PUBLIC_URL%/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og.png" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "Markdown to Word – Hashlite",
+            "url": "%PUBLIC_URL%/markdown-to-word",
+            "description": "Convert Markdown to Word for free. Paste Markdown, check the preview, and copy it into Word with headings, lists, tables and code intact. No sign-up.",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any (web browser)",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Hashlite",
+              "url": "%PUBLIC_URL%/"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Do headings become real Word headings?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. # and ## become Heading 1 and Heading 2 in Word, so you can build a table of contents from them."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do tables survive?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Markdown tables paste as Word tables, including column alignment."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I get a .docx file?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Paste into a new Word document and save it as .docx. For a file without Word, download HTML or save as PDF from the ⋯ menu."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is my text uploaded?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Converting happens in your browser. Nothing is sent anywhere unless you choose Save to keep it in an account."
+                }
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "%PUBLIC_URL%/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Tools",
+                "item": "%PUBLIC_URL%/tools"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown to Word",
+                "item": "%PUBLIC_URL%/markdown-to-word"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body class="home">
+    <a class="skip-link" href="#try">Skip to the editor</a>
+    <header class="site-header home-header">
+      <div class="container wide">
+        <a class="brand" href="/" aria-label="Hashlite home"><img src="/favicon.svg" alt="" width="32" height="32" /><span class="brand-name">Hashlite</span></a>
+        <h1 class="home-title">Markdown to Word converter</h1>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            <li class="hide-sm"><a href="/tools">Tools</a></li>
+            <li class="hide-sm"><a href="/learn">Learn</a></li>
+            <li><a class="nav-cta" id="nav-account" href="/app">Sign in</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="home-editor" id="try" aria-label="Markdown editor" tabindex="-1" data-page="markdown-to-word" data-view="split" data-action="copy">
+        <div class="he-bar">
+          <span class="he-loading">Loading the editor…</span>
+        </div>
+        <div class="he-panes" data-view="split">
+          <div class="he-pane he-editor">
+            <textarea class="he-fallback" id="try-input" spellcheck="false" aria-label="Markdown">
+# Quarterly report
+
+## Summary
+
+Revenue grew **12%** this quarter, driven by the new *self-serve* plan.
+
+- Three new enterprise customers
+- Support response time down to 4 hours
+- [x] Launched the mobile app
+- [ ] Localise the help centre
+
+| Region | Revenue | Change |
+| ------ | ------: | -----: |
+| Europe | €1.2M   | +15%   |
+| US     | $2.4M   | +9%    |
+
+&gt; [!NOTE]
+&gt; Figures are unaudited.
+
+```python
+growth = (this_quarter - last_quarter) / last_quarter
+```
+</textarea>
+          </div>
+          <div class="he-pane he-preview" id="try-preview">
+            <article class="markdown-body">
+<h2>Quarterly report</h2>
+<h3>Summary</h3>
+<p>Revenue grew <strong>12%</strong> this quarter, driven by the new <em>self-serve</em> plan.</p>
+<ul class="contains-task-list">
+<li>Three new enterprise customers</li>
+<li>Support response time down to 4 hours</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Launched the mobile app</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Localise the help centre</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Region</th>
+<th style="text-align:right">Revenue</th>
+<th style="text-align:right">Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Europe</td>
+<td style="text-align:right">€1.2M</td>
+<td style="text-align:right">+15%</td>
+</tr>
+<tr>
+<td>US</td>
+<td style="text-align:right">$2.4M</td>
+<td style="text-align:right">+9%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="markdown-alert markdown-alert-note">
+<p class="markdown-alert-title">Note</p>
+<p>Figures are unaudited.</p>
+</div>
+<pre><code class="language-python">growth = (this_quarter - last_quarter) / last_quarter
+</code></pre>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="about">
+        <div class="container intro">
+          <h2 id="about">Markdown to Word converter, free and in your browser</h2>
+          <p class="lead">Paste Markdown on the left and it appears formatted on the right. Click <strong>Copy for Word / Docs</strong>, then paste into Microsoft Word: headings, bold and italic, lists, tables, links and code blocks keep their formatting.</p>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="how">
+        <div class="container">
+          <h2 id="how">How it works</h2>
+          <ol class="steps">
+            <li><h3>Paste your Markdown</h3><p>Paste it into the editor above, or open a .md file from the ⋯ menu. The preview shows what Word will get.</p></li>
+            <li><h3>Click Copy for Word / Docs</h3><p>The formatted document goes to your clipboard, with the Markdown as a plain-text fallback.</p></li>
+            <li><h3>Paste into Word</h3><p>Press Ctrl+V (⌘V on a Mac) in Word. Headings become Word headings, so the navigation pane and table of contents work.</p></li>
+          </ol>
+          
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq">
+        <div class="container faq">
+          <h2 id="faq">Questions</h2>
+          <details>
+            <summary><h3>Do headings become real Word headings?</h3></summary>
+            <div class="answer"><p>Yes. # and ## become Heading 1 and Heading 2 in Word, so you can build a table of contents from them.</p></div>
+          </details>
+          <details>
+            <summary><h3>Do tables survive?</h3></summary>
+            <div class="answer"><p>Yes. Markdown tables paste as Word tables, including column alignment.</p></div>
+          </details>
+          <details>
+            <summary><h3>Can I get a .docx file?</h3></summary>
+            <div class="answer"><p>Paste into a new Word document and save it as .docx. For a file without Word, download HTML or save as PDF from the ⋯ menu.</p></div>
+          </details>
+          <details>
+            <summary><h3>Is my text uploaded?</h3></summary>
+            <div class="answer"><p>No. Converting happens in your browser. Nothing is sent anywhere unless you choose Save to keep it in an account.</p></div>
+          </details>
+          <nav class="related" aria-labelledby="related-h">
+            <h2 id="related-h">More free tools</h2>
+            <ul><li><a href="/markdown-to-google-docs">Markdown to Google Docs</a></li><li><a href="/markdown-to-pdf-converter">Markdown to PDF converter</a></li><li><a href="/markdown-to-html">Markdown to HTML converter</a></li><li><a href="/tools">All tools</a></li></ul>
+          </nav>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© Hashlite</p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/tools">Tools</a></li>
+            <li><a href="/learn">Learn</a></li>
+            <li><a href="/guide">Cheat sheet</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><button type="button" class="footer-link" data-cookie-settings>Cookie settings</button></li>
+            <li><a href="/">Open editor</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/site.js"></script>
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>

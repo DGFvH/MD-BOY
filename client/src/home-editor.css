@@ -66,6 +66,22 @@
   cursor: pointer;
 }
 .he-save:hover { filter: brightness(1.08); }
+/* A tool page's main job (e.g. "Copy for Word / Docs"), next to Save. */
+.he-action {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.he-action:hover { background: color-mix(in srgb, var(--accent) 8%, var(--bg)); }
+:root:is([data-theme='dark'], [data-theme='contrast']) .he-action { color: var(--text); }
 
 .he-panes { display: flex; flex: 1; min-height: 0; }
 .he-pane { flex: 1 1 0; min-width: 0; min-height: 0; }
@@ -130,3 +146,46 @@
 }
 .steps h3 { font-size: var(--fs-md); margin: 3px 0 4px; }
 .steps p { margin: 0; color: var(--text-muted); }
+
+/* ---- Table tools (above the editor on the table pages) ---- */
+.home-editor.with-tool { height: 70vh; height: 70svh; min-height: 380px; }
+.table-tool { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); font-size: var(--fs-sm); }
+.table-tool textarea {
+  display: block;
+  width: 100%;
+  height: 120px;
+  margin: 6px 0 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--fs-sm)/1.5 var(--font-mono);
+  resize: vertical;
+}
+.tt-label { display: block; margin: 0 0 6px; font-weight: var(--fw-bold); }
+.tt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.tt-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.tt-options label { display: inline-flex; align-items: center; gap: 6px; }
+.tt-options select, .tt-btn {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.tt-btn:hover { background: var(--surface-2); }
+.tt-controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.tt-status { margin: 0; color: var(--text-muted); }
+.tt-grid-wrap { max-height: 220px; overflow: auto; margin-bottom: 8px; }
+.tt-grid { border-collapse: collapse; }
+.tt-grid td { padding: 0; border: 1px solid var(--border); }
+.tt-grid tr:first-child input { font-weight: var(--fw-bold); }
+.tt-grid input { width: 140px; height: 32px; padding: 0 8px; border: 0; background: var(--bg); color: var(--text); font: inherit; }
+.tt-grid input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tool-links { display: grid; gap: 8px 24px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin: 16px 0 0; padding: 0; list-style: none; }
+.tool-links a { display: block; padding: 10px 0; border-bottom: 1px solid var(--border); font-weight: var(--fw-bold); text-decoration: none; }
+.tool-links a:hover { text-decoration: underline; }

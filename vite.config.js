@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import { applyPublicUrl, normalizePublicUrl, robotsTxt, sitemapXml, llmsTxt } from './build/site.mjs';
+import { TOOLS } from './build/tools.mjs';
 import { fileURLToPath } from 'node:url';
 
 // @vscode/markdown-it-katex depends on an older KaTeX. The app passes it the top-level
@@ -58,6 +59,8 @@ export default defineConfig(({ mode }) => ({
         'markdown-math-and-diagrams': fileURLToPath(new URL('./client/learn/markdown-math-and-diagrams/index.html', import.meta.url)),
         'markdown-vs-rich-text': fileURLToPath(new URL('./client/learn/markdown-vs-rich-text/index.html', import.meta.url)),
         'ai-chat-to-document': fileURLToPath(new URL('./client/learn/ai-chat-to-document/index.html', import.meta.url)),
+        tools: fileURLToPath(new URL('./client/tools/index.html', import.meta.url)),
+        ...Object.fromEntries(TOOLS.map((t) => [t.slug, fileURLToPath(new URL(`./client/${t.slug}/index.html`, import.meta.url))])),
       },
     },
   },

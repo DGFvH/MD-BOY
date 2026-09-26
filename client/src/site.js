@@ -1,8 +1,10 @@
 // Progressive enhancement for the public pages: the storage notice, and "Copy" buttons on
 // the guide's Markdown examples. Content never depends on this file.
 import { showStorageNotice } from './consent.js';
+import { registerServiceWorker } from './pwa.js';
 
 showStorageNotice();
+registerServiceWorker();
 
 if (navigator.clipboard) {
   for (const fig of document.querySelectorAll('.pair figure:first-child')) {

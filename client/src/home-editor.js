@@ -12,7 +12,7 @@ import { undo } from '@codemirror/commands';
 import { createEditor, commands } from './editor.js';
 import { createPreview, documentStats } from './preview.js';
 import {
-  exportMarkdown, exportHtml, buildStandaloneHtml, pickMarkdownFiles, titleFromMarkdown, copyRichText, printStandalone,
+  exportMarkdown, exportHtml, buildStandaloneHtml, pickMarkdownFiles, readMarkdownFiles, titleFromMarkdown, copyRichText, printStandalone, exportCredit,
 } from './export.js';
 import { h, iconButton, toast, showMenu, debounce } from './ui.js';
 import { loadGuestDraft, saveGuestDraft } from './guest.js';
@@ -43,10 +43,20 @@ function signedIn() {
   }
 }
 
+/**
+ * Mounts the editor in root (the page's static editor box). Settings come from root's data
+ * attributes, so each tool page can tune it in its HTML:
+ *   data-page     keeps this page's text separately (tool pages); none on the home page
+ *   data-view     the first view: edit, split or preview
+ *   data-action   a highlighted button for the page's main job: copy, pdf, html or open
+ * Returns { editor, setText }.
+ */
 export function mountHomeEditor(root) {
   const staticInput = root.querySelector('textarea');
   const sample = staticInput?.defaultValue ?? '';
-  const draft = loadGuestDraft();
+  const page = root.dataset.page || undefined;
+  const viewPref = page ? `view:${page}` : 'homeView';
+  const draft = loadGuestDraft(page);
 
   applyTheme();
 
@@ -82,10 +92,22 @@ export function mountHomeEditor(root) {
     type: 'button', class: 'he-save', title: 'Save to your Hashlite account: folders, history and every device',
     onClick: () => saveToAccount(),
   }, signedIn() ? 'Save to my documents' : 'Save');
+  const actions = {
+    copy: ['Copy for Word / Docs', () => run(copyFormatted)],
+    pdf: ['Save as PDF', () => run(printDoc)],
+    html: ['Copy HTML', () => run(copyHtmlSource)],
+    open: ['Open .md file', () => run(openFile)],
+    copymd: ['Copy Markdown', () => run(async () => {
+      await navigator.clipboard.writeText(text());
+      toast('Markdown copied.');
+    })],
+  };
+  const action = actions[root.dataset.action];
+  const actionBtn = action && h('button', { type: 'button', class: 'he-action', onClick: action[1] }, action[0]);
   const bar = h('div', { class: 'he-bar' },
     tools,
     h('div', { class: 'segmented', role: 'group', 'aria-label': 'View' }, viewButtons.edit, viewButtons.split, viewButtons.preview),
-    moreBtn, saveBtn);
+    moreBtn, actionBtn, saveBtn);
 
   const words = h('span');
   const stored = h('span', { class: 'he-stored' }, 'Saved in this browser');
@@ -99,7 +121,7 @@ export function mountHomeEditor(root) {
   });
 
   const store = debounce(() => {
-    stored.textContent = saveGuestDraft(editor.getValue()) ? 'Saved in this browser' : 'Not saved: this browser blocks storage';
+    stored.textContent = saveGuestDraft(editor.getValue(), { page }) ? 'Saved in this browser' : 'Not saved: this browser blocks storage';
   }, 400);
 
   function refreshNow() {
@@ -118,7 +140,7 @@ export function mountHomeEditor(root) {
     },
     onSave: () => {
       store.cancel();
-      saveGuestDraft(editor.getValue());
+      saveGuestDraft(editor.getValue(), { page });
       stored.textContent = 'Saved in this browser';
       toast('Saved in this browser.', { action: { label: 'Save to account', onClick: saveToAccount } });
     },
@@ -134,20 +156,22 @@ export function mountHomeEditor(root) {
   root.classList.add('ready');
 
   // Keep the text when leaving within the pause after typing.
-  addEventListener('pagehide', () => saveGuestDraft(editor.getValue(), { pending: Boolean(loadGuestDraft()?.pending) }));
+  addEventListener('pagehide', () => {
+    saveGuestDraft(editor.getValue(), { page, pending: !page && Boolean(loadGuestDraft()?.pending) });
+  });
 
   function saveToAccount() {
-    saveGuestDraft(editor.getValue(), { pending: true });
+    saveGuestDraft(editor.getValue(), { pending: true }); // the app picks it up from the main key
     location.href = '/app';
   }
 
   // ---- Views ----
   const shownView = () => {
-    const view = getPrefs().homeView ?? 'split';
+    const view = getPrefs()[viewPref] ?? root.dataset.view ?? 'split';
     return mobileQuery.matches && view === 'split' ? 'edit' : view;
   };
   function setView(view) {
-    if (view) setPref('homeView', view);
+    if (view) setPref(viewPref, view);
     const shown = shownView();
     panes.dataset.view = shown;
     for (const [k, b] of Object.entries(viewButtons)) {
@@ -184,7 +208,7 @@ export function mountHomeEditor(root) {
   function replaceText(next, message) {
     if (next === text()) return;
     editor.replace(next); // doesn't fire onChange
-    saveGuestDraft(next);
+    saveGuestDraft(next, { page });
     refreshNow();
     editor.focus();
     toast(message, { timeout: 8000, action: { label: 'Undo', onClick: () => editor.run(undo) } });
@@ -202,24 +226,48 @@ export function mountHomeEditor(root) {
     }
   }
 
+  async function openFile() {
+    const [file] = await pickMarkdownFiles();
+    if (file) replaceText(file.content, `Opened “${file.title}”.`);
+  }
+
+  async function copyFormatted() {
+    await copyRichText(await standalone(), text());
+    toast('Copied. Paste it into Word, Google Docs or an email.');
+  }
+
+  async function copyHtmlSource() {
+    await navigator.clipboard.writeText(await standalone());
+    toast('HTML copied.');
+  }
+
+  // Dropping a Markdown file anywhere on the editor box opens it (the editor pane itself
+  // inserts dropped text, as editors do).
+  root.addEventListener('dragover', (e) => {
+    if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+  });
+  root.addEventListener('drop', async (e) => {
+    if (!e.dataTransfer?.files.length || e.target.closest('.cm-editor')) return;
+    e.preventDefault();
+    const [file] = await readMarkdownFiles([...e.dataTransfer.files]);
+    if (file) replaceText(file.content, `Opened “${file.title}”.`);
+    else toast('Only Markdown or text files can be opened here.', { type: 'error' });
+  });
+
   function menuItems() {
     return [
-      { label: 'Open Markdown file…', icon: 'upload', onClick: () => run(async () => {
-        const [file] = await pickMarkdownFiles();
-        if (file) replaceText(file.content, `Opened “${file.title}”.`);
-      }) },
+      { label: 'Open Markdown file…', icon: 'upload', onClick: () => run(openFile) },
       { label: 'New document', icon: 'plus', onClick: () => replaceText('', 'Started a new document.') },
       'separator',
       { label: 'Download Markdown (.md)', icon: 'download', onClick: () => exportMarkdown(title(), text()) },
       { label: 'Download HTML (.html)', icon: 'download', onClick: () => run(async () => exportHtml(title(), await standalone())) },
       { label: 'Print / Save as PDF', icon: 'printer', onClick: () => run(printDoc) },
-      { label: 'Copy as formatted text', icon: 'copy', onClick: () => run(async () => {
-        await copyRichText(await standalone(), text());
-        toast('Copied. Paste it into Word, Google Docs or an email.');
-      }) },
+      { label: 'Copy as formatted text', icon: 'copy', onClick: () => run(copyFormatted) },
+      { label: 'Copy HTML source', icon: 'code', onClick: () => run(copyHtmlSource) },
       'separator',
       { label: 'Theme…', icon: THEMES.find((t) => t.id === currentTheme()).icon, onClick: () => showMenu(moreBtn, themeMenuItems(pickTheme)) },
       { label: 'Line numbers', checked: Boolean(getPrefs().lineNumbers), onClick: () => editor.setLineNumbers(setPref('lineNumbers', !getPrefs().lineNumbers).lineNumbers) },
+      { label: 'Credit Hashlite in HTML downloads', checked: exportCredit(), onClick: () => setPref('exportCredit', !exportCredit()) },
     ];
   }
 
@@ -249,7 +297,7 @@ export function mountHomeEditor(root) {
     if (linked === null) return;
     if (text() === sample || !text().trim()) {
       editor.load(linked);
-      saveGuestDraft(linked);
+      saveGuestDraft(linked, { page });
       refreshNow();
     } else {
       replaceText(linked, 'Opened the linked document.');
@@ -260,5 +308,9 @@ export function mountHomeEditor(root) {
 
   editor.setLineNumbers(getPrefs().lineNumbers);
   refreshNow();
-  return editor;
+  return {
+    editor,
+    /** Replaces the text (undoable), e.g. from the table tools. */
+    setText: (next, message) => (message ? replaceText(next, message) : (editor.replace(next), saveGuestDraft(next, { page }), refreshNow())),
+  };
 }
