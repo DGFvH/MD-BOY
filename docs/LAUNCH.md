@@ -6,8 +6,7 @@ about what Hashlite is. Keep it that way: no fake accounts, no asking friends to
 posting the same text everywhere on the same day.
 
 **Before posting:** make sure the latest version is live on hashlite.io, the Supabase email
-settings are done (see the Cowork prompt), and the GitHub repository is public if you call it
-open source.
+settings are done (see the Cowork prompt).
 
 ## What to say in one line
 
@@ -74,7 +73,7 @@ and ask for feedback rather than advertising.
 Submit once each, with the one-line description above.
 
 - **AlternativeTo:** add Hashlite as an alternative to Dillinger, StackEdit, Typora, HackMD and
-  Markdown Live Preview. Category: Markdown editor; license: free, open source; platform: web.
+  Markdown Live Preview. Category: Markdown editor; license: free; platform: web.
 - **SaaSHub, Slant, Product Hunt, BetaList, Uneed, There's An AI For That** (the AI-output use
   case), **Toolify**: the free listings.
 - **Awesome lists on GitHub:** for example `mundimark/awesome-markdown` and
