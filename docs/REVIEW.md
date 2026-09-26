@@ -178,3 +178,19 @@ Accounts and documents moved from the built-in SQLite server to the Supabase pro
 - **Setup page:** `/connect` (Claude: Settings › Connectors › Add custom connector; Claude Code: `claude mcp add --transport http …`). It is linked from `/tools` and in `llms.txt`; the privacy page describes the connector.
 - **Tests:** `npm run test:mcp` drives the official MCP client over HTTP (initialize, list tools, call each tool, CORS preflight). An e2e test opens a link the connector built.
 - **Later (not built):** connecting a Hashlite account over OAuth, so Claude can list, search, read and save documents. The plan is in the session notes.
+
+## Account connector: your documents in Claude (2026-09-26)
+
+- **OAuth 2.1 for MCP:** discovery (`/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`), dynamic client registration, PKCE (S256 only), a consent page at `/oauth/authorize`, and a token endpoint with rotating refresh tokens.
+- **No server secret:** the Vercel functions call database functions with the public key.
+  - All checks happen in the database (`20260926100000_connector_oauth.sql`, tables in `private`). Tokens are random and stored only as SHA-256 hashes. Codes are single-use and last 10 minutes; access tokens last 1 hour; refresh tokens last 30 days and rotate.
+  - `private.act_as(token)` sets `auth.uid()` for the transaction, so the app's own functions and ownership checks apply unchanged.
+- **Tools** on `/api/account-mcp`: `search_documents`, `list_documents`, `read_document`, `create_document`, `update_document` (version check; the replaced text always goes into history), `share_document`, plus the three public tools.
+- **Revoking:** Account › Connected apps lists connections, with Disconnect.
+- **Consent screen:** it shows the app's self-declared name *and* the host you return to, since registration is open (as MCP expects).
+- **Test:** one e2e test runs the whole flow against the live database:
+  - discovery, the 401 challenge, and registration (including a refused non-https redirect);
+  - a refused unregistered redirect, sign-in, consent, a wrong verifier, code reuse;
+  - every tool, including the stale-version guard;
+  - refresh rotation, and Disconnect.
+- **Advisors:** the only new warnings are the intended "security definer callable by anon" ones on the OAuth and `mcp_*` functions; each checks its own credential first.

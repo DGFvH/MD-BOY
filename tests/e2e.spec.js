@@ -1,6 +1,9 @@
 import { test, expect, viaNode, PROXIED, SUPABASE_URL_RE } from './fixtures.mjs';
 import { resetTestAccount, TEST_EMAIL, TEST_PASSWORD } from './account.mjs';
 import { editorLink } from '../mcp/server.js';
+import { createHash, randomBytes } from 'node:crypto';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 // Signs in to a freshly emptied Supabase test account (the welcome document is
 // created on the first sign-in, as for a new user).
@@ -542,6 +545,111 @@ test('a link from the connector (open_in_hashlite) opens that document in the ed
   await page.goto('/connect');
   await expect(page.locator('h1')).toHaveText('Connect Hashlite to your AI assistant');
   await expect(page.locator('pre code').first()).toContainText('/api/mcp');
+});
+
+test('the account connector: OAuth consent, tools, refresh and disconnect', async ({ page, request, baseURL }) => {
+  test.setTimeout(120_000);
+  await resetTestAccount();
+
+  // Discovery, and the 401 that makes a client start the login.
+  const resource = await (await request.get('/.well-known/oauth-protected-resource/api/account-mcp')).json();
+  expect(resource.resource).toBe(`${baseURL}/api/account-mcp`);
+  const server = await (await request.get('/.well-known/oauth-authorization-server')).json();
+  expect(server.code_challenge_methods_supported).toEqual(['S256']);
+  const anonymous = await request.post('/api/account-mcp', { data: {} });
+  expect(anonymous.status()).toBe(401);
+  expect(anonymous.headers()['www-authenticate']).toContain('resource_metadata="');
+
+  // Registration: https or localhost only.
+  expect((await request.post('/api/oauth/register', { data: { client_name: 'Evil', redirect_uris: ['http://evil.example/cb'] } })).status()).toBe(400);
+  const redirectUri = `${baseURL}/callback`;
+  const reg = await request.post('/api/oauth/register', { data: { client_name: 'Test assistant', redirect_uris: [redirectUri] } });
+  expect(reg.status()).toBe(201);
+  const { client_id: clientId } = await reg.json();
+
+  // Consent: sign in, Allow, back to the app with a code.
+  const verifier = randomBytes(48).toString('base64url');
+  const challenge = createHash('sha256').update(verifier).digest('base64url');
+  const authorize = (uri = redirectUri) => `/oauth/authorize?${new URLSearchParams({
+    response_type: 'code', client_id: clientId, redirect_uri: uri, state: 'st4te', code_challenge: challenge, code_challenge_method: 'S256',
+  })}`;
+  await page.goto(authorize('https://attacker.example/cb'));
+  await expect(page.getByRole('heading', { name: 'This link doesn’t work' })).toBeVisible();
+  await page.goto(authorize());
+  await expect(page.getByText('Test assistant wants to connect to your Hashlite documents.')).toBeVisible();
+  await page.fill('#auth-email', TEST_EMAIL);
+  await page.fill('#auth-password', TEST_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Connect Test assistant?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Allow' }).click();
+  await page.waitForURL(/\/callback\?/);
+  const back = new URL(page.url());
+  expect(back.searchParams.get('state')).toBe('st4te');
+  const code = back.searchParams.get('code');
+
+  // Token exchange: the verifier must match, and a code works once.
+  const exchange = (v) => request.post('/api/oauth/token', { form: { grant_type: 'authorization_code', code, code_verifier: v, client_id: clientId, redirect_uri: redirectUri } });
+  const wrong = await exchange(randomBytes(48).toString('base64url'));
+  expect(wrong.status()).toBe(400);
+  expect((await wrong.json()).error).toBe('invalid_grant');
+  const tokens = await (await exchange(verifier)).json();
+  expect(tokens.token_type).toBe('Bearer');
+  expect((await exchange(verifier)).status()).toBe(400); // used
+
+  // The tools, as an MCP client with the access token.
+  const connect = async (access) => {
+    const client = new Client({ name: 'test', version: '1' });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${baseURL}/api/account-mcp`), { requestInit: { headers: { Authorization: `Bearer ${access}` } } }));
+    return client;
+  };
+  const client = await connect(tokens.access_token);
+  const names = (await client.listTools()).tools.map((t) => t.name);
+  expect(names).toEqual(expect.arrayContaining(['search_documents', 'list_documents', 'read_document', 'create_document', 'update_document', 'share_document', 'open_in_hashlite']));
+  const call = (name, args) => client.callTool({ name, arguments: args });
+
+  const created = await call('create_document', { title: 'From Claude', markdown: '# Plan\n\nZebra crossing notes.' });
+  const id = created.structuredContent.id;
+  expect(created.structuredContent.url).toContain(`/app#/doc/${id}`);
+  const read = await call('read_document', { id });
+  expect(read.structuredContent.content).toContain('Zebra crossing');
+  const updated = await call('update_document', { id, markdown: '# Plan\n\nUpdated by the assistant.', version: read.structuredContent.version });
+  expect(updated.structuredContent.version).toBe(read.structuredContent.version + 1);
+  const stale = await call('update_document', { id, markdown: 'stale', version: read.structuredContent.version });
+  expect(stale.isError).toBe(true);
+  expect(stale.content[0].text).toMatch(/changed after you read it/);
+  const found = await call('search_documents', { query: 'assistant' });
+  expect(found.structuredContent.results.map((r) => r.id)).toContain(id);
+  const listed = await call('list_documents', {});
+  expect(listed.structuredContent.documents.some((d) => d.title === 'From Claude')).toBe(true);
+  const missing = await call('read_document', { id: '00000000-0000-4000-8000-000000000000' });
+  expect(missing.isError).toBe(true);
+  const shared = await call('share_document', { id });
+  expect(shared.structuredContent.url).toMatch(/\/s\/[\w-]{22}$/);
+  await client.close();
+
+  // The update kept the earlier text in the document's history, and the app shows the document.
+  await page.goto(`/app#/doc/${id}`);
+  await expect(page.locator('.cm-content')).toContainText('Updated by the assistant.', { timeout: 15_000 });
+  await page.getByRole('button', { name: 'Version history' }).click();
+  await expect(page.locator('.side-panel')).toBeVisible();
+
+  // Refresh rotates the tokens: the old refresh token stops working.
+  const refresh = (t) => request.post('/api/oauth/token', { form: { grant_type: 'refresh_token', refresh_token: t, client_id: clientId } });
+  const fresh = await (await refresh(tokens.refresh_token)).json();
+  expect(fresh.access_token).toBeTruthy();
+  expect((await refresh(tokens.refresh_token)).status()).toBe(400);
+
+  // Disconnect in the Account dialog: the token stops working.
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: 'Account…' }).click();
+  await expect(page.getByText('Test assistant', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Disconnect Test assistant' }).click();
+  await expect(page.getByText('No apps are connected.')).toBeVisible();
+  const after = await request.post('/api/account-mcp', {
+    headers: { Authorization: `Bearer ${fresh.access_token}`, Accept: 'application/json, text/event-stream' },
+    data: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+  });
+  expect(after.status()).toBe(401);
 });
 
 test.describe('cookie banner', () => {

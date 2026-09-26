@@ -500,3 +500,9 @@ button.user:hover { background: var(--surface-2); color: var(--text); }
   .markdown-body pre, .markdown-body blockquote, .markdown-body table, .markdown-body img { break-inside: avoid; }
   .markdown-body pre { white-space: pre-wrap; }
 }
+
+/* Account dialog: connected apps */
+.connected-apps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.connected-apps li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.connected-apps li.muted { display: block; }
+.consent-list { margin: 0 0 12px; padding-left: 20px; line-height: 1.6; }

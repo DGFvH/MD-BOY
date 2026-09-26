@@ -64,7 +64,9 @@ Link to \`${home}#text=\` followed by the URL-encoded Markdown (for example, the
 
 ## Connector (MCP server)
 
-Hashlite runs a public remote MCP server at \`${base || 'https://hashlite.io'}/api/mcp\` (Streamable HTTP, no authentication). Its tools: \`open_in_hashlite\` (returns a link that opens a Markdown document in the editor), \`csv_to_markdown_table\` and \`list_hashlite_tools\`. Setup: ${link('/connect')}
+Hashlite runs a public remote MCP server at \`${base || 'https://hashlite.io'}/api/mcp\` (Streamable HTTP, no authentication). Its tools: \`open_in_hashlite\` (returns a link that opens a Markdown document in the editor), \`csv_to_markdown_table\` and \`list_hashlite_tools\`.
+
+A second server at \`${base || 'https://hashlite.io'}/api/account-mcp\` (OAuth 2.1 with PKCE and dynamic client registration) works with the user's own Hashlite documents: \`search_documents\`, \`list_documents\`, \`read_document\`, \`create_document\`, \`update_document\` (earlier text stays in version history) and \`share_document\`. Setup: ${link('/connect')}
 
 ## What works without an account
 
@@ -92,7 +94,7 @@ ${TOOLS.map((t) => `- [${t.h1}](${link(`/${t.slug}`)}): ${t.description}`).join(
 }
 
 export function robotsTxt(base) {
-  const lines = ['User-agent: *', 'Allow: /', 'Disallow: /app', 'Disallow: /s/'];
+  const lines = ['User-agent: *', 'Allow: /', 'Disallow: /app', 'Disallow: /s/', 'Disallow: /oauth/'];
   if (base) lines.push('', `Sitemap: ${base}/sitemap.xml`);
   return `${lines.join('\n')}\n`;
 }

@@ -1,6 +1,6 @@
 // Account dialog: change password, download every document, delete the account.
 import { api } from '../api.js';
-import { h, icons, modal, toast, downloadFile } from '../ui.js';
+import { h, icons, modal, toast, downloadFile, timeAgo } from '../ui.js';
 
 function section(title, ...children) {
   return h('section', { class: 'modal-section' }, h('h3', {}, title), ...children);
@@ -16,6 +16,42 @@ function passwordField(id, label, autocomplete, { hint, ...extra } = {}) {
     input,
     hint && h('small', { class: 'muted', id: `${id}-hint` }, hint));
   return { input, row };
+}
+
+// Apps connected through the connector (e.g. Claude), each with a Disconnect button.
+function connectedApps() {
+  const list = h('ul', { class: 'connected-apps' }, h('li', { class: 'muted' }, 'Loading…'));
+  const render = async () => {
+    try {
+      const apps = await api.listConnections();
+      if (!apps.length) {
+        list.replaceChildren(h('li', { class: 'muted' }, 'No apps are connected. ', h('a', { href: '/connect', target: '_blank', rel: 'noopener' }, 'How to connect Claude')));
+        return;
+      }
+      list.replaceChildren(...apps.map((app) => h('li', {},
+        h('span', {}, h('strong', {}, app.name), h('small', { class: 'muted' },
+          ` · connected ${timeAgo(app.created_at)}${app.last_used_at ? ` · last used ${timeAgo(app.last_used_at)}` : ''}`)),
+        h('button', {
+          type: 'button', class: 'btn', 'aria-label': `Disconnect ${app.name}`,
+          onClick: async (e) => {
+            e.currentTarget.disabled = true;
+            try {
+              await api.disconnect(app.id);
+              toast(`${app.name} can no longer reach your documents.`);
+            } catch (err) {
+              toast(err.message, { type: 'error' });
+            }
+            render();
+          },
+        }, 'Disconnect'))));
+    } catch (err) {
+      list.replaceChildren(h('li', { class: 'muted' }, err.message));
+    }
+  };
+  render();
+  return section('Connected apps',
+    h('p', { class: 'muted' }, 'Apps you allowed to read and edit your documents, such as Claude.'),
+    list);
 }
 
 /**
@@ -107,6 +143,7 @@ export function showAccount({ user, beforeExport, onDeleted }) {
         section('Your documents',
           h('p', { class: 'muted' }, 'Get every document as a Markdown file, in folders like in the sidebar.'),
           h('div', { class: 'form-actions' }, exportBtn)),
+        connectedApps(),
         h('section', { class: 'modal-section danger-zone' }, h('h3', {}, 'Delete account'), delForm));
     },
   });

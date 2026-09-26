@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => ({
         'ai-chat-to-document': fileURLToPath(new URL('./client/learn/ai-chat-to-document/index.html', import.meta.url)),
         tools: fileURLToPath(new URL('./client/tools/index.html', import.meta.url)),
         connect: fileURLToPath(new URL('./client/connect/index.html', import.meta.url)),
+        authorize: fileURLToPath(new URL('./client/oauth/authorize/index.html', import.meta.url)),
         ...Object.fromEntries(TOOLS.map((t) => [t.slug, fileURLToPath(new URL(`./client/${t.slug}/index.html`, import.meta.url))])),
       },
     },

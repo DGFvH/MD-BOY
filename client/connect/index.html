@@ -89,12 +89,27 @@
         </ol>
         <p>Then ask, for example: <em>“Write a one-page project plan and open it in Hashlite.”</em> Custom connectors depend on your Claude plan and your organisation's settings; Claude's help centre has the current details.</p>
 
+        <h2 id="account">Your documents in Claude</h2>
+        <p>
+          A second connector lets Claude work with the documents in your Hashlite account: search, list and read them,
+          create new ones, update them (earlier versions stay in each document's history), and make read-only share links
+          when you ask. Add it the same way, with this URL:
+        </p>
+        <pre><code>%PUBLIC_URL%/api/account-mcp</code></pre>
+        <p>
+          Claude then asks you to sign in to Hashlite and to allow access. You can disconnect at any time in Hashlite, under
+          <strong>Account › Connected apps</strong>. Claude never sees your password: it gets a key that only works for your
+          documents, expires after an hour and is renewed while you stay connected.
+        </p>
+
         <h2 id="other">Other MCP clients</h2>
-        <p>Hashlite's connector is a standard remote MCP server (Streamable HTTP, no authentication) at <code>%PUBLIC_URL%/api/mcp</code>. In Claude Code, for example:</p>
-        <pre><code>claude mcp add --transport http hashlite %PUBLIC_URL%/api/mcp</code></pre>
+        <p>Both connectors are standard remote MCP servers (Streamable HTTP). <code>%PUBLIC_URL%/api/mcp</code> needs no authentication; <code>%PUBLIC_URL%/api/account-mcp</code> uses OAuth 2.1 with PKCE and dynamic client registration. In Claude Code, for example:</p>
+        <pre><code>claude mcp add --transport http hashlite %PUBLIC_URL%/api/mcp
+claude mcp add --transport http hashlite-docs %PUBLIC_URL%/api/account-mcp</code></pre>
 
         <h2 id="privacy">Privacy</h2>
-        <p>The connector doesn't store anything and needs no account. The text of a document is sent to it only to build the link, and it is not kept or logged. When you open the link, the text stays in your browser. See the <a href="/privacy">privacy page</a>.</p>
+        <p>The link connector doesn't store anything and needs no account. The text of a document is sent to it only to build the link, and it is not kept or logged. When you open the link, the text stays in your browser.</p>
+        <p>The documents connector works with your account only after you allow it, and only for your own documents. Hashlite stores which apps you connected and when they were last used, never the keys themselves (only a fingerprint of them). See the <a href="/privacy">privacy page</a>.</p>
 
         <div class="try"><p><strong>No connector?</strong> Paste any Markdown into <a href="/">the editor</a>: it works the same way.</p></div>
       </article>

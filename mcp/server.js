@@ -23,16 +23,25 @@ export function editorLink(markdown) {
 const text = (t) => ({ type: 'text', text: t });
 
 export function createServer() {
-  const server = new McpServer(
-    { name: 'hashlite', title: 'Hashlite', version: '1.0.0', websiteUrl: SITE },
-    {
-      instructions:
-        'Hashlite is a free online Markdown editor. Use open_in_hashlite when the user wants to edit, preview, '
-        + 'or export a Markdown document you wrote (to PDF, Word, Google Docs or HTML): give them the link it returns. '
-        + 'Nothing is uploaded; the text travels in the link itself.',
-    },
-  );
+  const server = newServer();
+  registerPublicTools(server);
+  return server;
+}
 
+export function newServer(instructions = PUBLIC_INSTRUCTIONS) {
+  return new McpServer(
+    { name: 'hashlite', title: 'Hashlite', version: '1.0.0', websiteUrl: SITE },
+    { instructions },
+  );
+}
+
+const PUBLIC_INSTRUCTIONS =
+  'Hashlite is a free online Markdown editor. Use open_in_hashlite when the user wants to edit, preview, '
+  + 'or export a Markdown document you wrote (to PDF, Word, Google Docs or HTML): give them the link it returns. '
+  + 'Nothing is uploaded; the text travels in the link itself.';
+
+/** The tools that need no account: open_in_hashlite, csv_to_markdown_table, list_hashlite_tools. */
+export function registerPublicTools(server) {
   server.registerTool('open_in_hashlite', {
     title: 'Open in Hashlite',
     description:
@@ -97,6 +106,4 @@ export function createServer() {
       structuredContent: { tools },
     };
   });
-
-  return server;
 }

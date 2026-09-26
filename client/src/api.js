@@ -195,6 +195,35 @@ export const api = {
   },
 
   /** A .zip of every document outside the trash, in its folders. */
+  // ---- Connected apps (the connector for AI assistants, OAuth) ----
+  /** The signed-in user, or null (no redirect to the sign-in screen). */
+  async sessionUser() {
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    return user ? { id: user.id, email: user.email } : null;
+  },
+
+  /** The name of an application asking for access, if client id and redirect address belong together. */
+  async oauthClientInfo(clientId, redirectUri) {
+    return run(supabase.rpc('oauth_client_info', { p_client_id: clientId, p_redirect_uri: redirectUri }));
+  },
+
+  /** After "Allow": a one-time code for the application. */
+  async oauthCreateCode(clientId, redirectUri, codeChallenge) {
+    await currentUser();
+    return run(supabase.rpc('oauth_create_code', { p_client_id: clientId, p_redirect_uri: redirectUri, p_code_challenge: codeChallenge }));
+  },
+
+  async listConnections() {
+    await currentUser();
+    return run(supabase.rpc('connector_list'));
+  },
+
+  async disconnect(id) {
+    await currentUser();
+    await run(supabase.rpc('connector_revoke', { p_id: id }));
+  },
+
   async exportZip() {
     await currentUser();
     const [folders, documents] = await Promise.all([

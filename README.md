@@ -14,7 +14,9 @@ Hashlite is a simple, capable **online Markdown editor**. Write in the browser, 
 - `https://hashlite.io/#text=<URL-encoded Markdown>` opens that text in the editor
 - Free tool pages built on the same editor (`/tools`): Markdown to Word, Google Docs, PDF and HTML, a Markdown viewer, CSV to Markdown table, a table generator, and Mermaid, LaTeX math and README editors
 - Installable as an app (PWA): opens offline, and "Share → Hashlite" on a phone opens shared text in the editor
-- **Connector for AI assistants**: a public MCP server at `https://hashlite.io/api/mcp` (see `/connect`), so an assistant such as Claude can hand you a link that opens its document in the editor
+- **Connectors for AI assistants** (see `/connect`):
+  - `https://hashlite.io/api/mcp`, public: an assistant such as Claude can hand you a link that opens its document in the editor
+  - `https://hashlite.io/api/account-mcp`, with your permission (OAuth 2.1 + PKCE): it can search, read, create, update and share your documents; disconnect under Account › Connected apps
 
 **Editor**
 - CodeMirror 6 editor with Markdown syntax highlighting, search and replace, multiple cursors, and automatic list continuation
@@ -146,8 +148,10 @@ client/                 Vite frontend (vanilla JS, no framework)
 build/site.mjs          public page list, PUBLIC_URL, robots/sitemap/llms.txt
 supabase/migrations/    database schema, RLS policies, functions, storage bucket
 supabase/templates/     styled Auth emails to paste into the dashboard
-api/mcp.js              Vercel function: the MCP endpoint (Streamable HTTP, stateless)
-mcp/server.js           the MCP tools: open_in_hashlite, csv_to_markdown_table, list_hashlite_tools
+api/mcp.js              Vercel function: the public MCP endpoint (Streamable HTTP, stateless)
+api/account-mcp.js      Vercel function: the account MCP endpoint (OAuth bearer token)
+api/oauth/              OAuth: client registration, token endpoint, discovery metadata
+mcp/                    the MCP tools (server.js public, account.js per user) and the database helper
 tests/                  Playwright tests, a static server like the hosts, test-account helper
 docs/                   review, SEO plan, LLM research
 ```
